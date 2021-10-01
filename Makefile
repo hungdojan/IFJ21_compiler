@@ -2,8 +2,8 @@ CC=gcc
 CFLAGS=-std=c99 -Wall -Wextra -g -pedantic
 CFLAGS+=-O2
 LOGIN=xdohun00
-TARGET=ifj21
-OBJS=main.o symtable.o
+TARGET=ifj21c
+OBJS=main.o symtable.o istring.o
 
 # ----------------------------
 
