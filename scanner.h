@@ -1,32 +1,35 @@
 
 
-enum tokenS {
-    TOKEN_ASSIGN,
-    TOKEN_DEFINE_TYPE,
-    TOKEN_EQ,
-    TOKEN_LT,
-    TOKEN_LTEQ,
-    TOKEN_GT,
-    TOKEN_GTEQ,
-    TOKEN_NOT,
-    TOKEN_DIV,
-    TOKEN_IDIV,
-    TOKEN_MUL,
-    TOKEN_ADD,
-    TOKEN_SUB,
-    TOKEN_LEFT_PARENTES,
-    TOKEN_RIGHT_PARENTES,
-    TOKEN_EOS,
-    TOKEN_EOF,
-    TOKEN_COMMA,
-    TOKEN_COMMENT, // commenty bude mazat lexikalní analyzátor
-    TOKEN_CONCAT,
-    TOKEN_INTEGER,
-    TOKEN_NUMBER,
-    TOKEN_STRLEN,
-    TOKEN_STRING,
-    TOKEN_IDENTIFIER
-    } token;
+enum State {
+    STATE_NEW,
+    STATE_RETURN_OPERATOR,
+
+    STATE_ASSIGN,
+    STATE_DEFINE_TYPE,
+    STATE_EQ,
+    STATE_LT,
+    STATE_LTEQ,
+    STATE_GT,
+    STATE_GTEQ,
+    STATE_NOT,
+    STATE_DIV,
+    STATE_IDIV,
+    STATE_MUL,
+    STATE_ADD,
+    STATE_SUB,
+    STATE_LEFT_PARENTES,
+    STATE_RIGHT_PARENTES,
+    STATE_EOS,
+    STATE_EOF,
+    STATE_COMMA,
+    STATE_COMMENT, // commenty bude mazat lexikalní analyzátor
+    STATE_CONCAT,
+    STATE_INTEGER,
+    STATE_NUMBER,
+    STATE_STRLEN,
+    STATE_STRING,
+    STATE_IDENTIFIER
+    } state;
 
 
 void get_token();
