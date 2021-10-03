@@ -5,6 +5,8 @@
 #ifndef IFJ_CLION_TOKEN_H
 #define IFJ_CLION_TOKEN_H
 
+#include "istring.h"
+
 enum Token_type{
     type_plus,
     type_minus,

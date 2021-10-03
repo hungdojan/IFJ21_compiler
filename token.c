@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 #include "token.h"
-#include "istring.h"
+
 
 void token_create(Istring *s, enum Token_type type)
 {}

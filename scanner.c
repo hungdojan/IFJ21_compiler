@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "scanner.h"
 #include "istring.h"
 #include "token.h"
@@ -14,7 +15,7 @@ int get_token() {
     type = type_undefined;
 
     while (1) {
-        char c = getchar();
+        c = getchar();
 
         switch (state) {
             case STATE_NEW:
@@ -157,7 +158,7 @@ int get_token() {
                 } else if (c == '\"') {
                     string_Add_Char(&str, c);
                     state = STATE_STRING;
-                } else if (isaplha(c) || '_') {
+                } else if (isalpha(c) || '_') {
                     string_Add_Char(&str, c);
                     state = STATE_IDENTIFIER;
                 } else if (isdigit(c)) {
@@ -168,7 +169,7 @@ int get_token() {
                     return 1;
                 break;
             case STATE_IDENTIFIER:
-                if (isaplha(c) || '_' || isdigit(c)) {
+                if (isalpha(c) || '_' || isdigit(c)) {
                     string_Add_Char(&str, c);
                 } else {
                     ungetc(c, stdin);
@@ -244,7 +245,7 @@ int get_token() {
                 }
                 break;
             case STATE_STRLEN_IDENTIFIER:
-                if (isaplha(c) || '_' || isdigit(c)) {
+                if (isalpha(c) || '_' || isdigit(c)) {
                     string_Add_Char(&str, c);
                 } else {
                     ungetc(c, stdin);

@@ -23,3 +23,4 @@ enum State {
 
 
 int get_token();
+void get_rid_of_comments();
