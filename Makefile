@@ -19,12 +19,11 @@ $(TARGET): $(OBJS)
 
 # testuje ruzne funkce ve zdrojacich
 test: CMakeLists.txt test_source.cpp
-	cd build && cmake .. && make -j8 && ./ifj21c-test
+	cmake . -B./build && make -C./build && ./ifj21c-test
 
 pack:
 	rm -f *.zip
 	zip $(LOGIN) *.h *.c Makefile
 
 clean:
-	rm -f *.o $(TARGET)
-	cd build/ && rm -rf *
+	rm -f *.o $(TARGET) build/*
