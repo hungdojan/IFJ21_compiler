@@ -6,6 +6,7 @@ project(ifj21c-test)
 # -std=c++14
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C_FLAGS "-O2 -fcommon")
 
 # Include hlavickovych souboru ve slozce include
 # include_directories(include)
@@ -13,7 +14,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Nastaveni promennych
 set(COMPILER_LIB comp_lib)
 set(TEST_SOURCE test_source)
-set(SOURCE istring.c istring.h scanner.h scanner.c)
+set(SOURCE token.c token.h istring.c istring.h scanner.h scanner.c)
 
 # Podslozky se CMakeLists.txt
 add_subdirectory(googletest)
