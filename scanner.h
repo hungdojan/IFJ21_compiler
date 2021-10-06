@@ -1,4 +1,17 @@
-
+/**
+ * @file scanner.h
+ * @brief Deklarace funkci a vycet stavu lexikalni analyzy
+ *
+ * @authors Jaroslav Kvasnicka (xkvasn14) 
+ *          Hung Do            (xdohun00)
+ *          David Kedra        (xkedra00)
+ *          Petr Kolarik       (xkolar79)
+ *          
+ *
+ * Reseni projektu IFJ a IAL, FIT VUT 21/22
+ */
+#ifndef _SCANNER_H_
+#define _SCANNER_H_
 
 enum State {
     STATE_NEW,
@@ -21,6 +34,20 @@ enum State {
     // STATE_ERROR
     } state;
 
+/**
+ * @brief Ziska token ze zdrojoveho souboru
+ *
+ * @param f Ukazatel na otevreny zdrojovy soubor
+ * @return Nulovou hodnotu, pokud nenastala zadna lexikalni chyba
+ */
+int get_token(FILE *f);
 
-int get_token();
-void get_rid_of_comments();
+/**
+ * @brief Preskakuje komentare ve zdrojovem souboru
+ *
+ * @param f Ukazatel na otevreny zdrojovy soubor
+ * @return Nulovou hodnotu, pokud nenastala zadna lexikalni chyba
+ */
+int get_rid_of_comments(FILE *f);
+
+#endif // _SCANNER_H_

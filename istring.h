@@ -12,7 +12,7 @@
 #ifndef _ISTRING_H_
 #define _ISTRING_H_
 
-#define STRING_BASE_SIZE 4
+#define STRING_BASE_SIZE 8
 
 typedef struct
 {
