@@ -158,7 +158,7 @@ int get_token()
                 }
                 else if (c == '#')
                 {
-                    tmp = getchar();
+                    tmp = getchar();/*
                     if (tmp == '\"')
                     {
                         string_Add_Char(&str, c);
@@ -170,6 +170,12 @@ int get_token()
                         string_Add_Char(&str, c);
                         string_Add_Char(&str, tmp);
                         state = STATE_STRLEN_IDENTIFIER;
+                    }*/
+                    if(tmp == '\"' || isalpha(tmp) || tmp == '_')
+                    {
+                        ungetc(tmp);
+                        string_Add_Char(&str,c);
+                        state = STATE_STRING_LEN;
                     }
                     else
                     {
@@ -217,10 +223,10 @@ int get_token()
                 }
                 else if (c == '\"')
                 {
-                    string_Add_Char(&str, c);
+                    //string_Add_Char(&str, c);
                     state = STATE_STRING;
                 }
-                else if (isalpha(c) || '_')
+                else if (isalpha(c) || c == '_')
                 {
                     string_Add_Char(&str, c);
                     state = STATE_IDENTIFIER;
@@ -236,7 +242,7 @@ int get_token()
                     return 1;
                 break;
             case STATE_IDENTIFIER:
-                if (isalpha(c) || '_' || isdigit(c))
+                if (isalpha(c) || c == '_' || isdigit(c))
                 {
                     string_Add_Char(&str, c);
                 }
@@ -343,7 +349,8 @@ int get_token()
                 }
                 break;
             case STATE_STRLEN_IDENTIFIER:
-                if (isalpha(c) || '_' || isdigit(c))
+                // old case
+                if (isalpha(c) || c == '_' || isdigit(c))
                 {
                     string_Add_Char(&str, c);
                 }
@@ -355,6 +362,7 @@ int get_token()
                 }
                 break;
             case STATE_STRLEN_STRING:
+                // old case
                 if (c == '\"')
                 {
                     type = type_strlen_string;
@@ -368,6 +376,10 @@ int get_token()
                 {
                     string_Add_Char(&str, c);
                 }
+                break;
+            case STATE_STRING_LEN:
+                type = type_string_len;
+                state = STATE_RETURN_STRING_LEN;
                 break;
             default:
                 break;
@@ -413,6 +425,7 @@ int get_token()
                 break;
             case STATE_RETURN_STRLEN_IDENTIFIER:
                 // GENERATE TOKEN WITH TYPE STRLEN_IDENTIFIER and VALUE #_s651fe
+                // old case
                 token_create(&str, type);
                 string_Init(&str);
                 state = STATE_NEW;
@@ -420,7 +433,15 @@ int get_token()
                 break;
             case STATE_RETURN_STRLEN_STRING:
                 // GENERATE TOKEN WITH TYPE STRLEN_STRING and VALUE #"xxxxx"
+                // old case
                 token_create(&str, type);
+                string_Init(&str);
+                state = STATE_NEW;
+                type = type_undefined;
+                break;
+            case STATE_RETURN_STRING_LEN:
+                // GENERATE TOKEN WITH TYPE STRING_LEN and VALUE #
+                token_create(&str,type);
                 string_Init(&str);
                 state = STATE_NEW;
                 type = type_undefined;

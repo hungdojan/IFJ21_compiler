@@ -24,6 +24,7 @@ enum Token_type {
     type_assign,
     type_strlen_identifier,
     type_strlen_string,
+    type_string_len,
     type_left_parentheses,
     type_right_parentheses,
     type_declare,
