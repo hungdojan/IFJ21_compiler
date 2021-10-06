@@ -1,12 +1,12 @@
 CC=gcc
-CFLAGS=-std=c99 -Wall -Wextra -g -pedantic
+CFLAGS=-std=c99 -Wall -Wextra -g -pedantic -fcommon
 CFLAGS+=-O2
 LOGIN=xdohun00
 TARGET=ifj21c
 OBJS=main.o symtable.o istring.o scanner.o token.o
 # ----------------------------
 
-.PHONY: all clean
+.PHONY: all clean test
 
 # ---------------------------
 
@@ -17,9 +17,14 @@ $(TARGET): $(OBJS)
 
 # ---------------------------
 
+# testuje ruzne funkce ve zdrojacich
+test: CMakeLists.txt test_source.cpp
+	cd build && cmake .. && make -j8 && ./ifj21c-test
+
 pack:
 	rm -f *.zip
 	zip $(LOGIN) *.h *.c Makefile
 
 clean:
 	rm -f *.o $(TARGET)
+	cd build/ && rm -rf *

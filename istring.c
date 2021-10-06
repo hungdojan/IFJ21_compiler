@@ -10,7 +10,6 @@
  * Reseni projektu IFJ a IAL, FIT VUT 21/22
  */
 #include <stdlib.h> // NULL, calloc, free, realloc
-#include <stdio.h>
 #include "istring.h"
 
 int string_Init(Istring *s)
@@ -35,7 +34,6 @@ int string_Add_Char(Istring *s, char c)
         // pridany znak presahuje velikost retezcu
         if (s->length + 1 >= s->allocSize)
         {
-            printf("tu!\n");
             void *temp = realloc(s->value, sizeof(char) * s->allocSize * 2);
             if (temp == NULL)
                 return 99;
