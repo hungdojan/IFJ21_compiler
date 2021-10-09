@@ -4,7 +4,7 @@ CFLAGS+=-O2
 LOGIN=xdohun00
 TARGET=ifj21c
 TEST_TARGET=./build/ifj21c-test
-OBJS=main.o symtable.o istring.o scanner.o token.o
+OBJS=main.o symtable.o istring.o scanner.o token.o error.o
 # ----------------------------
 
 .PHONY: all clean test
