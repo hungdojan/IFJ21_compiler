@@ -2,8 +2,8 @@
  * @file error.c
  * @brief Definice funkci pro vypisy chybovych hlasek
  *
- * @authors Hung Do            (xdohun00)
- *          David Kedra        (xkedra00)
+ * @authors David Kedra        (xkedra00)
+ *          Hung Do            (xdohun00)
  *          Petr Kolarik       (xkolar79)
  *          Jaroslav Kvasnicka (xkvasn14)
  *
@@ -17,8 +17,8 @@
 
 // "Error <err_code>: <format>\n"
 // priklad uziti: print_error(INTERNAL_ERR, "Chyba alokace pameti")
-int print_error(int err_code, Istring *str, token_t **token, const char *format, ...){
-    
+int print_error(int err_code, Istring *str, token_t **token, const char *format, ...)
+{
     // impicitni zprava o chybe (s kodem chyby) s navazujici unikatne pozadovanou
     switch (err_code)
     {
@@ -73,14 +73,12 @@ int print_error(int err_code, Istring *str, token_t **token, const char *format,
     }
 
     // dealokace pole tokenu  
-    if(token){
+    if(token)
         token_delete(token);
-    }
 
     // dealokace Istringu, prokud jeste nebyl vytvoren token
-    if(str){
+    if(str)
         string_Free(str);
-    }
 
     return err_code;
 

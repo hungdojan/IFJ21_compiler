@@ -41,27 +41,23 @@ enum Token_type {
     TYPE_INTEGER,
     TYPE_NUMBER,
     TYPE_EXPONENT_NUMBER,
-    TYPE_UNDEFINED
+    TYPE_UNDEFINED,
+    TYPE_DO,
+    TYPE_GLOBAL,
+    TYPE_NUMBER,
+    TYPE_ELSE,
+    TYPE_IF,
+    TYPE_REQUIRE,
+    TYPE_END,
+    TYPE_INTEGER,
+    TYPE_RETURN,
+    TYPE_FUNCTION,
+    TYPE_LOCAL,
+    TYPE_STRING,
+    TYPE_NIL,
+    TYPE_THEN,
+    TYPE_WHILE
 } type;
-
-enum Key_words
-{
-    KW_DO,
-    KW_GLOBAL,
-    KW_NUMBER,
-    KW_ELSE,
-    KW_IF,
-    KW_REQUIRE,
-    KW_END,
-    KW_INTEGER,
-    KW_RETURN,
-    KW_FUNCTION,
-    KW_LOCAL,
-    KW_STRING,
-    KW_NIL,
-    KW_THEN,
-    KW_WHILE
-} key_word;
 
 // mozne typy atributu tokenu, vyuzije se jeden z nich 
 typedef union

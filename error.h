@@ -2,8 +2,8 @@
  * @file error.h
  * @brief Deklarace chybovych vypisu a navratove hodnoty chyb
  *
- * @authors Hung Do            (xdohun00)
- *          David Kedra        (xkedra00)
+ * @authors David Kedra        (xkedra00)
+ *          Hung Do            (xdohun00)
  *          Petr Kolarik       (xkolar79)
  *          Jaroslav Kvasnicka (xkvasn14)
  *
@@ -39,7 +39,7 @@ enum err_codes
     ERR_SEMANT = 7,
     ERR_UNEXP_VAL = 8,
     ERR_ZERO_DIV = 9,
-    ERR_INTERNAL = 99   ///< vnitrni chyba prekladace neovlivnena vtupnim programem (alloc err, ...) 
+    ERR_INTERNAL = 99   ///< vnitrni chyba prekladace neovlivnena vstupnim programem (alloc err, ...) 
 };
 
 #endif
