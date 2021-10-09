@@ -38,7 +38,10 @@ int token_create(Istring *s, enum Token_type type, token_t **ref_token)
 
 
         // vyber korektniho typu hodnoty tokenu
-        if(type == TYPE_INTEGER) 
+
+        if(type == TYPE_STRING)
+            token->value.str_val = s->value;
+        else if(type == TYPE_INTEGER) 
         {
             // konverze hodnoty na konstatni cislo typu int (melo by uz byt ve spravnem tvaru)
             token->value.int_val = strtol(s->value, NULL, 10);
@@ -63,9 +66,12 @@ int token_create(Istring *s, enum Token_type type, token_t **ref_token)
             // pokud je typem key word, nemusi se uz ukladat do hodnoty
             if(token->type == TYPE_IDENTIFIER)
                 token->value.str_val = s->value;
+            else
+                string_Free(s);
         }
         else
-            token->value.str_val = s->value;
+            //ostatni typy primo urcuji operace, relace, apod. Neni potreba ukladat hodnotu
+            string_Free(s);
     }
     else
     {
