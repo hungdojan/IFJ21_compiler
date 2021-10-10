@@ -268,11 +268,16 @@ int get_token()
                     string_Add_Char(&str, c);
                     state = STATE_EXPONENT;
                 }
-                else
+                else if (c == ' ' || c == '\n')
                 {
                     ungetc(c, stdin);
                     type = type_integer;
                     state = STATE_RETURN_INTEGER;
+                }
+                else
+                {
+                    // ERROR - 123abc is not a valid number nor identifier
+                    return 1;
                 }
                 break;
             case STATE_NUMBER:
@@ -285,11 +290,16 @@ int get_token()
                     string_Add_Char(&str, c);
                     state = STATE_EXPONENT;
                 }
-                else
+                else if (c == ' ' || c == '\n')
                 {
                     ungetc(c, stdin);
                     type = type_number;
                     state = STATE_RETURN_NUMBER;
+                }
+                else
+                {
+                    // ERROR - 123.wfa is not a valid number
+                    return 1;
                 }
                 break;
             case STATE_EXPONENT:
@@ -326,11 +336,16 @@ int get_token()
                 {
                     string_Add_Char(&str, c);
                 }
-                else
+                else if (c == ' ' || c == '\n')
                 {
                     ungetc(c, stdin);
                     type = type_exponent_number; // or type = type_number;
                     state = STATE_RETURN_NUMBER;
+                }
+                else
+                {
+                    // ERROR - after number should be a blank space
+                    return 1;
                 }
                 break;
             case STATE_STRING:
