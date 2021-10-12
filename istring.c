@@ -48,7 +48,12 @@ int string_Add_Char(Istring *s, char c)
 
 void string_Free(Istring *s)
 {
-    if(s != NULL)
+    if(s != NULL && s->value != NULL)
+    {
         free(s->value);
+
+        // potreba nullovat, aby nedoslo k opakovanemu pokusu o free
+        s->value = NULL;
+    }
 }
 /* istring.c */
