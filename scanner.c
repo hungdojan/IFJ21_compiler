@@ -1,23 +1,33 @@
+/**
+ * @file scanner.c
+ * @brief Definice funkci lexikalni analyzy
+ *
+ * @authors Jaroslav Kvasnicka (xkvasn14)
+ *          Hung Do            (xdohun00)
+ *          David Kedra        (xkedra00)
+ *          Petr Kolarik       (xkolar79)
+ *
+ * Reseni projektu IFJ a IAL, FIT VUT 21/22
+ */
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "scanner.h"
 #include "istring.h"
 #include "token.h"
 
-int get_token()
+int get_token(FILE *f)
 {
     int c = '\0';
     char tmp = '\0';
     Istring str;
     string_Init(&str);
     state = STATE_NEW;
-    type = type_undefined;
+    type = TYPE_UNDEFINED;
 
     do
     {
-        c = getchar();
+        c = fgetc(f);
 
         switch (state)
         {
@@ -25,14 +35,14 @@ int get_token()
                 if (c == '+')
                 {
                     string_Add_Char(&str, c);
-                    type = type_plus;
+                    type = TYPE_PLUS;
                     state = STATE_RETURN_OPERATOR;
                 }
                 else if (c == '-')
                 {
-                    tmp = getchar();
+                    tmp = fgetc(f);
                     if (tmp == '-')
-                        get_rid_of_comments();
+                        c = get_rid_of_comments(f);
                     else if (isdigit(tmp))
                     {
                         // FIXME: token_integer_neg
@@ -44,108 +54,108 @@ int get_token()
                     {
                         string_Add_Char(&str, c);
                         ungetc(tmp, stdin);
-                        type = type_minus;
+                        type = TYPE_MINUS;
                         state = STATE_RETURN_OPERATOR;
                     }
                 }
                 else if (c == '*')
                 {
                     string_Add_Char(&str, c);
-                    type = type_multiply;
+                    type = TYPE_MULTIPLY;
                     state = STATE_RETURN_OPERATOR;
                 }
                 else if (c == '/')
                 {
-                    tmp = getchar();
+                    tmp = fgetc(f);
                     if (tmp == '/')
                     {
                         string_Add_Char(&str, c);
                         string_Add_Char(&str, tmp);
-                        type = type_divide_whole;
+                        type = TYPE_DIVIDE_WHOLE;
                         state = STATE_RETURN_OPERATOR;
                     }
                     else
                     {
                         string_Add_Char(&str, c);
                         ungetc(tmp, stdin);
-                        type = type_divide;
+                        type = TYPE_DIVIDE;
                         state = STATE_RETURN_OPERATOR;
                     }
                 }
                 else if (c == '%')
                 {
                     string_Add_Char(&str, c);
-                    type = type_divide_modulo;
+                    type = TYPE_DIVIDE_MODULO;
                     state = STATE_RETURN_OPERATOR;
                 }
                 else if (c == '^')
                 {
                     string_Add_Char(&str, c);
-                    type = type_power;
+                    type = TYPE_POWER;
                     state = STATE_RETURN_OPERATOR;
                 }
                 else if (c == '>')
                 {
-                    tmp = getchar();
+                    tmp = fgetc(f);
                     if (tmp == '=')
                     {
                         string_Add_Char(&str, c);
                         string_Add_Char(&str, tmp);
-                        type = type_greater_or_eq;
+                        type = TYPE_GREATER_OR_EQ;
                         state = STATE_RETURN_OPERATOR;
                     }
                     else
                     {
                         string_Add_Char(&str, c);
                         ungetc(tmp, stdin);
-                        type = type_greater;
+                        type = TYPE_GREATER;
                         state = STATE_RETURN_OPERATOR;
                     }
                 }
                 else if (c == '<')
                 {
-                    tmp = getchar();
+                    tmp = fgetc(f);
                     if (tmp == '=')
                     {
                         string_Add_Char(&str, c);
                         string_Add_Char(&str, tmp);
-                        type = type_lesser_or_eq;
+                        type = TYPE_LESSER_OR_EQ;
                         state = STATE_RETURN_OPERATOR;
                     }
                     else
                     {
                         string_Add_Char(&str, c);
                         ungetc(tmp, stdin);
-                        type = type_lesser;
+                        type = TYPE_LESSER;
                         state = STATE_RETURN_OPERATOR;
                     }
                 }
                 else if (c == '=')
                 {
-                    tmp = getchar();
+                    tmp = fgetc(f);
                     if (tmp == '=')
                     {
                         string_Add_Char(&str, c);
                         string_Add_Char(&str, tmp);
-                        type = type_eq;
+                        type = TYPE_EQ;
                         state = STATE_RETURN_OPERATOR;
                     }
                     else
                     {
                         string_Add_Char(&str, c);
                         ungetc(tmp, stdin);
-                        type = type_assign;
+                        type = TYPE_ASSIGN;
                         state = STATE_RETURN_OPERATOR;
                     }
                 }
                 else if (c == '~')
                 {
-                    tmp = getchar();
+                    tmp = fgetc(f);
                     if (tmp == '=')
                     {
                         string_Add_Char(&str, c);
                         string_Add_Char(&str, tmp);
-                        type = type_not_eq;
+                        type = TYPE_NOT_EQ;
                         state = STATE_RETURN_OPERATOR;
                     }
                     else
@@ -153,12 +163,13 @@ int get_token()
                         //string_Add_Char(&str,c);
                         //ungetc(tmp,stdin);
                         // ERROR - can not do "~x" , x - any symbol
-                        return 1;
+                        goto error;
                     }
                 }
                 else if (c == '#')
                 {
-                    tmp = getchar();/*
+                    tmp = fgetc(f);
+                    /*
                     if (tmp == '\"')
                     {
                         string_Add_Char(&str, c);
@@ -182,35 +193,35 @@ int get_token()
                         //string_Add_Char(&str,c);
                         //ungetc(tmp,stdin);
                         // ERROR - #123, #$&^@, ## - not valid definition
-                        return 1;
+                        goto error;
                     }
                 }
                 else if (c == '(')
                 {
                     string_Add_Char(&str, c);
-                    type = type_left_parentheses;
+                    type = TYPE_LEFT_PARENTHESES;
                     state = STATE_RETURN_OPERATOR;
                 }
                 else if (c == ')')
                 {
                     string_Add_Char(&str, c);
-                    type = type_right_parentheses;
+                    type = TYPE_RIGHT_PARENTHESES;
                     state = STATE_RETURN_OPERATOR;
                 }
                 else if (c == ':')
                 {
                     string_Add_Char(&str, c);
-                    type = type_declare;
+                    type = TYPE_DECLARE;
                     state = STATE_RETURN_OPERATOR;
                 }
                 else if (c == '.')
                 {
-                    tmp = getchar();
+                    tmp = fgetc(f);
                     if (tmp == '.')
                     {
                         string_Add_Char(&str, c);
                         string_Add_Char(&str, tmp);
-                        type = type_concat;
+                        type = TYPE_CONCAT;
                         state = STATE_RETURN_OPERATOR;
                     }
                     else
@@ -218,7 +229,7 @@ int get_token()
                         //string_Add_Char(&str,c);
                         //ungetc(tmp,stdin);
                         // ERROR - "." is not a valid definition
-                        return 1;
+                        goto error;
                     }
                 }
                 else if (c == '\"')
@@ -239,7 +250,7 @@ int get_token()
                 else if (isspace(c))
                 {}
                 else
-                    return 1;
+                    goto error;
                 break;
             case STATE_IDENTIFIER:
                 if (isalpha(c) || c == '_' || isdigit(c))
@@ -249,7 +260,7 @@ int get_token()
                 else
                 {
                     ungetc(c, stdin);
-                    type = type_identifier;
+                    type = TYPE_IDENTIFIER;
                     state = STATE_RETURN_IDENTIFIER;
                 }
                 break;
@@ -271,7 +282,7 @@ int get_token()
                 else if (c == ' ' || c == '\n')
                 {
                     ungetc(c, stdin);
-                    type = type_integer;
+                    type = TYPE_INTEGER;
                     state = STATE_RETURN_INTEGER;
                 }
                 else
@@ -293,7 +304,7 @@ int get_token()
                 else if (c == ' ' || c == '\n')
                 {
                     ungetc(c, stdin);
-                    type = type_number;
+                    type = TYPE_NUMBER;
                     state = STATE_RETURN_NUMBER;
                 }
                 else
@@ -316,7 +327,7 @@ int get_token()
                 else
                 {
                     // ERROR - after E must come a digit
-                    return 1;
+                    goto error;
                 }
                 break;
             case STATE_EXPONENT_CONTINUE:
@@ -328,7 +339,7 @@ int get_token()
                 else
                 {
                     // ERROR - after + or - must come a digit
-                    return 1;
+                    goto error;
                 }
                 break;
             case STATE_EXPONENT_FINISH:
@@ -339,7 +350,7 @@ int get_token()
                 else if (c == ' ' || c == '\n')
                 {
                     ungetc(c, stdin);
-                    type = type_exponent_number; // or type = type_number;
+                    type = TYPE_EXPONENT_NUMBER; // OR TYPE = TYPE_NUMBER;
                     state = STATE_RETURN_NUMBER;
                 }
                 else
@@ -351,7 +362,7 @@ int get_token()
             case STATE_STRING:
                 if (c == '\"')
                 {
-                    type = type_string;
+                    type = TYPE_STRING;
                     state = STATE_RETURN_STRING;
                 }
                 else if (c == '\\')
@@ -372,7 +383,7 @@ int get_token()
                 else
                 {
                     ungetc(c, stdin);
-                    type = type_strlen_identifier;
+                    type = TYPE_STRLEN_IDENTIFIER;
                     state = STATE_RETURN_STRLEN_IDENTIFIER;
                 }
                 break;
@@ -380,7 +391,7 @@ int get_token()
                 // old case
                 if (c == '\"')
                 {
-                    type = type_strlen_string;
+                    type = TYPE_STRLEN_STRING;
                     state = STATE_RETURN_STRLEN_STRING;
                 }
                 else if (c == '\\')
@@ -407,7 +418,7 @@ int get_token()
                 token_create(&str, type);
                 string_Init(&str);
                 state = STATE_NEW;
-                type = type_undefined;
+                type = TYPE_UNDEFINED;
                 break;
             case STATE_RETURN_IDENTIFIER:
                 // is_key_word()
@@ -415,28 +426,28 @@ int get_token()
                 token_create(&str, type);
                 string_Init(&str);
                 state = STATE_NEW;
-                type = type_undefined;
+                type = TYPE_UNDEFINED;
                 break;
             case STATE_RETURN_STRING:
                 // GENERATE TOKEN WITH TYPE string and VALUE "xxxxx"
                 token_create(&str, type);
                 string_Init(&str);
                 state = STATE_NEW;
-                type = type_undefined;
+                type = TYPE_UNDEFINED;
                 break;
             case STATE_RETURN_INTEGER:
                 // GENERATE TOKEN WITH TYPE integer and VALUE 8465151
                 token_create(&str, type);
                 string_Init(&str);
                 state = STATE_NEW;
-                type = type_undefined;
+                type = TYPE_UNDEFINED;
                 break;
             case STATE_RETURN_NUMBER:
                 // GENERATE TOKEN WITH TYPE number and VALUE 89465.485, 654.648E6548
                 token_create(&str, type);
                 string_Init(&str);
                 state = STATE_NEW;
-                type = type_undefined;
+                type = TYPE_UNDEFINED;
                 break;
             case STATE_RETURN_STRLEN_IDENTIFIER:
                 // GENERATE TOKEN WITH TYPE STRLEN_IDENTIFIER and VALUE #_s651fe
@@ -444,7 +455,7 @@ int get_token()
                 token_create(&str, type);
                 string_Init(&str);
                 state = STATE_NEW;
-                type = type_undefined;
+                type = TYPE_UNDEFINED;
                 break;
             case STATE_RETURN_STRLEN_STRING:
                 // GENERATE TOKEN WITH TYPE STRLEN_STRING and VALUE #"xxxxx"
@@ -459,29 +470,62 @@ int get_token()
                 token_create(&str,type);
                 string_Init(&str);
                 state = STATE_NEW;
-                type = type_undefined;
+                type = TYPE_UNDEFINED;
                 break;
             default:
                 break;
         }
-    }while (c != EOF);
+    } while (c != EOF);
+    return 0;
+error:
+    string_Free(&str);
+    return 1;
 }
 
-void get_rid_of_comments()
+#define SINGLE_LINE_COMM 1
+#define START_MULTI 2
+#define MULTI_LINE_COMM 3
+#define END_MULTI 4
+
+int get_rid_of_comments(FILE *f)
 {
-    if(getchar() == '[' && getchar() == '[')
+    int c;                          // nacteny znak
+    int is_comment = 1;             // pravdivostni hodnota, ze se stale nacita komentar
+    int state = SINGLE_LINE_COMM;
+    do
     {
-        int c;
-        while((c = getchar()) != EOF)
-            if(c == ']')
-                if(getchar() == ']')
-                    return;
-    }
-    else
-    {
-        int c;
-        while ((c = getchar()) != '\n' && c != EOF)
-            ;
-        return;
-    }
+        c = fgetc(f);
+        switch (state)
+        {
+            case SINGLE_LINE_COMM:
+                if (c == '[')        state = START_MULTI;
+                else    // single line comment
+                {
+                    if (c != '\n' && c != EOF)
+                        while ((c = fgetc(f)) != '\n' && c != EOF)
+                            ; // preskakuje znak
+                }
+                break;
+            case START_MULTI:
+                if (c == '[')        state = MULTI_LINE_COMM;
+                else    // single line comment
+                {
+                    if (c != '\n' && c != EOF)
+                        while ((c = fgetc(f)) != '\n' && c != EOF)
+                            ; // preskakuje znak
+                }
+                break;
+            case MULTI_LINE_COMM:
+                if (c == ']')        state = END_MULTI;
+                break;
+            case END_MULTI:
+                if (c == ']')        is_comment = 0;
+                else                 state = MULTI_LINE_COMM;
+                break;
+        }
+    } while (c != EOF && is_comment);
+
+    // vraci posledni nacteny znak
+    return c;
 }
+/* scanner.c */

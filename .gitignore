@@ -1,2 +1,4 @@
 *.o
+build/
 ifj21c
+.vscode
