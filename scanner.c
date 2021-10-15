@@ -169,6 +169,7 @@ int get_token(FILE *f)
                 else if (c == '#')
                 {
                     tmp = fgetc(f);
+                    /*
                     if (tmp == '\"')
                     {
                         string_Add_Char(&str, c);
@@ -180,6 +181,12 @@ int get_token(FILE *f)
                         string_Add_Char(&str, c);
                         string_Add_Char(&str, tmp);
                         state = STATE_STRLEN_IDENTIFIER;
+                    }*/
+                    if(tmp == '\"' || isalpha(tmp) || tmp == '_')
+                    {
+                        ungetc(tmp);
+                        string_Add_Char(&str,c);
+                        state = STATE_STRING_LEN;
                     }
                     else
                     {
@@ -227,10 +234,10 @@ int get_token(FILE *f)
                 }
                 else if (c == '\"')
                 {
-                    string_Add_Char(&str, c);
+                    //string_Add_Char(&str, c);
                     state = STATE_STRING;
                 }
-                else if (isalpha(c) || '_')
+                else if (isalpha(c) || c == '_')
                 {
                     string_Add_Char(&str, c);
                     state = STATE_IDENTIFIER;
@@ -246,7 +253,7 @@ int get_token(FILE *f)
                     goto error;
                 break;
             case STATE_IDENTIFIER:
-                if (isalpha(c) || '_' || isdigit(c))
+                if (isalpha(c) || c == '_' || isdigit(c))
                 {
                     string_Add_Char(&str, c);
                 }
@@ -272,11 +279,16 @@ int get_token(FILE *f)
                     string_Add_Char(&str, c);
                     state = STATE_EXPONENT;
                 }
-                else
+                else if (c == ' ' || c == '\n')
                 {
                     ungetc(c, stdin);
                     type = TYPE_INTEGER;
                     state = STATE_RETURN_INTEGER;
+                }
+                else
+                {
+                    // ERROR - 123abc is not a valid number nor identifier
+                    return 1;
                 }
                 break;
             case STATE_NUMBER:
@@ -289,11 +301,16 @@ int get_token(FILE *f)
                     string_Add_Char(&str, c);
                     state = STATE_EXPONENT;
                 }
-                else
+                else if (c == ' ' || c == '\n')
                 {
                     ungetc(c, stdin);
                     type = TYPE_NUMBER;
                     state = STATE_RETURN_NUMBER;
+                }
+                else
+                {
+                    // ERROR - 123.wfa is not a valid number
+                    return 1;
                 }
                 break;
             case STATE_EXPONENT:
@@ -330,11 +347,16 @@ int get_token(FILE *f)
                 {
                     string_Add_Char(&str, c);
                 }
-                else
+                else if (c == ' ' || c == '\n')
                 {
                     ungetc(c, stdin);
                     type = TYPE_EXPONENT_NUMBER; // OR TYPE = TYPE_NUMBER;
                     state = STATE_RETURN_NUMBER;
+                }
+                else
+                {
+                    // ERROR - after number should be a blank space
+                    return 1;
                 }
                 break;
             case STATE_STRING:
@@ -353,7 +375,8 @@ int get_token(FILE *f)
                 }
                 break;
             case STATE_STRLEN_IDENTIFIER:
-                if (isalpha(c) || '_' || isdigit(c))
+                // old case
+                if (isalpha(c) || c == '_' || isdigit(c))
                 {
                     string_Add_Char(&str, c);
                 }
@@ -365,6 +388,7 @@ int get_token(FILE *f)
                 }
                 break;
             case STATE_STRLEN_STRING:
+                // old case
                 if (c == '\"')
                 {
                     type = TYPE_STRLEN_STRING;
@@ -378,6 +402,10 @@ int get_token(FILE *f)
                 {
                     string_Add_Char(&str, c);
                 }
+                break;
+            case STATE_STRING_LEN:
+                type = type_string_len;
+                state = STATE_RETURN_STRING_LEN;
                 break;
             default:
                 break;
@@ -423,6 +451,7 @@ int get_token(FILE *f)
                 break;
             case STATE_RETURN_STRLEN_IDENTIFIER:
                 // GENERATE TOKEN WITH TYPE STRLEN_IDENTIFIER and VALUE #_s651fe
+                // old case
                 token_create(&str, type);
                 string_Init(&str);
                 state = STATE_NEW;
@@ -430,7 +459,15 @@ int get_token(FILE *f)
                 break;
             case STATE_RETURN_STRLEN_STRING:
                 // GENERATE TOKEN WITH TYPE STRLEN_STRING and VALUE #"xxxxx"
+                // old case
                 token_create(&str, type);
+                string_Init(&str);
+                state = STATE_NEW;
+                type = type_undefined;
+                break;
+            case STATE_RETURN_STRING_LEN:
+                // GENERATE TOKEN WITH TYPE STRING_LEN and VALUE #
+                token_create(&str,type);
                 string_Init(&str);
                 state = STATE_NEW;
                 type = TYPE_UNDEFINED;

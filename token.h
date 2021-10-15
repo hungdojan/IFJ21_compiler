@@ -59,7 +59,7 @@ enum Token_type {
     TYPE_KW_WHILE
 } type;
 
-// mozne typy atributu tokenu, vyuzije se jeden z nich 
+// mozne typy atributu tokenu, vyuzije se jeden z nich
 typedef union
 {
     int     int_val;
@@ -85,9 +85,9 @@ int token_create(Istring *s, enum Token_type type, token_t **ref_token);
 
 /**
  * @brief Otestovani, zda identifikator neni klicovym slovem
- * 
+ *
  * @param identif Retezec obsahujici podeyrely identifikator
- * @return Vraci konkretni typ klicoveho slova nebo vzchozi TYPE_IDENTIF 
+ * @return Vraci konkretni typ klicoveho slova nebo vzchozi TYPE_IDENTIF
  */
 int check_key_words(char *identif);
 
