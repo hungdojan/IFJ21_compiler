@@ -51,7 +51,7 @@ int token_create(Istring *s, enum Token_type type, token_t **ref_token)
             // je potreba dealokovat puvodni obsah istringu
             string_Free(s);
         }
-        else if(type == TYPE_NUMBER || type == TYPE_EXPONENT_NUMBER)
+        else if(type == TYPE_NUMBER || type == TYPE_NUMBER)
         {
             // konverze hodnoty na konstatni cislo typu C double
             token->value.float_val = strtod(s->value, NULL);

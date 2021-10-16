@@ -13,34 +13,32 @@
 #ifndef _SCANNER_H_
 #define _SCANNER_H_
 
+#include "token.h"
+
 enum State {
     STATE_NEW,
     STATE_INTEGER,
-    STATE_STRLEN_STRING,
-    STATE_STRLEN_IDENTIFIER,
     STATE_STRING,
     STATE_IDENTIFIER,
     STATE_NUMBER,
     STATE_EXPONENT,
-    STATE_EXPONENT_CONTINUE,
     STATE_EXPONENT_FINISH,
     STATE_RETURN_OPERATOR,
     STATE_RETURN_STRING,
     STATE_RETURN_INTEGER,
     STATE_RETURN_NUMBER,
-    STATE_RETURN_IDENTIFIER,
-    STATE_RETURN_STRLEN_IDENTIFIER,
-    STATE_RETURN_STRLEN_STRING
+    STATE_RETURN_IDENTIFIER
     // STATE_ERROR
-    } state;
+};
 
 /**
  * @brief Ziska token ze zdrojoveho souboru
  *
  * @param f Ukazatel na otevreny zdrojovy soubor
+ * @param ref Ukazatel na referencni token, pres ktery se vraci data
  * @return Nulovou hodnotu, pokud nenastala zadna lexikalni chyba
  */
-int get_token(FILE *f);
+int get_token(FILE *f, token_t **ref);
 
 /**
  * @brief Preskakuje komentare ve zdrojovem souboru
