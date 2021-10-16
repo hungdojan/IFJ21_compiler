@@ -30,8 +30,7 @@ enum Token_type {
     TYPE_EQ,
     TYPE_NOT_EQ,
     TYPE_ASSIGN,
-    TYPE_STRLEN_IDENTIFIER,
-    TYPE_STRLEN_STRING,
+    TYPE_STRLEN,
     TYPE_LEFT_PARENTHESES,
     TYPE_RIGHT_PARENTHESES,
     TYPE_DECLARE,
@@ -40,7 +39,6 @@ enum Token_type {
     TYPE_IDENTIFIER,
     TYPE_INTEGER,
     TYPE_NUMBER,
-    TYPE_EXPONENT_NUMBER,
     TYPE_UNDEFINED,
     TYPE_KW_DO,
     TYPE_KW_GLOBAL,
@@ -87,7 +85,7 @@ int token_create(Istring *s, enum Token_type type, token_t **ref_token);
  * @brief Otestovani, zda identifikator neni klicovym slovem
  *
  * @param identif Retezec obsahujici podeyrely identifikator
- * @return Vraci konkretni typ klicoveho slova nebo vzchozi TYPE_IDENTIF
+ * @return Vraci konkretni typ klicoveho slova nebo vychozi TYPE_IDENTIFIER
  */
 int check_key_words(char *identif);
 
