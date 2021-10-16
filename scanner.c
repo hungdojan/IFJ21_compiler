@@ -299,7 +299,15 @@ int get_token(FILE *f, token_t **ref)
                 }
                 else if (c == '.')
                 {
+                    tmp = fgetc(f);
+                    // non-digit character after floating-point sign
+                    if (!isdigit(tmp))
+                    {
+                        ungetc(tmp, f);
+                        goto error;
+                    }
                     string_Add_Char(&str, c);
+                    string_Add_Char(&str, tmp);
                     state = STATE_NUMBER;
                 }
                 else if (c == 'e' || c == 'E')
@@ -307,16 +315,11 @@ int get_token(FILE *f, token_t **ref)
                     string_Add_Char(&str, c);
                     state = STATE_EXPONENT;
                 }
-                else if (isspace(c))
+                else
                 {
                     ungetc(c, f);
                     type = TYPE_INTEGER;
                     state = STATE_RETURN_INTEGER;
-                }
-                else
-                {
-                    // ERROR - 123abc is not a valid number nor identifier
-                    goto error;
                 }
                 break;
             case STATE_NUMBER:
@@ -329,16 +332,11 @@ int get_token(FILE *f, token_t **ref)
                     string_Add_Char(&str, c);
                     state = STATE_EXPONENT;
                 }
-                else if (c == ' ' || c == '\n')
+                else
                 {
                     ungetc(c, f);
                     type = TYPE_NUMBER;
                     state = STATE_RETURN_NUMBER;
-                }
-                else
-                {
-                    // ERROR - 123.wfa is not a valid number
-                    return 1;
                 }
                 break;
             case STATE_EXPONENT:
@@ -358,16 +356,11 @@ int get_token(FILE *f, token_t **ref)
                 {
                     string_Add_Char(&str, c);
                 }
-                else if (c == ' ' || c == '\n')
+                else
                 {
                     ungetc(c, f);
                     type = TYPE_NUMBER;
                     state = STATE_RETURN_NUMBER;
-                }
-                else
-                {
-                    // ERROR - after number should be a blank space
-                    return 1;
                 }
                 break;
             case STATE_STRING:
@@ -385,10 +378,6 @@ int get_token(FILE *f, token_t **ref)
                 {
                     string_Add_Char(&str, c);
                 }
-                break;
-            case STATE_STRING_LEN:
-                type = type_string_len;
-                state = STATE_RETURN_STRING_LEN;
                 break;
             default:
                 break;
