@@ -39,6 +39,7 @@ enum Token_type {
     TYPE_IDENTIFIER,
     TYPE_INTEGER,
     TYPE_NUMBER,
+    TYPE_COMMA,
     TYPE_UNDEFINED,
     TYPE_KW_DO,
     TYPE_KW_GLOBAL,

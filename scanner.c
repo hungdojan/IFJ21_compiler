@@ -75,7 +75,7 @@ int get_token(FILE *f, token_t **ref)
                 {
                     string_Add_Char(&str, c);
                     type = TYPE_PLUS;
-                    state = STATE_RETURN_OPERATOR;
+                    state = STATE_END_LOAD;
                 }
                 else if (c == '-')
                 {
@@ -99,14 +99,14 @@ int get_token(FILE *f, token_t **ref)
                         string_Add_Char(&str, c);
                         ungetc(tmp, f);
                         type = TYPE_MINUS;
-                        state = STATE_RETURN_OPERATOR;
+                        state = STATE_END_LOAD;
                     }
                 }
                 else if (c == '*')
                 {
                     string_Add_Char(&str, c);
                     type = TYPE_MULTIPLY;
-                    state = STATE_RETURN_OPERATOR;
+                    state = STATE_END_LOAD;
                 }
                 else if (c == '/')
                 {
@@ -116,26 +116,26 @@ int get_token(FILE *f, token_t **ref)
                     {
                         string_Add_Char(&str, tmp);
                         type = TYPE_DIVIDE_WHOLE;
-                        state = STATE_RETURN_OPERATOR;
+                        state = STATE_END_LOAD;
                     }
                     else
                     {
                         ungetc(tmp, f);
                         type = TYPE_DIVIDE;
-                        state = STATE_RETURN_OPERATOR;
+                        state = STATE_END_LOAD;
                     }
                 }
                 else if (c == '%')
                 {
                     string_Add_Char(&str, c);
                     type = TYPE_DIVIDE_MODULO;
-                    state = STATE_RETURN_OPERATOR;
+                    state = STATE_END_LOAD;
                 }
                 else if (c == '^')
                 {
                     string_Add_Char(&str, c);
                     type = TYPE_POWER;
-                    state = STATE_RETURN_OPERATOR;
+                    state = STATE_END_LOAD;
                 }
                 else if (c == '>')
                 {
@@ -145,13 +145,13 @@ int get_token(FILE *f, token_t **ref)
                     {
                         string_Add_Char(&str, tmp);
                         type = TYPE_GREATER_OR_EQ;
-                        state = STATE_RETURN_OPERATOR;
+                        state = STATE_END_LOAD;
                     }
                     else
                     {
                         ungetc(tmp, f);
                         type = TYPE_GREATER;
-                        state = STATE_RETURN_OPERATOR;
+                        state = STATE_END_LOAD;
                     }
                 }
                 else if (c == '<')
@@ -162,13 +162,13 @@ int get_token(FILE *f, token_t **ref)
                     {
                         string_Add_Char(&str, tmp);
                         type = TYPE_LESSER_OR_EQ;
-                        state = STATE_RETURN_OPERATOR;
+                        state = STATE_END_LOAD;
                     }
                     else
                     {
                         ungetc(tmp, f);
                         type = TYPE_LESSER;
-                        state = STATE_RETURN_OPERATOR;
+                        state = STATE_END_LOAD;
                     }
                 }
                 else if (c == '=')
@@ -179,13 +179,13 @@ int get_token(FILE *f, token_t **ref)
                     {
                         string_Add_Char(&str, tmp);
                         type = TYPE_EQ;
-                        state = STATE_RETURN_OPERATOR;
+                        state = STATE_END_LOAD;
                     }
                     else
                     {
                         ungetc(tmp, f);
                         type = TYPE_ASSIGN;
-                        state = STATE_RETURN_OPERATOR;
+                        state = STATE_END_LOAD;
                     }
                 }
                 else if (c == '~')
@@ -196,7 +196,7 @@ int get_token(FILE *f, token_t **ref)
                         string_Add_Char(&str, c);
                         string_Add_Char(&str, tmp);
                         type = TYPE_NOT_EQ;
-                        state = STATE_RETURN_OPERATOR;
+                        state = STATE_END_LOAD;
                     }
                     else
                     {
@@ -206,6 +206,12 @@ int get_token(FILE *f, token_t **ref)
                         goto error;
                     }
                 }
+                else if (c == ',')
+                {
+                    string_Add_Char(&str, c);
+                    type = TYPE_COMMA;
+                    state = STATE_END_LOAD;
+                }
                 else if (c == '#')
                 {
                     tmp = fgetc(f);
@@ -214,7 +220,7 @@ int get_token(FILE *f, token_t **ref)
                         ungetc(tmp, f);
                         string_Add_Char(&str,c);
                         type = TYPE_STRLEN;
-                        state = STATE_RETURN_OPERATOR;
+                        state = STATE_END_LOAD;
                     }
                     else
                     {
@@ -228,19 +234,19 @@ int get_token(FILE *f, token_t **ref)
                 {
                     string_Add_Char(&str, c);
                     type = TYPE_LEFT_PARENTHESES;
-                    state = STATE_RETURN_OPERATOR;
+                    state = STATE_END_LOAD;
                 }
                 else if (c == ')')
                 {
                     string_Add_Char(&str, c);
                     type = TYPE_RIGHT_PARENTHESES;
-                    state = STATE_RETURN_OPERATOR;
+                    state = STATE_END_LOAD;
                 }
                 else if (c == ':')
                 {
                     string_Add_Char(&str, c);
                     type = TYPE_DECLARE;
-                    state = STATE_RETURN_OPERATOR;
+                    state = STATE_END_LOAD;
                 }
                 else if (c == '.')
                 {
@@ -250,7 +256,7 @@ int get_token(FILE *f, token_t **ref)
                         string_Add_Char(&str, c);
                         string_Add_Char(&str, tmp);
                         type = TYPE_CONCAT;
-                        state = STATE_RETURN_OPERATOR;
+                        state = STATE_END_LOAD;
                     }
                     else
                     {
@@ -289,7 +295,7 @@ int get_token(FILE *f, token_t **ref)
                 {
                     ungetc(c, f);
                     type = TYPE_IDENTIFIER;
-                    state = STATE_RETURN_IDENTIFIER;
+                    state = STATE_END_LOAD;
                 }
                 break;
             case STATE_INTEGER:
@@ -319,7 +325,7 @@ int get_token(FILE *f, token_t **ref)
                 {
                     ungetc(c, f);
                     type = TYPE_INTEGER;
-                    state = STATE_RETURN_INTEGER;
+                    state = STATE_END_LOAD;
                 }
                 break;
             case STATE_NUMBER:
@@ -336,7 +342,7 @@ int get_token(FILE *f, token_t **ref)
                 {
                     ungetc(c, f);
                     type = TYPE_NUMBER;
-                    state = STATE_RETURN_NUMBER;
+                    state = STATE_END_LOAD;
                 }
                 break;
             case STATE_EXPONENT:
@@ -360,14 +366,14 @@ int get_token(FILE *f, token_t **ref)
                 {
                     ungetc(c, f);
                     type = TYPE_NUMBER;
-                    state = STATE_RETURN_NUMBER;
+                    state = STATE_END_LOAD;
                 }
                 break;
             case STATE_STRING:
                 if (c == '\"')
                 {
                     type = TYPE_STRING;
-                    state = STATE_RETURN_STRING;
+                    state = STATE_END_LOAD;
                 }
                 else if (c == '\\')
                 {
@@ -385,28 +391,7 @@ int get_token(FILE *f, token_t **ref)
 
         switch (state)
         {
-            case STATE_RETURN_OPERATOR:
-                // GENERATE TOKEN WITH TYPE and VALUE + - * / // % ^ # 
-                token_create(&str, type, ref);
-                loading = 0;
-                break;
-            case STATE_RETURN_IDENTIFIER:
-                // GENERATE TOKEN WITH TYPE identifier and VALUE _498r6wvs
-                token_create(&str, type, ref);
-                loading = 0;
-                break;
-            case STATE_RETURN_STRING:
-                // GENERATE TOKEN WITH TYPE string and VALUE "xxxxx"
-                token_create(&str, type, ref);
-                loading = 0;
-                break;
-            case STATE_RETURN_INTEGER:
-                // GENERATE TOKEN WITH TYPE integer and VALUE 8465151
-                token_create(&str, type, ref);
-                loading = 0;
-                break;
-            case STATE_RETURN_NUMBER:
-                // GENERATE TOKEN WITH TYPE number and VALUE 89465.485, 654.648E6548
+            case STATE_END_LOAD:
                 token_create(&str, type, ref);
                 loading = 0;
                 break;
