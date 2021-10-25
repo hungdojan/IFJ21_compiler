@@ -1,6 +1,6 @@
 /**
- * @file symtable.h
- * @brief Hlavickovy soubor tabulky symbolu
+ * @file parser.h
+ * @brief Hlavickovy soubor syntakticke analyzy
  *
  * @authors Hung Do            (xdohun00)
  *          David Kedra        (xkedra00)
@@ -9,10 +9,8 @@
  *
  * Reseni projektu IFJ a IAL, FIT VUT 21/22
  */
-#ifndef _SYMTABLE_H_
-#define _SYMTABLE_H_
 
-#include "bintree.h"
+#ifndef _PARSER_H_
+#define _PARSER_H_
 
-#endif
-/* symtable.h */
+#endif // _PARSER_H_
