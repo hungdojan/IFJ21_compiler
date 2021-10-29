@@ -14,6 +14,7 @@
 #include <ctype.h>
 #include "scanner.h"
 #include "istring.h"
+#include "error.h"
 
 static int esc_seq(Istring *s, FILE *f)
 {
@@ -200,10 +201,9 @@ int get_token(FILE *f, token_t **ref)
                     }
                     else
                     {
-                        //string_Add_Char(&str,c);
-                        //ungetc(tmp,stdin);
                         // ERROR - can not do "~x" , x - any symbol
-                        goto error;
+                        //goto error;
+                        return print_error(ERR_SYNTAX, &str, NULL, "spatny format operatoru ~");
                     }
                 }
                 else if (c == ',')
@@ -224,10 +224,9 @@ int get_token(FILE *f, token_t **ref)
                     }
                     else
                     {
-                        //string_Add_Char(&str,c);
-                        //ungetc(tmp,stdin);
                         // ERROR - #123, #$&^@, ## - not valid definition
-                        goto error;
+                        //goto error;
+                        return print_error(ERR_SYNTAX, &str, NULL, "spatny format retezce pri operace #");
                     }
                 }
                 else if (c == '(')
@@ -260,10 +259,9 @@ int get_token(FILE *f, token_t **ref)
                     }
                     else
                     {
-                        //string_Add_Char(&str,c);
-                        //ungetc(tmp,stdin);
                         // ERROR - "." is not a valid definition
-                        goto error;
+                        //goto error;
+                        return print_error(ERR_SYNTAX, &str, NULL, "chybejici operand konkatenace");
                     }
                 }
                 else if (c == '\"')
@@ -284,7 +282,8 @@ int get_token(FILE *f, token_t **ref)
                     loading = 0;
                 else if (isspace(c)) { }
                 else
-                    goto error;
+                    return print_error(ERR_SYNTAX, &str, NULL, "neplatny znak \"%c\"", c);
+                    //goto error;
                 break;
             case STATE_IDENTIFIER:
                 if (isalpha(c) || c == '_' || isdigit(c))
@@ -310,7 +309,8 @@ int get_token(FILE *f, token_t **ref)
                     if (!isdigit(tmp))
                     {
                         ungetc(tmp, f);
-                        goto error;
+                        //goto error;
+                        return print_error(ERR_SYNTAX, &str, NULL, "chybny format desetinneho cisla");
                     }
                     string_Add_Char(&str, c);
                     string_Add_Char(&str, tmp);
@@ -354,7 +354,8 @@ int get_token(FILE *f, token_t **ref)
                 else
                 {
                     // ERROR - after E must come a digit
-                    goto error;
+                    //goto error;
+                    return print_error(ERR_SYNTAX, &str, NULL, "neplatna hodnota v exponentu po znaku E");
                 }
                 break;
             case STATE_EXPONENT_FINISH:
@@ -378,7 +379,8 @@ int get_token(FILE *f, token_t **ref)
                 else if (c == '\\')
                 {
                     if (esc_seq(&str, f) != 0)
-                        goto error;
+                        return print_error(ERR_SYNTAX, &str, NULL, "chybna escape sekvence stringu");
+                        //goto error;
                 }
                 else
                 {
@@ -405,9 +407,10 @@ int get_token(FILE *f, token_t **ref)
         return EOF;
     }
     return 0;
-error:
+/*error:
     string_Free(&str);
     return 1;
+*/
 }
 
 #define SINGLE_LINE_COMM 1
