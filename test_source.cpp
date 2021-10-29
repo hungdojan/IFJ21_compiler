@@ -52,7 +52,7 @@ TEST_F(IstringStruct, Init) {
 }
 
 TEST_F(IstringStruct, AddChar) {
-    char *my_str = "ahoj";
+    const char *my_str = "ahoj";
     for (int i = 0; my_str[i]; i++) {
         string_Add_Char(&str, my_str[i]);
     }
