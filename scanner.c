@@ -203,7 +203,7 @@ int get_token(FILE *f, token_t **ref)
                     {
                         // ERROR - can not do "~x" , x - any symbol
                         //goto error;
-                        return print_error(ERR_SYNTAX, &str, NULL, "spatny format operatoru ~");
+                        return print_error(ERR_LEX, &str, NULL, "spatny format operatoru ~");
                     }
                 }
                 else if (c == ',')
@@ -213,21 +213,11 @@ int get_token(FILE *f, token_t **ref)
                     state = STATE_END_LOAD;
                 }
                 else if (c == '#')
-                {
-                    tmp = fgetc(f);
-                    if (tmp == '\"' || isalpha(tmp) || c == '_')
-                    {
-                        ungetc(tmp, f);
-                        string_Add_Char(&str,c);
-                        type = TYPE_STRLEN;
-                        state = STATE_END_LOAD;
-                    }
-                    else
-                    {
-                        // ERROR - #123, #$&^@, ## - not valid definition
-                        //goto error;
-                        return print_error(ERR_SYNTAX, &str, NULL, "spatny format retezce pri operace #");
-                    }
+                { 
+                    // samostatny operator pro zjisteni delky retezce
+                    string_Add_Char(&str, c);
+                    type = TYPE_STRLEN;
+                    state = STATE_END_LOAD;
                 }
                 else if (c == '(')
                 {
@@ -261,7 +251,7 @@ int get_token(FILE *f, token_t **ref)
                     {
                         // ERROR - "." is not a valid definition
                         //goto error;
-                        return print_error(ERR_SYNTAX, &str, NULL, "chybejici operand konkatenace");
+                        return print_error(ERR_LEX, &str, NULL, "chybejici operand konkatenace");
                     }
                 }
                 else if (c == '\"')
@@ -282,7 +272,7 @@ int get_token(FILE *f, token_t **ref)
                     loading = 0;
                 else if (isspace(c)) { }
                 else
-                    return print_error(ERR_SYNTAX, &str, NULL, "neplatny znak \"%c\"", c);
+                    return print_error(ERR_LEX, &str, NULL, "neplatny znak \"%c\"", c);
                     //goto error;
                 break;
             case STATE_IDENTIFIER:
@@ -310,7 +300,7 @@ int get_token(FILE *f, token_t **ref)
                     {
                         ungetc(tmp, f);
                         //goto error;
-                        return print_error(ERR_SYNTAX, &str, NULL, "chybny format desetinneho cisla");
+                        return print_error(ERR_LEX, &str, NULL, "chybny format desetinneho cisla");
                     }
                     string_Add_Char(&str, c);
                     string_Add_Char(&str, tmp);
@@ -355,7 +345,7 @@ int get_token(FILE *f, token_t **ref)
                 {
                     // ERROR - after E must come a digit
                     //goto error;
-                    return print_error(ERR_SYNTAX, &str, NULL, "neplatna hodnota v exponentu po znaku E");
+                    return print_error(ERR_LEX, &str, NULL, "neplatna hodnota v exponentu po znaku E");
                 }
                 break;
             case STATE_EXPONENT_FINISH:
@@ -379,7 +369,7 @@ int get_token(FILE *f, token_t **ref)
                 else if (c == '\\')
                 {
                     if (esc_seq(&str, f) != 0)
-                        return print_error(ERR_SYNTAX, &str, NULL, "chybna escape sekvence stringu");
+                        return print_error(ERR_LEX, &str, NULL, "chybna escape sekvence stringu");
                         //goto error;
                 }
                 else
