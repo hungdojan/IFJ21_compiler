@@ -4,7 +4,7 @@ CFLAGS=-std=c99 -Wall -Wextra -g -pedantic -fcommon
 LOGIN=xdohun00
 TARGET=ifj21c
 TEST_TARGET=./build/ifj21c-test
-OBJS=main.o symtable.o istring.o scanner.o token.o error.o stack.o
+OBJS=main.o symtable.o istring.o scanner.o token.o error.o stack.o parser.o
 TEST_DEPEND=*.h *.c
 # ----------------------------
 

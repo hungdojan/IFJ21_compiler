@@ -35,6 +35,8 @@ typedef struct tree_node
 
 } *node_ptr;
 
+extern node_ptr global_tree;
+
 /**
  * @brief Inicializace stromu (frame), ktera vytvori specialni ROOT node s nealokovanym klicem NULL. 
  *        Bude-li strom uzivan i po tree_destroy, je potreba nejdrive volat tuto funkci
