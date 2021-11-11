@@ -60,7 +60,6 @@ enum Token_type {
     TYPE_EOF,
     TYPE_KW_REPEAT,
     TYPE_KW_FOR,
-    TYPE_HASH,
     TYPE_KW_TRUE,
     TYPE_KW_FALSE,
     TYPE_KW_NOT,
