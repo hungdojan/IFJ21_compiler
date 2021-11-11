@@ -55,7 +55,19 @@ enum Token_type {
     TYPE_KW_STRING,
     TYPE_KW_NIL,
     TYPE_KW_THEN,
-    TYPE_KW_WHILE
+    TYPE_KW_WHILE,
+    // extensions:
+    TYPE_EOF,
+    TYPE_KW_REPEAT,
+    TYPE_KW_FOR,
+    TYPE_HASH,
+    TYPE_KW_TRUE,
+    TYPE_KW_FALSE,
+    TYPE_KW_NOT,
+    TYPE_KW_ELSEIF,
+    TYPE_KW_UNTIL,
+    TYPE_KW_BOOLEAN,
+    TYPE_KW_BREAK
 } type;
 
 // mozne typy atributu tokenu, vyuzije se jeden z nich
