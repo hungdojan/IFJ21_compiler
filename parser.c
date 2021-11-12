@@ -6,6 +6,13 @@
 #include "error.h"
 
 #define NO_ERR 0
+#define CHECK_TOKEN(token, TYPE) \
+    do { \
+        if ((*token)->type == TYPE)  \
+            get_token(token);       \
+        else                        \
+            return ERR_SYNTAX;      \
+    } while (0)
 
 /**
  * @brief Implementace <prg>
@@ -27,53 +34,115 @@ int prg(token_t **token)
 
         // <prg> -> require "string" <prg>
         case TYPE_KW_REQUIRE:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            // "string"
+            CHECK_TOKEN(token, TYPE_STRING);
+
+            return prg(token);
 
         // <prg> -> id <func_or_assign> <prg>
         case TYPE_IDENTIFIER:
-            // TODO:
-            break;
+            get_token(token, f);
 
-        // <prg> -> return <ret_exp>>
+            // func_or_assign
+            res = func_or_assign(token);
+            if (res != NO_ERR)
+                return res;
+
+            // prg
+            return prg(token;)
+
+        // <prg> -> return <ret_exp>
         case TYPE_KW_RETURN:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            // ret_exp
+            return ret_exp(token);
 
         // <prg> -> <func_dec> <prg>
         case TYPE_KW_GLOBAL:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            //func_dec
+            res = func_dec(token);
+            if (res != NO_ERR)
+                return res;
+            
+            // prg
+            return prg(token);
 
         // <prg> -> <func_def> <prg>
         case TYPE_KW_FUNCTION:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            //func_dec
+            res = func_dec(token);
+            if (res != NO_ERR)
+                return res;
+            
+            // prg
+            return prg(token);
 
         // <prg> -> <var_init> <prg>
         case TYPE_KW_LOCAL:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            //var_init
+            res = var_init(token);
+            if (res != NO_ERR)
+                return res;
+            
+            // prg
+            return prg(token);
 
         // <prg> -> <if_block> <prg>
         case TYPE_KW_IF:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            //if_block
+            res = if_block(token);
+            if (res != NO_ERR)
+                return res;
+            
+            // prg
+            return prg(token);
 
         // <prg> -> <while_block> <prg>
         case TYPE_KW_WHILE:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            //while_block
+            res = while_block(token);
+            if (res != NO_ERR)
+                return res;
+            
+            // prg
+            return prg(token);
 
         // <prg> -> <repeat_block> <prg>
         case TYPE_KW_REPEAT:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            //repeat_block
+            res = repeat_block(token);
+            if (res != NO_ERR)
+                return res;
+            
+            // prg
+            return prg(token);
 
         // <prg> -> <for_block> <prg>
         case TYPE_KW_FOR:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            //for_block
+            res = for_block(token);
+            if (res != NO_ERR)
+                return res;
+            
+            // prg
+            return prg(token);
 
         default:
             res = ERR_SYNTAX;
@@ -91,8 +160,28 @@ int func_dec(token_t **token)
     {
         // <func_dec> -> global id : function ( <parm> ) : <ret>
         case TYPE_KW_GLOBAL:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            // id
+            CHECK_TOKEN(token, TYPE_IDENTIFIER);
+
+            // :
+            CHECK_TOKEN(token, TYPE_DECLARE);
+
+            // function
+            CHECK_TOKEN(token, TYPE_KW_FUNCTION);
+
+            CHECK_TOKEN(token, TYPE_LEFT_PARENTHESES);
+
+            res = parm(token);
+            if (res != NO_ERR)
+                return res;
+
+            CHECK_TOKEN(token, TYPE_RIGHT_PARENTHESES);
+
+            CHECK_TOKEN(token, TYPE_DECLARE);
+
+            return ret(token);
 
         default:
             res = ERR_SYNTAX;
@@ -109,7 +198,38 @@ int func_def(token_t **token)
     {
         // <func_def> -> function id ( <args> ) : <ret> <code> end
         case TYPE_KW_FUNCTION:
-            // TODO:
+            get_token(token, f);
+            
+            // id
+            CHECK_TOKEN(token, TYPE_IDENTIFIER);
+
+            // (
+            CHECK_TOKEN(token, TYPE_LEFT_PARENTHESES);
+
+            // args
+            res = args(token);
+            if (res != NO_ERR)
+                return res;
+
+            // )
+            CHECK_TOKEN(token, TYPE_RIGHT_PARENTHESES);
+
+            // :
+            CHECK_TOKEN(token, TYPE_DECLARE);
+
+            // ret
+            res = ret(token);
+            if (res != NO_ERR)
+                return res;
+
+            // code
+            res = code(token);
+            if (res != NO_ERR)
+                return res;
+
+            // end
+            CHECK_TOKEN(token, TYPE_KW_END);
+
             break;
 
         default:
@@ -127,7 +247,34 @@ int if_block(token_t **token)
     {
         // <if_block> -> if <expression> then <code > <elif_block> <else_block> end
         case TYPE_KW_IF:
-            // TODO:
+            get_token(token, f);
+
+            // expression
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            // then
+            CHECK_TOKEN(token, TYPE_KW_THEN);
+
+            // code
+            res = code(token);
+            if (res != NO_ERR)
+                return res;
+
+            // elif
+            res = elif_block(token);
+            if (res != NO_ERR)
+                return res;
+
+            // else
+            res = else_block(token);
+            if (res != NO_ERR)
+                return res;
+
+            // end
+            CHECK_TOKEN(token, TYPE_KW_END);
+
             break;
 
         default:
@@ -145,7 +292,24 @@ int while_block(token_t **token)
     {
         // <while_block> -> while <expression> do <code> end
         case TYPE_KW_WHILE:
-            // TODO:
+            get_token(token, f);
+
+            // expression
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            // do
+            CHECK_TOKEN(token, TYPE_KW_DO);
+
+            // code
+            res = code(token);
+            if (res != NO_ERR)
+                return res;
+
+            // end
+            CHECK_TOKEN(token, TYPE_KW_END);
+
             break;
 
         default:
@@ -163,7 +327,27 @@ int repeat_block(token_t **token)
     {
         // <repeat_block> -> repeat <code> until ( <expresssion )
         case TYPE_KW_REPEAT:
-            // TODO:
+            get_token(token, f);
+
+            // code
+            res = code(token);
+            if (res != NO_ERR)
+                return res;
+
+            // until
+            CHECK_TOKEN(token, TYPE_KW_UNTIL);
+
+            // (
+            CHECK_TOKEN(token, TYPE_LEFT_PARENTHESES);
+
+            // exp
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            // )
+            CHECK_TOKEN(token, TYPE_RIGHT_PARENTHESES);
+
             break;
 
         default:
@@ -181,7 +365,30 @@ int for_block(token_t **token)
     {
         // <for_block> -> for <expression> , <expression> <exp_opt> do <code> end
         case TYPE_KW_FOR:
-            // TODO:
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            CHECK_TOKEN(token, TYPE_COMMA);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            res = exp_opt(token);
+            if (res != NO_ERR)
+                return res;
+
+            CHECK_TOKEN(token, TYPE_KW_DO);
+
+            res = code(token);
+            if (res != NO_ERR)
+                return res;
+
+            CHECK_TOKEN(token, TYPE_KW_END);
+
             break;
 
         default:
@@ -199,8 +406,17 @@ int var_init(token_t **token)
     {
         // <var_init> -> local id : <d_type> <var_init_assign>
         case TYPE_KW_LOCAL:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            CHECK_TOKEN(token, TYPE_IDENTIFIER);
+
+            CHECK_TOKEN(token, TYPE_DECLARE);
+
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+
+            return var_init_assign(token);
 
         default:
             res = ERR_SYNTAX;
@@ -217,18 +433,41 @@ int func_or_assign(token_t **token)
     {
         // <func_or_assign> -> ( <func_args> )
         case TYPE_LEFT_PARENTHESES:
-            // TODO:
+            get_token(token, f);
+
+            res = func_args(token);
+            if (res != NO_ERR)
+                return res;
+
+            CHECK_TOKEN(token, TYPE_RIGHT_PARENTHESES);
+
             break;
 
         // <func_or_assign> -> <multi_var> = <expression> <multi_exp>
         case TYPE_COMMA:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = multi_var(token);
+            if (res != NO_ERR)
+                return res;
+
+            CHECK_TOKEN(token, TYPE_EQ);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return multi_exp(token);
 
         // <func_or_assign> -> <multi_var> = <expression> <multi_exp>
         case TYPE_EQ:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return multi_exp(token);
 
         default:
             res = ERR_SYNTAX;
@@ -250,77 +489,128 @@ int ret_exp(token_t **token)
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_IDENTIFIER:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_exp_n(token);
 
         // <ret_exp> -> eps
         case TYPE_KW_ELSEIF:
-            // TODO:
             break;
 
         // <ret_exp> -> eps
         case TYPE_KW_ELSE:
-            // TODO:
             break;
 
         // <ret_exp> -> eps
         case TYPE_KW_UNTIL:
-            // TODO:
             break;
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_LEFT_PARENTHESES:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_exp_n(token);
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_STRING:
-            //TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_exp_n(token);
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_NUMBER:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_exp_n(token);
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_INTEGER:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_exp_n(token);
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_KW_NIL:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_exp_n(token);
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_STRLEN:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_exp_n(token);
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_KW_TRUE:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_exp_n(token);
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_KW_FALSE:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_exp_n(token);
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_KW_NOT:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_exp_n(token);
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_CONCAT:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_exp_n(token);
 
         // <ret_exp> -> eps
         case TYPE_KW_END:
-            // TODO:
             break;
 
         default:
@@ -338,28 +628,47 @@ int parm(token_t **token)
     {
         // <parm> -> eps
         case TYPE_RIGHT_PARENTHESES:
-            // TODO:
             break;
 
         // <parm> -> <d_type> <parm_n>
         case TYPE_KW_STRING:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return parm_n(token);
 
         // <parm> -> <d_type> <parm_n>
         case TYPE_KW_INTEGER:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return parm_n(token);
 
         // <parm> -> <d_type> <parm_n>
         case TYPE_KW_NUMBER:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return parm_n(token);
 
         // <parm> -> <d_type> <parm_n>
         case TYPE_KW_BOOLEAN:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return parm_n(token);
 
         default:
             res = ERR_SYNTAX;
@@ -381,82 +690,90 @@ int ret(token_t **token)
 
         // <ret> -> eps
         case TYPE_KW_REQUIRE:
-            // TODO:
             break;
 
         // <ret> -> eps
         case TYPE_IDENTIFIER:
-            // TODO:
             break;
 
         // <ret> -> eps
         case TYPE_KW_RETURN:
-            // TODO:
             break;
 
         // <ret> -> eps
         case TYPE_KW_GLOBAL:
-            // TODO:
             break;
 
         // <ret> -> eps
         case TYPE_KW_FUNCTION:
-            // TODO:
             break;
 
         // <ret> -> eps
         case TYPE_KW_LOCAL:
-            // TODO:
             break;
 
         // <ret> -> eps
         case TYPE_KW_IF:
-            // TODO:
             break;
 
         // <ret> -> eps
         case TYPE_KW_WHILE:
-            // TODO:
             break;
 
         // <ret> -> eps
         case TYPE_KW_REPEAT:
-            // TODO:
             break;
 
         // <ret> -> eps
         case TYPE_KW_FOR:
-            // TODO:
             break;
 
         // <ret> -> eps
         case TYPE_KW_END:
-            // TODO:
             break;
 
         // <ret> -> <d_type> <ret_n>
         case TYPE_KW_STRING:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_n(token);
 
         // <ret> -> <d_type> <ret_n>
         case TYPE_KW_INTEGER:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_n(token);
 
         // <ret> -> <d_type> <ret_n>
         case TYPE_KW_NUMBER:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_n(token);
 
         // <ret> -> <d_type> <ret_n>
         case TYPE_KW_BOOLEAN:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_n(token);
 
         // <ret> -> eps
         case TYPE_KW_BREAK:
-            // TODO:
             break;
 
         default:
@@ -474,21 +791,25 @@ int d_type(token_t **token)
     {
         // <d_type> -> string
         case TYPE_KW_STRING:
+            get_token(token, f);
             // TODO:
             break;
 
         // <d_type> -> integer
         case TYPE_KW_INTEGER:
+            get_token(token, f);
             // TODO:
             break;
 
         // <d_type> -> number
         case TYPE_KW_NUMBER:
+            get_token(token, f);
             // TODO:
             break;
 
         // <d_type> -> boolean
         case TYPE_KW_BOOLEAN:
+            get_token(token, f);
             // TODO:
             break;
 
@@ -507,12 +828,16 @@ int parm_n(token_t **token)
     {
         // <parm_n> -> <d_type> <parm_n>
         case TYPE_COMMA:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+
+            return parm_n(token);
 
         // <parm_n> -> eps
         case TYPE_RIGHT_PARENTHESES:
-            // TODO:
             break;
 
         default:
@@ -535,68 +860,61 @@ int ret_n(token_t **token)
 
         // <ret_n> -> eps
         case TYPE_KW_REQUIRE:
-            // TODO:
             break;
 
         // <ret_n> -> eps
         case TYPE_IDENTIFIER:
-            // TODO:
             break;
 
         // <ret_n> -> eps
         case TYPE_KW_RETURN:
-            // TODO:
             break;
 
         // <ret_n> -> eps
         case TYPE_KW_GLOBAL:
-            // TODO:
             break;
 
         // <ret_n> -> eps
         case TYPE_KW_FUNCTION:
-            // TODO:
             break;
 
         // <ret_n> -> eps
         case TYPE_KW_LOCAL:
-            // TODO:
             break;
 
         // <ret_n> -> eps
         case TYPE_KW_IF:
-            // TODO:
             break;
 
         // <ret_n> -> eps
         case TYPE_KW_WHILE:
-            // TODO:
             break;
 
         // <ret_n> -> eps
         case TYPE_KW_REPEAT:
-            // TODO:
             break;
 
         // <ret_n> -> eps
         case TYPE_KW_FOR:
-            // TODO:
             break;
 
         // <ret_n> -> eps
         case TYPE_KW_END:
-            // TODO:
             break;
 
         // <ret_n> -> eps
         case TYPE_KW_BREAK:
-            // TODO:
             break;
 
         // <ret_n> -> <d_type> <ret_n>
         case TYPE_COMMA:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return ret_n(token);
 
         default:
             res = ERR_SYNTAX;
@@ -613,12 +931,18 @@ int args(token_t **token)
     {
         // <args> -> id : <d_type> <args_n>
         case TYPE_IDENTIFIER:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            CHECK_TOKEN(token, TYPE_DECLARE);
+
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return args_n(token);
 
         // <args> -> eps
         case TYPE_RIGHT_PARENTHESES:
-            // TODO:
             break;
 
         default:
@@ -636,62 +960,94 @@ int code(token_t **token)
     {
         // <code> -> id <func_or_assign> <code>
         case TYPE_IDENTIFIER:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = func_or_assign(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return code(token);
 
         // <code> -> return <ret_exp>
         case TYPE_KW_RETURN:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            CHECK_TOKEN(token, TYPE_KW_RETURN);
+
+            return ret_exp(token);
 
         // <code> -> <var_init> <code>
         case TYPE_KW_LOCAL:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = var_init(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return code(token);
 
         // <code> -> <if_block> <code>
         case TYPE_KW_IF:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = if_block(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return code(token);
 
         // <code> -> eps
         case TYPE_KW_ELSEIF:
-            // TODO:
             break;
 
         // <code> -> eps
         case TYPE_KW_ELSE:
-            // TODO:
             break;
 
         // <code> -> <while_block> <code>
         case TYPE_KW_WHILE:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = while_block(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return code(token);
 
         // <code> -> <repeat_block> <code>
         case TYPE_KW_REPEAT:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = repeat_block(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return code(token);
 
         // <code> -> eps
         case TYPE_KW_UNTIL:
-            // TODO:
             break;
 
         // <code> -> <for_block> <code>
         case TYPE_KW_FOR:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = for_block(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return code(token);
 
         // <code> -> eps
         case TYPE_KW_END:
-            // TODO:
             break;
 
         // <code> -> break
         case TYPE_KW_BREAK:
-            // TODO:
+            get_token(token, f);
+
+            CHECK_TOKEN(token, TYPE_KW_BREAK);
+
             break;
 
         default:
@@ -709,13 +1065,21 @@ int args_n(token_t **token)
     {
         // <args_n> -> eps
         case TYPE_RIGHT_PARENTHESES:
-            // TODO:
             break;
 
         // <args_n> -> id : <d_type> <args_n>
         case TYPE_COMMA:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            CHECK_TOKEN(token, TYPE_IDENTIFIER);
+            
+            CHECK_TOKEN(token, TYPE_DECLARE);
+            
+            res = d_type(token);
+            if (res != NO_ERR)
+                return res;
+            
+            return args_n(token);
 
         default:
             res = ERR_SYNTAX;
@@ -737,77 +1101,62 @@ int var_init_assign(token_t **token)
 
         // <var_init_assign> -> eps
         case TYPE_KW_REQUIRE:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_IDENTIFIER:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_RETURN:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_GLOBAL:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_FUNCTION:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_LOCAL:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_IF:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_ELSEIF:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_ELSE:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_WHILE:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_REPEAT:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_UNTIL:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_FOR:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_END:
-            // TODO:
             break;
 
         // <var_init_assign> -> eps
         case TYPE_KW_BREAK:
-            // TODO:
             break;
 
         default:
@@ -829,17 +1178,32 @@ int elif_block(token_t **token)
     {
         // <elif_block> -> elseif <expression> do <code> end
         case TYPE_KW_ELSEIF:
-            // TODO:
+            get_token(token, f);
+
+            // expression
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            // do
+            CHECK_TOKEN(token, TYPE_KW_DO);
+
+            // code
+            res = code(token);
+            if (res != NO_ERR)
+                return res;
+
+            // end
+            CHECK_TOKEN(token, TYPE_KW_END);
+
             break;
 
         // <elif_block> -> eps
         case TYPE_KW_ELSE:
-            // TODO:
             break;
 
         // <elif_block> -> eps
         case TYPE_KW_END:
-            // TODO:
             break;
 
         default:
@@ -857,12 +1221,12 @@ int else_block(token_t **token)
     {
         // <else_block> -> else <code>
         case TYPE_KW_ELSE:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            return code(token);
 
         // <else_block> -> eps
         case TYPE_KW_END:
-            // TODO:
             break;
 
         default:
@@ -880,12 +1244,14 @@ int exp_opt(token_t **token)
     {
         // <exp_opt> -> eps
         case TYPE_KW_DO:
-            // TODO:
             break;
 
         // <exp_opt> -> "integer"
         case TYPE_COMMA:
-            // TODO:
+            get_token(token, f);
+
+            CHECK_TOKEN(token, TYPE_INTEGER);
+
             break;
 
         default:
@@ -903,63 +1269,117 @@ int func_args(token_t **token)
     {
         // <func_args> -> <expression> <func_args_n>
         case TYPE_IDENTIFIER:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return func_args_n(token);
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_LEFT_PARENTHESES:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return func_args_n(token);
 
         // <func_args> -> eps
         case TYPE_RIGHT_PARENTHESES:
-            // TODO:
             break;
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_STRING:
-            //TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return func_args_n(token);
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_NUMBER:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return func_args_n(token);
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_INTEGER:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return func_args_n(token);
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_KW_NIL:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return func_args_n(token);
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_STRLEN:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return func_args_n(token);
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_KW_TRUE:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return func_args_n(token);
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_KW_FALSE:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return func_args_n(token);
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_KW_NOT:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return func_args_n(token);
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_CONCAT:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return func_args_n(token);
 
         default:
             res = ERR_SYNTAX;
@@ -976,13 +1396,15 @@ int multi_var(token_t **token)
     {
         // <multi_var> -> eps
         case TYPE_EQ:
-            //TODO:
             break;
 
         // <multi_var> -> id <multi_var>
         case TYPE_COMMA:
-            //TODO:
-            break;
+            get_token(token, f);
+
+            CHECK_TOKEN(token, TYPE_IDENTIFIER);
+
+            return multi_var(token);
 
         default:
             res = ERR_SYNTAX;
@@ -1004,82 +1426,72 @@ int multi_exp(token_t **token)
 
         // <multi_exp> -> eps
         case TYPE_KW_REQUIRE:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_IDENTIFIER:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_KW_RETURN:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_KW_GLOBAL:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_KW_FUNCTION:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_KW_LOCAL:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_KW_IF:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_KW_ELSEIF:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_KW_ELSE:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_KW_WHILE:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_KW_REPEAT:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_KW_UNTIL:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_KW_FOR:
-            // TODO:
             break;
 
         // <multi_exp> -> , <expression> <multi_exp>
         case TYPE_COMMA:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return multi_exp(token);
 
         // <multi_exp> -> eps
         case TYPE_KW_END:
-            // TODO:
             break;
 
         // <multi_exp> -> eps
         case TYPE_KW_BREAK:
-            // TODO:
             break;
 
         default:
@@ -1097,13 +1509,17 @@ int func_args_n(token_t **token)
     {
         // <func_args_n> -> eps
         case TYPE_RIGHT_PARENTHESES:
-            // TODO:
             break;
 
         // <func_args_n> -> , <expression> <func_args_n>
         case TYPE_COMMA:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return func_args_n(token);
 
         default:
             res = ERR_SYNTAX;
@@ -1125,27 +1541,28 @@ int ret_exp_n(token_t **token)
 
         // <ret_exp_n> -> eps
         case TYPE_KW_ELSEIF:
-            // TODO:
             break;
 
         // <ret_exp_n> -> eps
         case TYPE_KW_ELSE:
-            // TODO:
             break;
 
         // <ret_exp_n> -> eps
         case TYPE_KW_UNTIL:
-            // TODO:
             break;
 
         // <ret_exp_n> -> , <expression> <ret_exp_n>
         case TYPE_COMMA:
-            // TODO:
-            break;
+            get_token(token, f);
+
+            res = expression(token);
+            if (res != NO_ERR)
+                return res;
+
+            return ret_exp_n(token);
 
         // <ret_exp_n> -> eps
         case TYPE_KW_END:
-            // TODO:
             break;
 
         default:
