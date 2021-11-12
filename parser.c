@@ -51,7 +51,7 @@ int prg(token_t **token)
                 return res;
 
             // prg
-            return prg(token;)
+            return prg(token);
 
         // <prg> -> return <ret_exp>
         case TYPE_KW_RETURN:
@@ -62,7 +62,6 @@ int prg(token_t **token)
 
         // <prg> -> <func_dec> <prg>
         case TYPE_KW_GLOBAL:
-            get_token(token, f);
 
             //func_dec
             res = func_dec(token);
@@ -74,10 +73,9 @@ int prg(token_t **token)
 
         // <prg> -> <func_def> <prg>
         case TYPE_KW_FUNCTION:
-            get_token(token, f);
 
-            //func_dec
-            res = func_dec(token);
+            //func_def
+            res = func_def(token);
             if (res != NO_ERR)
                 return res;
             
@@ -86,7 +84,6 @@ int prg(token_t **token)
 
         // <prg> -> <var_init> <prg>
         case TYPE_KW_LOCAL:
-            get_token(token, f);
 
             //var_init
             res = var_init(token);
@@ -98,7 +95,6 @@ int prg(token_t **token)
 
         // <prg> -> <if_block> <prg>
         case TYPE_KW_IF:
-            get_token(token, f);
 
             //if_block
             res = if_block(token);
@@ -110,7 +106,6 @@ int prg(token_t **token)
 
         // <prg> -> <while_block> <prg>
         case TYPE_KW_WHILE:
-            get_token(token, f);
 
             //while_block
             res = while_block(token);
@@ -122,7 +117,6 @@ int prg(token_t **token)
 
         // <prg> -> <repeat_block> <prg>
         case TYPE_KW_REPEAT:
-            get_token(token, f);
 
             //repeat_block
             res = repeat_block(token);
@@ -134,7 +128,6 @@ int prg(token_t **token)
 
         // <prg> -> <for_block> <prg>
         case TYPE_KW_FOR:
-            get_token(token, f);
 
             //for_block
             res = for_block(token);
@@ -445,13 +438,12 @@ int func_or_assign(token_t **token)
 
         // <func_or_assign> -> <multi_var> = <expression> <multi_exp>
         case TYPE_COMMA:
-            get_token(token, f);
 
             res = multi_var(token);
             if (res != NO_ERR)
                 return res;
 
-            CHECK_TOKEN(token, TYPE_EQ);
+            CHECK_TOKEN(token, TYPE_ASSIGN);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -460,8 +452,7 @@ int func_or_assign(token_t **token)
             return multi_exp(token);
 
         // <func_or_assign> -> <multi_var> = <expression> <multi_exp>
-        case TYPE_EQ:
-            get_token(token, f);
+        case TYPE_ASSIGN:
 
             res = expression(token);
             if (res != NO_ERR)
@@ -489,7 +480,6 @@ int ret_exp(token_t **token)
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_IDENTIFIER:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -511,7 +501,6 @@ int ret_exp(token_t **token)
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_LEFT_PARENTHESES:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -521,7 +510,6 @@ int ret_exp(token_t **token)
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_STRING:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -531,7 +519,6 @@ int ret_exp(token_t **token)
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_NUMBER:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -541,7 +528,6 @@ int ret_exp(token_t **token)
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_INTEGER:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -551,7 +537,6 @@ int ret_exp(token_t **token)
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_KW_NIL:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -561,7 +546,6 @@ int ret_exp(token_t **token)
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_STRLEN:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -571,7 +555,6 @@ int ret_exp(token_t **token)
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_KW_TRUE:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -581,7 +564,6 @@ int ret_exp(token_t **token)
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_KW_FALSE:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -591,7 +573,6 @@ int ret_exp(token_t **token)
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_KW_NOT:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -601,7 +582,6 @@ int ret_exp(token_t **token)
 
         // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_CONCAT:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -632,7 +612,6 @@ int parm(token_t **token)
 
         // <parm> -> <d_type> <parm_n>
         case TYPE_KW_STRING:
-            get_token(token, f);
 
             res = d_type(token);
             if (res != NO_ERR)
@@ -642,7 +621,6 @@ int parm(token_t **token)
 
         // <parm> -> <d_type> <parm_n>
         case TYPE_KW_INTEGER:
-            get_token(token, f);
 
             res = d_type(token);
             if (res != NO_ERR)
@@ -652,7 +630,6 @@ int parm(token_t **token)
 
         // <parm> -> <d_type> <parm_n>
         case TYPE_KW_NUMBER:
-            get_token(token, f);
 
             res = d_type(token);
             if (res != NO_ERR)
@@ -662,7 +639,6 @@ int parm(token_t **token)
 
         // <parm> -> <d_type> <parm_n>
         case TYPE_KW_BOOLEAN:
-            get_token(token, f);
 
             res = d_type(token);
             if (res != NO_ERR)
@@ -734,7 +710,6 @@ int ret(token_t **token)
 
         // <ret> -> <d_type> <ret_n>
         case TYPE_KW_STRING:
-            get_token(token, f);
 
             res = d_type(token);
             if (res != NO_ERR)
@@ -744,7 +719,6 @@ int ret(token_t **token)
 
         // <ret> -> <d_type> <ret_n>
         case TYPE_KW_INTEGER:
-            get_token(token, f);
 
             res = d_type(token);
             if (res != NO_ERR)
@@ -754,7 +728,6 @@ int ret(token_t **token)
 
         // <ret> -> <d_type> <ret_n>
         case TYPE_KW_NUMBER:
-            get_token(token, f);
 
             res = d_type(token);
             if (res != NO_ERR)
@@ -764,7 +737,6 @@ int ret(token_t **token)
 
         // <ret> -> <d_type> <ret_n>
         case TYPE_KW_BOOLEAN:
-            get_token(token, f);
 
             res = d_type(token);
             if (res != NO_ERR)
@@ -828,7 +800,6 @@ int parm_n(token_t **token)
     {
         // <parm_n> -> <d_type> <parm_n>
         case TYPE_COMMA:
-            get_token(token, f);
 
             res = d_type(token);
             if (res != NO_ERR)
@@ -908,7 +879,6 @@ int ret_n(token_t **token)
 
         // <ret_n> -> <d_type> <ret_n>
         case TYPE_COMMA:
-            get_token(token, f);
 
             res = d_type(token);
             if (res != NO_ERR)
@@ -978,7 +948,6 @@ int code(token_t **token)
 
         // <code> -> <var_init> <code>
         case TYPE_KW_LOCAL:
-            get_token(token, f);
 
             res = var_init(token);
             if (res != NO_ERR)
@@ -988,7 +957,6 @@ int code(token_t **token)
 
         // <code> -> <if_block> <code>
         case TYPE_KW_IF:
-            get_token(token, f);
 
             res = if_block(token);
             if (res != NO_ERR)
@@ -1006,7 +974,6 @@ int code(token_t **token)
 
         // <code> -> <while_block> <code>
         case TYPE_KW_WHILE:
-            get_token(token, f);
 
             res = while_block(token);
             if (res != NO_ERR)
@@ -1016,7 +983,6 @@ int code(token_t **token)
 
         // <code> -> <repeat_block> <code>
         case TYPE_KW_REPEAT:
-            get_token(token, f);
 
             res = repeat_block(token);
             if (res != NO_ERR)
@@ -1030,7 +996,6 @@ int code(token_t **token)
 
         // <code> -> <for_block> <code>
         case TYPE_KW_FOR:
-            get_token(token, f);
 
             res = for_block(token);
             if (res != NO_ERR)
@@ -1159,6 +1124,12 @@ int var_init_assign(token_t **token)
         case TYPE_KW_BREAK:
             break;
 
+        // <var_init_assign> -> = <expression>
+        case TYPE_ASSIGN:
+            get_token(token, f);
+
+            return expression(token);
+
         default:
             res = ERR_SYNTAX;
             break;
@@ -1269,7 +1240,6 @@ int func_args(token_t **token)
     {
         // <func_args> -> <expression> <func_args_n>
         case TYPE_IDENTIFIER:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -1279,7 +1249,6 @@ int func_args(token_t **token)
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_LEFT_PARENTHESES:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -1293,7 +1262,6 @@ int func_args(token_t **token)
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_STRING:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -1303,7 +1271,6 @@ int func_args(token_t **token)
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_NUMBER:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -1313,7 +1280,6 @@ int func_args(token_t **token)
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_INTEGER:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -1323,7 +1289,6 @@ int func_args(token_t **token)
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_KW_NIL:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -1333,7 +1298,6 @@ int func_args(token_t **token)
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_STRLEN:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -1343,7 +1307,6 @@ int func_args(token_t **token)
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_KW_TRUE:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -1353,7 +1316,6 @@ int func_args(token_t **token)
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_KW_FALSE:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -1363,7 +1325,6 @@ int func_args(token_t **token)
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_KW_NOT:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -1373,7 +1334,6 @@ int func_args(token_t **token)
 
         // <func_args> -> <expression> <func_args_n>
         case TYPE_CONCAT:
-            get_token(token, f);
 
             res = expression(token);
             if (res != NO_ERR)
@@ -1395,7 +1355,7 @@ int multi_var(token_t **token)
     switch((*token)->type)
     {
         // <multi_var> -> eps
-        case TYPE_EQ:
+        case TYPE_ASSIGN:
             break;
 
         // <multi_var> -> id <multi_var>
