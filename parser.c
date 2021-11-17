@@ -30,8 +30,8 @@ int prg(token_t **token)
     {
     // <prg> -> eof <prg>
     case TYPE_EOF:
-
-        return prg(token);
+        token_delete(token);
+        break;
 
     // <prg> -> require "string" <prg>
     case TYPE_KW_REQUIRE:
@@ -48,7 +48,7 @@ int prg(token_t **token)
 
         CHECK_TOKEN(token, TYPE_IDENTIFIER);
 
-        CHECK_TOKEN(token, TYPE_ASSIGN);
+        CHECK_TOKEN(token, TYPE_DECLARE);
 
         CHECK_TOKEN(token, TYPE_KW_FUNCTION);
 
@@ -341,7 +341,6 @@ int parm_n(token_t **token)
 
     // <parm_n> -> eps
     case TYPE_EOF:
-        token_delete(token);
         break;
 
     // <parm_n> -> eps
@@ -400,7 +399,6 @@ int ret(token_t **token)
     {
     // <ret> -> eps
     case TYPE_EOF:
-        token_delete(token);
         break;
 
     // <ret> -> eps
@@ -416,7 +414,7 @@ int ret(token_t **token)
         break;
 
     // <ret> -> : <d_type> <parm_n>
-    case TYPE_ASSIGN:
+    case TYPE_DECLARE:
 
         res = d_type(token);
         if (res != NO_ERR)
@@ -466,7 +464,7 @@ int def_parm(token_t **token)
     case TYPE_IDENTIFIER:
         get_token(global_file, token);
 
-        CHECK_TOKEN(token, TYPE_ASSIGN);
+        CHECK_TOKEN(token, TYPE_DECLARE);
 
         res = d_type(token);
         if (res != NO_ERR)
@@ -502,7 +500,7 @@ int def_parm_n(token_t **token)
 
         CHECK_TOKEN(token, TYPE_IDENTIFIER);
 
-        CHECK_TOKEN(token, TYPE_ASSIGN);
+        CHECK_TOKEN(token, TYPE_DECLARE);
 
         res = d_type(token);
         if (res != NO_ERR)
@@ -517,107 +515,28 @@ int def_parm_n(token_t **token)
     return res;
 }
 
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-
-int repeat_block(token_t **token)
+int code(token_t **token)
 {
-    // TODO: zatim ignorovat
     int res = NO_ERR;
     INIT_TOKEN(token, res);
 
     switch ((*token)->type)
     {
-    // <repeat_block> -> repeat <code> until ( <expresssion )
-    case TYPE_KW_REPEAT:
+    // <code> -> id <func_or_assign> <code>
+    case TYPE_IDENTIFIER:
         get_token(global_file, token);
 
-        // code
-        res = code(token);
+        res = func_or_assign(token);
         if (res != NO_ERR)
             return res;
 
-        // until
-        CHECK_TOKEN(token, TYPE_KW_UNTIL);
+        return code(token);
 
-        // (
-        CHECK_TOKEN(token, TYPE_LEFT_PARENTHESES);
-
-        // exp
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        // )
-        CHECK_TOKEN(token, TYPE_RIGHT_PARENTHESES);
-
+    // <code> -> eps
+    case TYPE_KW_END:
         break;
 
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int for_block(token_t **token)
-{
-    // TODO: zatim ignorovat
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <for_block> -> for <expression> , <expression> <exp_opt> do <code> end
-    case TYPE_KW_FOR:
-        get_token(global_file, token);
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        CHECK_TOKEN(token, TYPE_COMMA);
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        res = exp_opt(token);
-        if (res != NO_ERR)
-            return res;
-
-        CHECK_TOKEN(token, TYPE_KW_DO);
-
-        res = code(token);
-        if (res != NO_ERR)
-            return res;
-
-        CHECK_TOKEN(token, TYPE_KW_END);
-
-        break;
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int var_init(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <var_init> -> local id : <d_type> <var_init_assign>
+    // <code> -> local id : <d_type> <var_init_assign> <code>
     case TYPE_KW_LOCAL:
         get_token(global_file, token);
 
@@ -629,178 +548,131 @@ int var_init(token_t **token)
         if (res != NO_ERR)
             return res;
 
-        return var_init_assign(token);
+        res = var_init_assign(token);
+        if (res != NO_ERR)
+            return res;
 
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int func_or_assign(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
+        return code(token);
 
-    switch ((*token)->type)
-    {
-    // <func_or_assign> -> ( <func_args> )
-    case TYPE_LEFT_PARENTHESES:
+    // <code> -> if <expression> then <code> <else_block> end <code>
+    case TYPE_KW_IF:
         get_token(global_file, token);
 
-        res = func_args(token);
+        res = expression(token);
         if (res != NO_ERR)
             return res;
 
-        CHECK_TOKEN(token, TYPE_RIGHT_PARENTHESES);
+        CHECK_TOKEN(token, TYPE_KW_THEN);
 
-        break;
-
-    // <func_or_assign> -> <multi_var> = <expression> <multi_exp>
-    case TYPE_COMMA:
-
-        res = multi_var(token);
+        res = code(token);
         if (res != NO_ERR)
             return res;
 
-        CHECK_TOKEN(token, TYPE_ASSIGN);
+        res = else_block(token);
+        if (res != NO_ERR)
+            return res;
+
+        CHECK_TOKEN(token, TYPE_KW_END);
+
+        return code(token);
+
+    // <code> -> while <expression> then <code> end <code>
+    case TYPE_KW_WHILE:
+        get_token(global_file, token);
 
         res = expression(token);
         if (res != NO_ERR)
             return res;
 
-        return multi_exp(token);
+        CHECK_TOKEN(token, TYPE_KW_THEN);
 
-    // <func_or_assign> -> <multi_var> = <expression> <multi_exp>
-    case TYPE_ASSIGN:
-
-        res = expression(token);
+        res = code(token);
         if (res != NO_ERR)
             return res;
 
-        return multi_exp(token);
+        CHECK_TOKEN(token, TYPE_KW_END);
 
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int ret_exp(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
+        return code(token);
 
-    switch ((*token)->type)
-    {
-    // <ret_exp> -> eps
-    case TYPE_EOF:
-        token_delete(token);
-        break;
+    // <code> -> return <lof_e>
+    case TYPE_KW_RETURN:
+        get_token(global_file, token);
 
-    // <ret_exp> -> <expression> <ret_exp_n>
-    case TYPE_IDENTIFIER:
+        return lof_e(token);
 
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return ret_exp_n(token);
-
-    // <ret_exp> -> eps
-    case TYPE_KW_ELSEIF:
-        break;
-
-    // <ret_exp> -> eps
+    // <code> -> eps
     case TYPE_KW_ELSE:
         break;
 
-    // <ret_exp> -> eps
-    case TYPE_KW_UNTIL:
+    default:
+        res = ERR_SYNTAX;
+        break;
+    }
+    return res;
+}
+
+int var_init_assign(token_t **token)
+{
+    int res = NO_ERR;
+    INIT_TOKEN(token, res);
+
+    switch ((*token)->type)
+    {
+    // <var_init_assign> -> eps
+    case TYPE_IDENTIFIER:
         break;
 
-    // <ret_exp> -> <expression> <ret_exp_n>
-    case TYPE_LEFT_PARENTHESES:
+    // <var_init_assign> -> eps
+    case TYPE_KW_END:
+        break;
 
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
+    // <var_init_assign> -> eps
+    case TYPE_KW_LOCAL:
+        break;
 
-        return ret_exp_n(token);
+    // <var_init_assign> -> eps
+    case TYPE_KW_IF:
+        break;
 
-    // <ret_exp> -> <expression> <ret_exp_n>
-    case TYPE_STRING:
+    // <var_init_assign> -> eps
+    case TYPE_KW_WHILE:
+        break;
 
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
+    // <var_init_assign> -> eps
+    case TYPE_KW_RETURN:
+        break;
 
-        return ret_exp_n(token);
+    // <var_init_assign> -> = <expression>
+    case TYPE_ASSIGN:
+        get_token(global_file, token);
 
-    // <ret_exp> -> <expression> <ret_exp_n>
-    case TYPE_NUMBER:
+        return expression(token);
 
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
+    // <var_init_assign> -> eps
+    case TYPE_KW_ELSE:
+        break;
 
-        return ret_exp_n(token);
+    default:
+        res = ERR_SYNTAX;
+        break;
+    }
+    return res;
+}
 
-    // <ret_exp> -> <expression> <ret_exp_n>
-    case TYPE_INTEGER:
+int else_block(token_t **token)
+{
+    int res = NO_ERR;
+    INIT_TOKEN(token, res);
 
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
+    switch ((*token)->type)
+    {
+    // <else_block> -> else <code>
+    case TYPE_KW_ELSE:
+        get_token(global_file, token);
 
-        return ret_exp_n(token);
+        return code(token);
 
-    // <ret_exp> -> <expression> <ret_exp_n>
-    case TYPE_KW_NIL:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return ret_exp_n(token);
-
-    // <ret_exp> -> <expression> <ret_exp_n>
-    case TYPE_STRLEN:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return ret_exp_n(token);
-
-    // <ret_exp> -> <expression> <ret_exp_n>
-    case TYPE_BOOLEAN:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return ret_exp_n(token);
-
-    // <ret_exp> -> <expression> <ret_exp_n>
-    case TYPE_KW_NOT:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return ret_exp_n(token);
-
-    // <ret_exp> -> <expression> <ret_exp_n>
-    case TYPE_CONCAT:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return ret_exp_n(token);
-
-    // <ret_exp> -> eps
+    // <else_block> -> eps
     case TYPE_KW_END:
         break;
 
@@ -811,6 +683,199 @@ int ret_exp(token_t **token)
     return res;
 }
 
+int func_or_assign(token_t **token)
+{
+    int res = NO_ERR;
+    INIT_TOKEN(token, res);
+
+    switch ((*token)->type)
+    {
+    // <func_or_assign> -> <multi_var> = <lof_e>
+    case TYPE_IDENTIFIER:
+
+        res = multi_var(token);
+        if (res != NO_ERR)
+            return res;
+
+        CHECK_TOKEN(token, TYPE_ASSIGN);
+
+        return lof_e(token);
+
+    // <func_or_assign> -> ( <lof_e> )
+    case TYPE_LEFT_PARENTHESES:
+        get_token(global_file, token);
+
+        res = lof_e(token);
+        if (res != NO_ERR)
+            return res;
+
+        CHECK_TOKEN(token, TYPE_RIGHT_PARENTHESES);
+
+        break;
+
+    // <func_or_assign> -> <multi_var> = <lof_e>
+    case TYPE_KW_END:
+
+        res = multi_var(token);
+        if (res != NO_ERR)
+            return res;
+
+        CHECK_TOKEN(token, TYPE_ASSIGN);
+
+        return lof_e(token);
+
+    // <func_or_assign> -> <multi_var> = <lof_e>
+    case TYPE_COMMA:
+
+        res = multi_var(token);
+        if (res != NO_ERR)
+            return res;
+
+        CHECK_TOKEN(token, TYPE_ASSIGN);
+
+        return lof_e(token);
+
+
+    // <func_or_assign> -> <multi_var> = <lof_e>
+    case TYPE_KW_LOCAL:
+
+        res = multi_var(token);
+        if (res != NO_ERR)
+            return res;
+
+        CHECK_TOKEN(token, TYPE_ASSIGN);
+
+        return lof_e(token);
+
+    // <func_or_assign> -> <multi_var> = <lof_e>
+    case TYPE_KW_IF:
+
+        res = multi_var(token);
+        if (res != NO_ERR)
+            return res;
+
+        CHECK_TOKEN(token, TYPE_ASSIGN);
+
+        return lof_e(token);
+
+    // <func_or_assign> -> <multi_var> = <lof_e>
+    case TYPE_KW_WHILE:
+
+        res = multi_var(token);
+        if (res != NO_ERR)
+            return res;
+
+        CHECK_TOKEN(token, TYPE_ASSIGN);
+
+        return lof_e(token);
+
+    // <func_or_assign> -> <multi_var> = <lof_e>
+    case TYPE_KW_RETURN:
+
+        res = multi_var(token);
+        if (res != NO_ERR)
+            return res;
+
+        CHECK_TOKEN(token, TYPE_ASSIGN);
+
+        return lof_e(token);
+
+    // <func_or_assign> -> <multi_var> = <lof_e>
+    case TYPE_ASSIGN:
+
+        res = multi_var(token);
+        if (res != NO_ERR)
+            return res;
+
+        CHECK_TOKEN(token, TYPE_ASSIGN);
+
+        return lof_e(token);
+
+    // <func_or_assign> -> <multi_var> = <lof_e>
+    case TYPE_KW_ELSE:
+
+        res = multi_var(token);
+        if (res != NO_ERR)
+            return res;
+
+        CHECK_TOKEN(token, TYPE_ASSIGN);
+
+        return lof_e(token);
+
+    default:
+        res = ERR_SYNTAX;
+        break;
+    }
+    return res;
+}
+
+int multi_var(token_t **token)
+{
+    int res = NO_ERR;
+    INIT_TOKEN(token, res);
+
+    switch ((*token)->type)
+    {
+    // <multi_var> -> , id <multi_var_n>
+    case TYPE_COMMA:
+        get_token(global_file, token);
+
+        CHECK_TOKEN(token, TYPE_IDENTIFIER);
+
+        return multi_var_n(token);
+
+    // <multi_var> -> eps
+    case TYPE_ASSIGN:
+        break;
+
+    default:
+        res = ERR_SYNTAX;
+        break;
+    }
+    return res;
+}
+
+int multi_var_n(token_t **token)
+{
+    int res = NO_ERR;
+    INIT_TOKEN(token, res);
+
+    switch ((*token)->type)
+    {
+    // <multi_var_n> -> , id <multi_var_n>
+    case TYPE_COMMA:
+        get_token(global_file, token);
+
+        CHECK_TOKEN(token, TYPE_IDENTIFIER);
+
+        return multi_var_n(token);
+
+    // <multi_var_n> -> eps
+    case TYPE_ASSIGN:
+        break;
+
+    default:
+        res = ERR_SYNTAX;
+        break;
+    }
+    return res;
+}
+
+int expression(token_t **token)
+{
+    int res = NO_ERR;
+    INIT_TOKEN(token, res);
+
+    switch ((*token)->type)
+    {
+    // TODO:
+
+    default:
+        res = ERR_SYNTAX;
+        break;
+    }
+    return res;
+}
 
 int d_type(token_t **token)
 {
@@ -841,715 +906,6 @@ int d_type(token_t **token)
     case TYPE_KW_BOOLEAN:
         get_token(global_file, token);
         // TODO:
-        break;
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-
-int ret_n(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <ret_n> -> eps
-    case TYPE_EOF:
-        token_delete(token);
-        break;
-
-    // <ret_n> -> eps
-    case TYPE_KW_REQUIRE:
-        break;
-
-    // <ret_n> -> eps
-    case TYPE_IDENTIFIER:
-        break;
-
-    // <ret_n> -> eps
-    case TYPE_KW_RETURN:
-        break;
-
-    // <ret_n> -> eps
-    case TYPE_KW_GLOBAL:
-        break;
-
-    // <ret_n> -> eps
-    case TYPE_KW_FUNCTION:
-        break;
-
-    // <ret_n> -> eps
-    case TYPE_KW_LOCAL:
-        break;
-
-    // <ret_n> -> eps
-    case TYPE_KW_IF:
-        break;
-
-    // <ret_n> -> eps
-    case TYPE_KW_WHILE:
-        break;
-
-    // <ret_n> -> eps
-    case TYPE_KW_REPEAT:
-        break;
-
-    // <ret_n> -> eps
-    case TYPE_KW_FOR:
-        break;
-
-    // <ret_n> -> eps
-    case TYPE_KW_END:
-        break;
-
-    // <ret_n> -> eps
-    case TYPE_KW_BREAK:
-        break;
-
-    // <ret_n> -> <d_type> <ret_n>
-    case TYPE_COMMA:
-
-        res = d_type(token);
-        if (res != NO_ERR)
-            return res;
-
-        return ret_n(token);
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int args(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <args> -> id : <d_type> <args_n>
-    case TYPE_IDENTIFIER:
-        get_token(global_file, token);
-
-        CHECK_TOKEN(token, TYPE_DECLARE);
-
-        res = d_type(token);
-        if (res != NO_ERR)
-            return res;
-
-        return args_n(token);
-
-    // <args> -> eps
-    case TYPE_RIGHT_PARENTHESES:
-        break;
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int code(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <code> -> id <func_or_assign> <code>
-    case TYPE_IDENTIFIER:
-        get_token(global_file, token);
-
-        res = func_or_assign(token);
-        if (res != NO_ERR)
-            return res;
-
-        return code(token);
-
-    // <code> -> return <ret_exp>
-    case TYPE_KW_RETURN:
-        get_token(global_file, token);
-
-        CHECK_TOKEN(token, TYPE_KW_RETURN);
-
-        return ret_exp(token);
-
-    // <code> -> <var_init> <code>
-    case TYPE_KW_LOCAL:
-
-        res = var_init(token);
-        if (res != NO_ERR)
-            return res;
-
-        return code(token);
-
-    // <code> -> <if_block> <code>
-    case TYPE_KW_IF:
-
-        res = if_block(token);
-        if (res != NO_ERR)
-            return res;
-
-        return code(token);
-
-    // <code> -> eps
-    case TYPE_KW_ELSEIF:
-        break;
-
-    // <code> -> eps
-    case TYPE_KW_ELSE:
-        break;
-
-    // <code> -> <while_block> <code>
-    case TYPE_KW_WHILE:
-
-        res = while_block(token);
-        if (res != NO_ERR)
-            return res;
-
-        return code(token);
-
-    // <code> -> <repeat_block> <code>
-    case TYPE_KW_REPEAT:
-
-        res = repeat_block(token);
-        if (res != NO_ERR)
-            return res;
-
-        return code(token);
-
-    // <code> -> eps
-    case TYPE_KW_UNTIL:
-        break;
-
-    // <code> -> <for_block> <code>
-    case TYPE_KW_FOR:
-
-        res = for_block(token);
-        if (res != NO_ERR)
-            return res;
-
-        return code(token);
-
-    // <code> -> eps
-    case TYPE_KW_END:
-        break;
-
-    // <code> -> break
-    case TYPE_KW_BREAK:
-        get_token(global_file, token);
-
-        CHECK_TOKEN(token, TYPE_KW_BREAK);
-
-        break;
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int args_n(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <args_n> -> eps
-    case TYPE_RIGHT_PARENTHESES:
-        break;
-
-    // <args_n> -> id : <d_type> <args_n>
-    case TYPE_COMMA:
-        get_token(global_file, token);
-
-        CHECK_TOKEN(token, TYPE_IDENTIFIER);
-
-        CHECK_TOKEN(token, TYPE_DECLARE);
-
-        res = d_type(token);
-        if (res != NO_ERR)
-            return res;
-
-        return args_n(token);
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int var_init_assign(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <var_init_assign> -> eps
-    case TYPE_EOF:
-        token_delete(token);
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_REQUIRE:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_IDENTIFIER:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_RETURN:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_GLOBAL:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_FUNCTION:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_LOCAL:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_IF:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_ELSEIF:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_ELSE:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_WHILE:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_REPEAT:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_UNTIL:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_FOR:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_END:
-        break;
-
-    // <var_init_assign> -> eps
-    case TYPE_KW_BREAK:
-        break;
-
-    // <var_init_assign> -> = <expression>
-    case TYPE_ASSIGN:
-        get_token(global_file, token);
-
-        return expression(token);
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int expression(token_t **token)
-{
-    // TODO: zatim ignorovat
-    //TODO:
-}
-int elif_block(token_t **token)
-{
-    // TODO: zatim ignorovat
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <elif_block> -> elseif <expression> do <code> end
-    case TYPE_KW_ELSEIF:
-        get_token(global_file, token);
-
-        // expression
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        // do
-        CHECK_TOKEN(token, TYPE_KW_DO);
-
-        // code
-        res = code(token);
-        if (res != NO_ERR)
-            return res;
-
-        // end
-        CHECK_TOKEN(token, TYPE_KW_END);
-
-        break;
-
-    // <elif_block> -> eps
-    case TYPE_KW_ELSE:
-        break;
-
-    // <elif_block> -> eps
-    case TYPE_KW_END:
-        break;
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int else_block(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <else_block> -> else <code>
-    case TYPE_KW_ELSE:
-        get_token(global_file, token);
-
-        return code(token);
-
-    // <else_block> -> eps
-    case TYPE_KW_END:
-        break;
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int exp_opt(token_t **token)
-{
-    // TODO: zatim ignorovat
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <exp_opt> -> eps
-    case TYPE_KW_DO:
-        break;
-
-    // <exp_opt> -> "integer"
-    case TYPE_COMMA:
-        get_token(global_file, token);
-
-        CHECK_TOKEN(token, TYPE_INTEGER);
-
-        break;
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int func_args(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <func_args> -> <expression> <func_args_n>
-    case TYPE_IDENTIFIER:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return func_args_n(token);
-
-    // <func_args> -> <expression> <func_args_n>
-    case TYPE_LEFT_PARENTHESES:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return func_args_n(token);
-
-    // <func_args> -> eps
-    case TYPE_RIGHT_PARENTHESES:
-        break;
-
-    // <func_args> -> <expression> <func_args_n>
-    case TYPE_STRING:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return func_args_n(token);
-
-    // <func_args> -> <expression> <func_args_n>
-    case TYPE_NUMBER:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return func_args_n(token);
-
-    // <func_args> -> <expression> <func_args_n>
-    case TYPE_INTEGER:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return func_args_n(token);
-
-    // <func_args> -> <expression> <func_args_n>
-    case TYPE_KW_NIL:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return func_args_n(token);
-
-    // <func_args> -> <expression> <func_args_n>
-    case TYPE_STRLEN:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return func_args_n(token);
-
-    // <func_args> -> <expression> <func_args_n>
-    case TYPE_BOOLEAN:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return func_args_n(token);
-
-    // <func_args> -> <expression> <func_args_n>
-    case TYPE_KW_NOT:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return func_args_n(token);
-
-    // <func_args> -> <expression> <func_args_n>
-    case TYPE_CONCAT:
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return func_args_n(token);
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int multi_var(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <multi_var> -> eps
-    case TYPE_ASSIGN:
-        break;
-
-    // <multi_var> -> id <multi_var>
-    case TYPE_COMMA:
-        get_token(global_file, token);
-
-        CHECK_TOKEN(token, TYPE_IDENTIFIER);
-
-        return multi_var(token);
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int multi_exp(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <multi_exp> -> eps
-    case TYPE_EOF:
-        token_delete(token);
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_REQUIRE:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_IDENTIFIER:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_RETURN:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_GLOBAL:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_FUNCTION:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_LOCAL:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_IF:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_ELSEIF:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_ELSE:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_WHILE:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_REPEAT:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_UNTIL:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_FOR:
-        break;
-
-    // <multi_exp> -> , <expression> <multi_exp>
-    case TYPE_COMMA:
-        get_token(global_file, token);
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return multi_exp(token);
-
-    // <multi_exp> -> eps
-    case TYPE_KW_END:
-        break;
-
-    // <multi_exp> -> eps
-    case TYPE_KW_BREAK:
-        break;
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int func_args_n(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <func_args_n> -> eps
-    case TYPE_RIGHT_PARENTHESES:
-        break;
-
-    // <func_args_n> -> , <expression> <func_args_n>
-    case TYPE_COMMA:
-        get_token(global_file, token);
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return func_args_n(token);
-
-    default:
-        res = ERR_SYNTAX;
-        break;
-    }
-    return res;
-}
-int ret_exp_n(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch ((*token)->type)
-    {
-    // <ret_exp_n> -> eps
-    case TYPE_EOF:
-        token_delete(token);
-        break;
-
-    // <ret_exp_n> -> eps
-    case TYPE_KW_ELSEIF:
-        break;
-
-    // <ret_exp_n> -> eps
-    case TYPE_KW_ELSE:
-        break;
-
-    // <ret_exp_n> -> eps
-    case TYPE_KW_UNTIL:
-        break;
-
-    // <ret_exp_n> -> , <expression> <ret_exp_n>
-    case TYPE_COMMA:
-        get_token(global_file, token);
-
-        res = expression(token);
-        if (res != NO_ERR)
-            return res;
-
-        return ret_exp_n(token);
-
-    // <ret_exp_n> -> eps
-    case TYPE_KW_END:
         break;
 
     default:
