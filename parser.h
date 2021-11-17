@@ -64,5 +64,9 @@ int multi_var(token_t **token);
 int multi_exp(token_t **token);
 int func_args_n(token_t **token);
 int ret_exp_n(token_t **token);
+int lof_e(token_t **token);
+int lof_e_n(token_t **token);
+int def_parm(token_t **token);
+int def_parm_n(token_t **token);
 
 #endif // _PARSER_H_
