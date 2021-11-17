@@ -10,7 +10,7 @@
 int exp_stack_reduce(exp_stack_t *s);
 
 // shift akce
-int exp_stack_shift(exp_stack_t *s);
+int exp_stack_shift(exp_stack_t *s, token_t *token);
 
 // bude prejmenovano na expression
 int precedence(token_t **token);

@@ -141,7 +141,7 @@ enum prec_type
     U, // UNDEF _
 };
 
-int exp_nterm_init();
+int exp_nterm_init(exp_nterm_t **n);
 void exp_nterm_destroy(exp_nterm_t **n);
 
 int exp_data_init(exp_data_t *data, token_t *token);
@@ -153,6 +153,9 @@ int exp_stack_init(exp_stack_t *s);
 
 // pridani prvku do zasobniku
 int exp_stack_push(exp_stack_t *s, enum exp_stack_symb sym, token_t *token, exp_data_t *data, struct exp_nterm *nterm);
+
+// pridani rovnou itemu do zasobniku
+int exp_stack_push_item(exp_stack_t *s, struct exp_stack_item * item);
 
 // vraci prvni token zpatky
 struct exp_stack_item *exp_stack_top(const exp_stack_t *s);
