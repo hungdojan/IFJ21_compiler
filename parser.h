@@ -26,15 +26,15 @@
         if (!token) return ERR_INTERNAL;    \
         if (*token == NULL)                 \
         {                       \
-            res = get_token(f, token);      \
+            res = get_token(global_file, token);      \
             if (res != NO_ERR)  return res; \
         }                       \
     } while (0)                 \
 
 
-extern FILE *f;
+extern FILE *global_file;
 
-int syntax_analysis(FILE *f);
+int syntax_analysis(FILE *file);
 
 int prg(token_t **token);
 int func_dec(token_t **token);

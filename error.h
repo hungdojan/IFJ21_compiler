@@ -30,6 +30,7 @@ int print_error(int err_code, Istring *str, token_t **token, const char *format,
 // vypis moznych chybovych navratovych hodnot
 enum err_codes
 {
+    NO_ERR=0,
     ERR_LEX = 1,
     ERR_SYNTAX = 2,
     ERR_SEM_DEF = 3,

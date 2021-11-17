@@ -13,16 +13,10 @@
 #ifndef _STACK_H_
 #define _STACK_H_
 
-#include <stdlib.h>
 #include "symtable.h"
+#include <stdlib.h>
 
 #define FRAME_STACK_SIZE 8
-/* TODO: az David prida symtable soubor, tak smazat celou definici node_ptr!!! */
-typedef struct node_t 
-{
-    int test_val;
-} *node_ptr;
-/* TODO: smazat az sem!!! */
 
 typedef struct stack_t {
     node_ptr *array;    /// pole ukazatelu na tabulky symbolu

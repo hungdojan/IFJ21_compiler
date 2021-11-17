@@ -14,6 +14,7 @@
 #define _SCANNER_H_
 
 #include "token.h"
+#include <stdio.h>
 
 enum State {
     STATE_NEW,
