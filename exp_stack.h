@@ -144,7 +144,8 @@ enum prec_type
 int exp_nterm_init();
 void exp_nterm_destroy(exp_nterm_t **n);
 
-int exp_data_str_init(exp_data_t *data, char *value, enum data_type type);
+int exp_data_init(exp_data_t *data, char *value, enum data_type type);
+void exp_data_copy(exp_data_t *dst, exp_data_t *src);
 void exp_data_destroy(exp_data_t *data);
 
 // inicializace zasobniku

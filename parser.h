@@ -31,6 +31,45 @@
         }                       \
     } while (0)                 \
 
+#define INSERT_SYMBOL(id_val, node_type)   \
+    do\
+    {\
+        res = tree_insert(&global_tree, id_val, node_type); \
+        if (res != NO_ERR)  return res;     \
+    } while (0)
+
+#define SEARCH_SYMBOL(id_val, node_type, node_return, err_type) \
+    do\
+    {\
+        stack_reset_index(&local_stack);\
+        while (stack_isempty(&local_stack))   \
+        {\
+            node_return = tree_search(stack_top(&local_stack), id_val);\
+            if (node_return != NULL)    \
+                break;\
+            else\
+                stack_dec_index(&local_stack);\
+        }\
+        if (node_return == NULL) \
+           node_return = tree_search(&global_tree, id_val); \
+        if (node_return == NULL)   return err_type;\
+    } while(0)
+
+#define INIT_SCOPE() \
+    do\
+    {\
+        stack_push_frame(&temp_stack, NULL); \
+        while (stack_isempty(&local_stack)) \
+            stack_push_frame(&temp_stack, stack_pop_frame(&local_stack));\
+    } while (0)
+
+#define DESTROY_SCOPE()\
+    do\
+    {\
+        node_ptr node; \
+        while ((node = stack_pop_frame(&temp_stack)) != NULL)\
+            stack_push_frame(&local_frame, stack_pop_frame(&temp_stack));\
+    } while(0)
 
 extern FILE *global_file;
 
