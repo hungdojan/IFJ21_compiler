@@ -185,6 +185,17 @@ int exp_stack_push(exp_stack_t *s, enum exp_stack_symb sym,
     return ERR_INTERNAL;
 }
 
+int exp_stack_push_item(exp_stack_t *s, struct exp_stack_item * item)
+{
+    if(item->type == SYM_EXPR)
+        exp_stack_push(s, item->type, NULL, /*&item->data.term*/ NULL, item->data.nterm);
+    else
+        exp_stack_push(s, item->type, NULL, &item->data.term, NULL);
+    
+    return NO_ERR;
+}
+
+
 // vraci prvni token zpatky
 exp_item_t *exp_stack_top(const exp_stack_t *s)
 {
