@@ -18,28 +18,74 @@ int exp_nterm_init(exp_nterm_t **n)
     return ERR_INTERNAL;
 }
 
-int exp_data_str_init(exp_data_t *data, char *value, enum data_type type)
+int exp_data_init(exp_data_t *data, token_t *token)
 {
     if (data != NULL)
     {
-        if (type == DATA_STR)
+        if (token->type == TYPE_IDENTIFIER)
         {
-            data->value.string = (char *)calloc(strlen(value) + 1, 1);
+            data->value.string = (char *)calloc(strlen(token->value.str_val) + 1, 1);
             if (data->value.string == NULL)
                 return ERR_INTERNAL;
-            strcpy(data->value.string, value);
+            strcpy(data->value.string, token->value.str_val);
         }
-        else if (type == DATA_ID)
+        else if (token->type == TYPE_STRING)
         {
-            data->value.id = (char *)calloc(strlen(value) + 1, 1);
+            data->value.id = (char *)calloc(strlen(token->value.str_val) + 1, 1);
             if (data->value.id == NULL)
                 return ERR_INTERNAL;
-            strcpy(data->value.id, value);
+            strcpy(data->value.id, token->value.str_val);
         }
-        else 
-            return ERR_INTERNAL;
+        else
+        {
+            switch(token->type)
+            {
+                case TYPE_BOOLEAN:
+                    data->type = DATA_BOOL;
+                    data->value.boolean = token->value.bool_val;
+                    break;
+                case TYPE_INTEGER:
+                    data->type = DATA_INT;
+                    data->value.integer = token->value.int_val;
+                    break;
+                case TYPE_NUMBER:
+                    data->type = DATA_NUM;
+                    data->value.number = token->value.float_val;
+                    break;
+                case TYPE_KW_NIL:
+                    data->type = DATA_NIL;
+                    break;
+                default:
+                    return ERR_INTERNAL;
+            }
+        }
     }
     return ERR_INTERNAL;
+}
+
+void exp_data_copy(exp_data_t *dst, exp_data_t *src)
+{
+    if (dst != NULL && src != NULL)
+    {
+        dst->type = src->type;
+        if (src->type == DATA_ID)
+        {
+            dst->value.id = src->value.id;
+            src->value.id = NULL;
+        }
+        else if (src->type == DATA_STR)
+        {
+            dst->value.string = src->value.string;
+            src->value.string = NULL;
+        }
+        else if (src->type == DATA_SUB_EXP)
+        {
+            dst->value.sub_expr = src->value.sub_expr;
+            src->value.sub_expr = NULL;
+        }
+        else
+            dst->value = src->value;
+    }
 }
 
 void exp_data_destroy(exp_data_t *data)
