@@ -26,10 +26,10 @@ enum exp_rules
     RULE_POWER,             // E -> E ^ E
     RULE_CONCAT,            // E -> E..E
     RULE_ID,                // E -> id
-    RULE_FUNC_NO_ARG,       // E -> id ( )
-    RULE_FUNC_ONE_ARG,      // E -> id ( E )
-    RULE_FUNC_TWO_ARG,      // E -> id ( E , E )
-    RULE_FUNC_MORE_ARGS,    // E -> id ( E , E , E )
+//     RULE_FUNC_NO_ARG,       // E -> id ( )
+//     RULE_FUNC_ONE_ARG,      // E -> id ( E )
+//     RULE_FUNC_TWO_ARG,      // E -> id ( E , E )
+//     RULE_FUNC_MORE_ARGS,    // E -> id ( E , E , E )
     RULE_PLUS,              // E -> E + E
     RULE_MINUS,             // E -> E - E
     RULE_MULTIPLY,          // E -> E * E
@@ -74,11 +74,10 @@ enum table_index
     TI_PLUS,
     TI_CONCAT,
     TI_LOGIC,
-    TI_LOGIC_EQ,
     TI_AND,
     TI_OR,
     TI_COMMA,
-    TI_ID,
+//     TI_ID,
     TI_CONST,
     TI_DOLLAR
 };
@@ -105,6 +104,7 @@ typedef struct exp_item_value
 // OPERATION val1
 typedef struct exp_nterm
 {
+    enum data_type  data_t;      /// datovy typ
     enum exp_rules  rule;        /// pouzite pravidlo
     exp_data_t      val1;        /// hodnota na leve strane
     exp_data_t      val2;        /// hodnota na prave strane
@@ -143,6 +143,9 @@ enum prec_type
 
 int exp_nterm_init();
 void exp_nterm_destroy(exp_nterm_t **n);
+
+int exp_data_str_init(exp_data_t *data, char *value, enum data_type type);
+void exp_data_destroy(exp_data_t *data);
 
 // inicializace zasobniku
 int exp_stack_init(exp_stack_t *s);

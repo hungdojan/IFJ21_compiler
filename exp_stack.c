@@ -1,3 +1,4 @@
+#include <string.h>
 #include "exp_stack.h"
 #include "error.h"
 #include <stdlib.h>
@@ -17,22 +18,62 @@ int exp_nterm_init(exp_nterm_t **n)
     return ERR_INTERNAL;
 }
 
+int exp_data_str_init(exp_data_t *data, char *value, enum data_type type)
+{
+    if (data != NULL)
+    {
+        if (type == DATA_STR)
+        {
+            data->value.string = (char *)calloc(strlen(value) + 1, 1);
+            if (data->value.string == NULL)
+                return ERR_INTERNAL;
+            strcpy(data->value.string, value);
+        }
+        else if (type == DATA_ID)
+        {
+            data->value.id = (char *)calloc(strlen(value) + 1, 1);
+            if (data->value.id == NULL)
+                return ERR_INTERNAL;
+            strcpy(data->value.id, value);
+        }
+        else 
+            return ERR_INTERNAL;
+    }
+    return ERR_INTERNAL;
+}
+
+void exp_data_destroy(exp_data_t *data)
+{
+    if (data != NULL)
+    {
+        if (data->type == DATA_STR)
+        {
+            free(data->value.string);
+            data->value.string = NULL;
+        }
+        else if (data->type == DATA_ID)
+        {
+            free(data->value.id);
+            data->value.id = NULL;
+        }
+        else if (data->type == DATA_SUB_EXP)
+        {
+            exp_nterm_destroy(&(data->value.sub_expr));
+            data->value.sub_expr = NULL;
+        }
+    }
+}
+
 void exp_nterm_destroy(exp_nterm_t **n)
 {
     if (n != NULL && *n != NULL)
     {
         // ruseni val1
         if ((*n)->val1.type == DATA_SUB_EXP)
-        {
-            exp_nterm_destroy(&(*n)->val1.value.sub_expr);
-            (*n)->val1.value.sub_expr = NULL;
-        }
+            exp_data_destroy(&(*n)->val1);
         // ruseni val2
         if ((*n)->val2.type == DATA_SUB_EXP)
-        {
-            exp_nterm_destroy(&(*n)->val2.value.sub_expr);
-            (*n)->val2.value.sub_expr = NULL;
-        }
+            exp_data_destroy(&(*n)->val2);
         // ruseni parametru fci
         for (int i = 0; i < (*n)->parm_len; i++)
         {
@@ -42,6 +83,8 @@ void exp_nterm_destroy(exp_nterm_t **n)
                 ((*n)->parms)[i].value.sub_expr = NULL;
             }
         }
+        free(*n);
+        *n = NULL;
     }
 }
 
@@ -86,7 +129,7 @@ int exp_stack_push(exp_stack_t *s, enum exp_stack_symb sym,
                 if (token == NULL)  return ERR_INTERNAL;
                 (s->array)[s->len].data.oper = token->type;
                 break;
-            // < $
+                // < $
             case SYM_SHIFT: case SYM_DOLLAR:
                 break;
         }
@@ -122,7 +165,7 @@ exp_item_t *exp_stack_pop(exp_stack_t *s)
 int exp_stack_isempty(const exp_stack_t *s)
 {
     if (s != NULL)
-        return !(s->len);
+        return !(s->len) || s->len == -1;
     return 1;
 }
 
@@ -154,13 +197,19 @@ int exp_nterm_add_parameter(exp_nterm_t *func, exp_data_t parm)
 // odstraneni zasobniku a uvolneni alokovane pameti
 void exp_stack_destroy(exp_stack_t *s)
 {
-    if (s != NULL)
+    if (s != NULL && s->array != NULL)
     {
         for (int i = s->len-1; i >= 0; i--)
         {
-
+            if ((s->array)[i].type == SYM_EXPR)
+                exp_nterm_destroy(&(s->array)[i].data.nterm);
+            else if ((s->array)[i].type == SYM_EXPR)
+                exp_data_destroy(&(s->array)[i].data.term);
+            free(s->array);
+            s->array = NULL;
+            s->len = -1;
+            s->alloc_size = 0;
         }
-        free(s->array);
     }
 }
 
