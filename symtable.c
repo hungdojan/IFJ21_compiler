@@ -14,6 +14,58 @@
 #include <stdlib.h>
 #include <string.h>
 
+void list_init(list_t *list)
+{   
+    if (list != NULL)
+    {   
+        list->first = NULL;
+        list->last = NULL;
+    }
+}
+
+// pridani polozky do listu
+int list_insert(list_t *list, void *data)
+{
+    if (list != NULL)
+    {
+        item_t *item = (item_t *)calloc(1, sizeof(item_t));
+        if (item == NULL)
+            return ERR_INTERNAL;
+
+        item->data = data;
+        item->next = NULL;
+        if (list->last != NULL)
+            list->last->next = item;
+        list->last = item; 
+        if (list->first == NULL)
+            list->first = item;
+    }
+    return ERR_INTERNAL;
+}
+
+// vraci prvni polozku v listu
+item_t *list_get_first(list_t *list)
+{   
+    if (list != NULL)
+        return list->first;
+    return NULL;
+}
+
+// uvolnuje pamet z listu
+void list_destroy(list_t *list)
+{
+    if (list != NULL)
+    {
+        while (list->first != NULL)
+        {
+            item_t *item = list->first->next;
+            free(list->first);
+            list->first = item;
+        }
+        list->first = list->last = NULL;
+    }
+}
+
 int tree_init(node_ptr *tree)
 {
     if(tree)

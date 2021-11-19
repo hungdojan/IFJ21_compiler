@@ -12,14 +12,40 @@
 #ifndef _SYMTABLE_H_
 #define _SYMTABLE_H_
 
+enum data_type
+{
+    DATA_SUB_EXP,
+    DATA_ID,
+    DATA_STR,
+    DATA_INT,
+    DATA_NUM,
+    DATA_BOOL,
+    DATA_NIL
+};
+
+typedef struct item
+{   
+    void *data;             /// univerzalni data
+    struct item *next;      /// ukazatel na dalsi polozku
+} item_t;
+
+typedef struct
+{   
+    item_t *first;  /// ukazatel na prvni prvek
+    item_t *last;   /// ukazatel na posledni prvek
+} list_t;
+
+void list_init(list_t *list);
+int list_insert(list_t *list, void *data);
+item_t *list_get_first(list_t *list);
+void list_destroy(list_t *list);
+
 // vycet moznych typu uzlu symtablu
 typedef enum{
     VAR,
     FUNC,
-
     ROOT,
 } item_type;
-
 
 // node_ptr je ukazatel na 'struct tree_node' uzel, ktery je sam stromem
 typedef struct tree_node

@@ -26,7 +26,6 @@ static int get_index_from_token(enum Token_type type)
         case TYPE_GREATER:
         case TYPE_GREATER_OR_EQ:     return TI_LOGIC;
         case TYPE_EQ:
-        case TYPE_NOT_EQ:            return TI_LOGIC;
         case TYPE_KW_AND:            return TI_AND;
         case TYPE_KW_OR:             return TI_OR;
         case TYPE_COMMA:             return TI_COMMA;
@@ -66,7 +65,7 @@ static enum prec_type table[PREC_TABLE_SIZE][PREC_TABLE_SIZE] = {
     {S, R, S, S, S, R, R, R, R, R, R, R, S, R}, // * / // %
     {S, R, S, S, S, S, R, R, R, R, R, R, S, R}, // + - 
     {S, R, S, S, S, S, S, S, R, R, R, R, S, R}, // ..
-    {S, R, S, S, S, S, S, S, R, R, R, R, S, R}, // > >= < <=
+    {S, R, S, S, S, S, S, S, R, R, R, R, S, R}, // > >= < <= == ~=
     {S, R, S, S, S, S, S, S, S, S, R, S, S, R}, // and
     {S, R, S, S, S, S, S, S, S, S, R, R, S, R}, // or
     {S, E, S, S, S, S, S, S, S, S, S, E, S, R}, // ,
@@ -311,7 +310,7 @@ int exp_stack_shift(exp_stack_t *s, token_t *token)
     exp_stack_push(s, sym_type, token, &new_item, NULL);
 }
 
-int precedence(token_t **token)
+int precedence(token_t **token, enum data_type *data_t)
 {
     int res = NO_ERR;
     struct exp_stack s;

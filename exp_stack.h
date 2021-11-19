@@ -52,17 +52,6 @@ enum exp_rules
     RULE_FALSE              // E -> _false_
 };
 
-enum data_type
-{
-    DATA_SUB_EXP,
-    DATA_ID,
-    DATA_STR,
-    DATA_INT,
-    DATA_NUM,
-    DATA_BOOL,
-    DATA_NIL
-};
-
 enum table_index
 {
     TI_LEFT_PARENTHESES,

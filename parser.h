@@ -14,7 +14,9 @@
 #define _PARSER_H_
 
 #include "token.h"
+#include "symtable.h"
 #include "error.h"
+#include "exp_stack.h"
 #include <stdio.h>
 
 /*
@@ -34,62 +36,66 @@
 #define INSERT_SYMBOL(id_val, node_type)   \
     do\
     {\
-        res = tree_insert(&global_tree, id_val, node_type); \
+        if (node_type == FUNC)\
+            res = tree_insert(&global_tree, id_val, node_type); \
+        else\
+            res = tree_insert(stack_top(&local_stack), id_val, node_type);\
         if (res != NO_ERR)  return res;     \
     } while (0)
 
-#define SEARCH_SYMBOL(id_val, node_type, node_return, err_type) \
+#define SEARCH_SYMBOL(id_val, node_return, err_type, node_type) \
     do\
     {\
-        stack_reset_index(&local_stack);\
-        while (stack_isempty(&local_stack))   \
+        if (node_type == FUNC)\
+            node_return = tree_search(&global_tree, id_val);\
+        else\
         {\
-            node_return = tree_search(stack_top(&local_stack), id_val);\
-            if (node_return != NULL)    \
-                break;\
-            else\
-                stack_dec_index(&local_stack);\
+            while (stack_isempty(&local_stack))   \
+            {\
+                node_return = tree_search(stack_top(&local_stack), id_val);\
+                if (node_return != NULL)    \
+                    break;\
+                else\
+                    stack_dec_index(&local_stack);\
+            }\
         }\
-        if (node_return == NULL) \
-           node_return = tree_search(&global_tree, id_val); \
-        if (node_return == NULL)   return err_type;\
     } while(0)
 
 #define INIT_SCOPE() \
     do\
     {\
-        stack_push_frame(&temp_stack, NULL); \
-        while (stack_isempty(&local_stack)) \
-            stack_push_frame(&temp_stack, stack_pop_frame(&local_stack));\
+        node_ptr __local_tree;\
+        if((res = tree_init(&__local_tree)) != NO_ERR) return res;\
+        stack_push_frame(&local_stack, __local_tree); \
     } while (0)
 
 #define DESTROY_SCOPE()\
     do\
     {\
-        node_ptr node; \
-        while ((node = stack_pop_frame(&temp_stack)) != NULL)\
-            stack_push_frame(&local_frame, stack_pop_frame(&temp_stack));\
+        node_ptr __local_tree  = stack_pop_frame(&local_stack);\
+        tree_destroy(&__local_tree);\
     } while(0)
-
 extern FILE *global_file;
 
 int syntax_analysis(FILE *file);
 
 int prg(token_t **token);
-int lof_e(token_t **token);
-int lof_e_n(token_t **token);
-int parm(token_t **token);
-int parm_n(token_t **token);
-int ret(token_t **token);
-int def_parm(token_t **token);
-int def_parm_n(token_t **token);
-int code(token_t **token);
-int var_init_assign(token_t **token);
-int else_block(token_t **token);
-int func_or_assign(token_t **token);
-int multi_var(token_t **token);
-int multi_var_n(token_t **token);
-int expression(token_t **token);
-int d_type(token_t **token);
+int lof_e(token_t **token, list_t *lof_data);
+int lof_e_n(token_t **token, list_t *lof_data);
+int parm(token_t **token, list_t *lof_data);
+int parm_n(token_t **token, list_t *lof_data);
+int ret(token_t **token, list_t *lof_data);
+int def_parm(token_t **token, list_t *lof_data);
+int def_parm_n(token_t **token, list_t *lof_data);
+int expression(token_t **token, enum data_type *data_t);
+int code(token_t **token, list_t *lof_data);
+int var_init_assign(token_t **token, enum data_type *data_t);
+int else_block(token_t **token, list_t *lof_data);
+int func_or_assign(token_t **token, list_t *lof_data);
+int multi_var(token_t **token, list_t *lof_data);
+int multi_var_n(token_t **token, list_t *lof_data);
+int multi_e(token_t **token, list_t *lof_data);
+int multi_e_n(token_t **token, list_t *lof_data);
+int d_type(token_t **token, enum data_type *data_t);
 
 #endif // _PARSER_H_
