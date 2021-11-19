@@ -13,6 +13,6 @@ int exp_stack_reduce(exp_stack_t *s);
 int exp_stack_shift(exp_stack_t *s, token_t *token);
 
 // bude prejmenovano na expression
-int precedence(token_t **token);
+int precedence(token_t **token, enum data_type *data_t);
 
 #endif // _EXPRESSION_H_

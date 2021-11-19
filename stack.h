@@ -25,7 +25,7 @@ typedef struct stack_t {
     int alloc_size;     /// velikost alokavane pameti pro array
 } frame_stack;
 
-extern frame_stack global_stack;
+extern frame_stack local_stack;
 
 /**
  * @breif Inicializace zasobniku

@@ -10,13 +10,15 @@ int exp_nterm_init(exp_nterm_t **n)
         *n = (exp_nterm_t *)calloc(1, sizeof(exp_nterm_t));
         if (*n == NULL)     return ERR_INTERNAL;
         // val1 rule a val2 jsou explicitne definovane
-        (*n)->parms = NULL;
-        (*n)->parm_len = 0;
-        (*n)->parm_alloc_size = 0;
+        // (*n)->parms = NULL;
+        // (*n)->parm_len = 0;
+        // (*n)->parm_alloc_size = 0;
         return NO_ERR;
     }
     return ERR_INTERNAL;
 }
+
+// data_t data = { .type = DATA_SUB_EXP, .value.sub_expr=nterm };
 
 int exp_data_init(exp_data_t *data, token_t *token)
 {
@@ -68,6 +70,7 @@ void exp_data_copy(exp_data_t *dst, exp_data_t *src)
     if (dst != NULL && src != NULL)
     {
         dst->type = src->type;
+        // zvlast kopiruje data pro alokovane objekty
         if (src->type == DATA_ID)
         {
             dst->value.id = src->value.id;
