@@ -23,6 +23,20 @@ void list_init(list_t *list)
     }
 }
 
+int list_compare_data(list_t l1, list_t l2)
+{
+    if (l1.len != l2.len)
+        return ERR_SEM_FUNC;
+    item_t *i1 = l1.first;
+    item_t *i2 = l2.first;
+    while (i1 != NULL && i2 != NULL)
+    {
+        if ( *(enum data_type *)i1->data != *(enum data_type *)i1->data )
+            return ERR_SEM_FUNC;
+    }
+    return NO_ERR;
+}
+
 // pridani polozky do listu
 int list_insert(list_t *list, void *data)
 {
@@ -39,6 +53,7 @@ int list_insert(list_t *list, void *data)
         list->last = item; 
         if (list->first == NULL)
             list->first = item;
+        list->len++;
     }
     return ERR_INTERNAL;
 }
@@ -63,6 +78,7 @@ void list_destroy(list_t *list)
             list->first = item;
         }
         list->first = list->last = NULL;
+        list->len = 0;
     }
 }
 
@@ -78,10 +94,26 @@ int tree_init(node_ptr *tree)
         (*tree)->key = NULL;
         (*tree)->left = NULL;
         (*tree)->right = NULL;
+        (*tree)->lof_params.first = (*tree)->lof_params.last = NULL;
+        (*tree)->lof_rets.first = (*tree)->lof_rets.last = NULL;
+        (*tree)->lof_params.len = (*tree)->lof_rets.len = 0;
 
         (*tree)->type = ROOT; // staci odlisit pres NULLovy key
     }
     return 0;
+}
+
+int tree_add_param_to_symbol(node_ptr tree, enum data_type data)
+{
+    if (tree != NULL)
+        return list_insert(&tree->lof_params, (void *)&data);
+    return ERR_INTERNAL;
+}
+int tree_add_ret_to_symbol(node_ptr tree, enum data_type data)
+{
+    if (tree != NULL)
+        return list_insert(&tree->lof_rets, (void *)&data);
+    return ERR_INTERNAL;
 }
 
 int tree_insert(node_ptr *tree, char *key, item_type type)
@@ -143,6 +175,8 @@ void tree_destroy(node_ptr *tree)
         
             if((*tree)->key)
                 free((*tree)->key);
+            list_destroy(&(*tree)->lof_rets);
+            list_destroy(&(*tree)->lof_params);
             free(*tree);
 
             *tree = NULL;
