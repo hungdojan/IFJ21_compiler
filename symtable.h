@@ -14,13 +14,13 @@
 
 enum data_type
 {
+    DATA_NIL=0,
     DATA_SUB_EXP,
     DATA_ID,
     DATA_STR,
     DATA_INT,
     DATA_NUM,
     DATA_BOOL,
-    DATA_NIL
 };
 
 typedef struct item
@@ -33,10 +33,12 @@ typedef struct
 {   
     item_t *first;  /// ukazatel na prvni prvek
     item_t *last;   /// ukazatel na posledni prvek
+    int len;
 } list_t;
 
 void list_init(list_t *list);
 int list_insert(list_t *list, void *data);
+int list_compare_data(list_t l1, list_t l2);
 item_t *list_get_first(list_t *list);
 void list_destroy(list_t *list);
 
@@ -55,6 +57,8 @@ typedef struct tree_node
     
     int is_defined;                 /// Bool, jestli byl definovan
     int param_num;                  /// Pocet parametru funkce 
+    list_t lof_params;         /// datove typy parametru
+    list_t lof_rets;           /// navratove hodnoty parametru
 
     struct tree_node *left;         /// Ukazatel na levy podstrom (klice mensi)
     struct tree_node *right;        /// Ukazatel na pravy podstrom (klice vetsi)
@@ -81,6 +85,9 @@ int tree_init(node_ptr *tree);
  * @return Error kod
 */
 int tree_insert(node_ptr *tree, char *key, item_type type);
+
+int tree_add_param_to_symbol(node_ptr tree, enum data_type data);
+int tree_add_ret_to_symbol(node_ptr tree, enum data_type data);
 
 /**
  * @brief Dealokace kompletniho stromu a bocnich podstromu
