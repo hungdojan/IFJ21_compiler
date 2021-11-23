@@ -269,7 +269,10 @@ int get_token(FILE *f, token_t **ref)
                     state = STATE_INTEGER;
                 }
                 else if (c == EOF)
-                    loading = 0;
+                {
+                    type = TYPE_EOF;
+                    state = STATE_END_LOAD;
+                }
                 else if (isspace(c)) { }
                 else
                     return print_error(ERR_LEX, &str, NULL, "neplatny znak \"%c\"", c);

@@ -12,6 +12,8 @@
 #ifndef _SYMTABLE_H_
 #define _SYMTABLE_H_
 
+#include "istring.h"
+
 enum data_type
 {
     DATA_NIL=0,
@@ -22,25 +24,6 @@ enum data_type
     DATA_NUM,
     DATA_BOOL,
 };
-
-typedef struct item
-{   
-    void *data;             /// univerzalni data
-    struct item *next;      /// ukazatel na dalsi polozku
-} item_t;
-
-typedef struct
-{   
-    item_t *first;  /// ukazatel na prvni prvek
-    item_t *last;   /// ukazatel na posledni prvek
-    int len;
-} list_t;
-
-void list_init(list_t *list);
-int list_insert(list_t *list, void *data);
-int list_compare_data(list_t l1, list_t l2);
-item_t *list_get_first(list_t *list);
-void list_destroy(list_t *list);
 
 // vycet moznych typu uzlu symtablu
 typedef enum{
@@ -55,10 +38,11 @@ typedef struct tree_node
     char *key;                      /// Nazev identifikatoru
     item_type type;                 /// Typ identifikatoru
     
+    int is_declared;                /// Bool, jestli byl deklarovan
     int is_defined;                 /// Bool, jestli byl definovan
-    int param_num;                  /// Pocet parametru funkce 
-    list_t lof_params;         /// datove typy parametru
-    list_t lof_rets;           /// navratove hodnoty parametru
+    enum data_type var_type;
+    Istring *lof_params;         /// datove typy parametru
+    Istring *lof_rets;           /// navratove hodnoty parametru
 
     struct tree_node *left;         /// Ukazatel na levy podstrom (klice mensi)
     struct tree_node *right;        /// Ukazatel na pravy podstrom (klice vetsi)
@@ -66,6 +50,24 @@ typedef struct tree_node
 } *node_ptr;
 
 extern node_ptr global_tree;
+
+/**
+ * @brief Porovna typovou kompatibilitu mezi datovymi typy
+ *
+ * @param caller Datovy typ vyrazu, ktery vola funkci
+ * @oaram callee Datovy typ, ktery funkce ocekava
+ * @return Nenulovou hodnotu pokud jsou nekompatibilni
+ */
+int type_control(enum data_type caller, enum data_type callee);
+
+/**
+ * @brief Porovna typovou kompatibilitu mezi vice vyrazy
+ *
+ * @param caller List datovych typu vyrazu, ktere volaji funkci
+ * @oaram callee List datovych typu, ktere funkce ocekava
+ * @return Nenulovou hodnotu pokud jsou nekompatibilni
+ */
+int lof_type_control(Istring *caller, Istring *callee);
 
 /**
  * @brief Inicializace stromu (frame), ktera vytvori specialni ROOT node s nealokovanym klicem NULL. 
@@ -82,12 +84,10 @@ int tree_init(node_ptr *tree);
  * @param tree Ukazatel na strom (frame), do ktereho se ulozi novy uzel (identifikator)
  * @param key String klic pridavaneho uzlu
  * @param type Typ noveho uzlu
+ * @param out  Vrati pres referenci nove vytvoreny uzel
  * @return Error kod
 */
-int tree_insert(node_ptr *tree, char *key, item_type type);
-
-int tree_add_param_to_symbol(node_ptr tree, enum data_type data);
-int tree_add_ret_to_symbol(node_ptr tree, enum data_type data);
+int tree_insert(node_ptr *tree, char *key, item_type type, node_ptr *out);
 
 /**
  * @brief Dealokace kompletniho stromu a bocnich podstromu

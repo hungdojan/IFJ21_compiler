@@ -13,10 +13,12 @@
 #ifndef _PARSER_H_
 #define _PARSER_H_
 
+#include "istring.h"
 #include "token.h"
 #include "symtable.h"
 #include "error.h"
 #include "exp_stack.h"
+#include "stack.h"
 #include <stdio.h>
 
 /*
@@ -33,23 +35,27 @@
         }                       \
     } while (0)                 \
 
-#define INSERT_SYMBOL(id_val, node_type)   \
+#define INSERT_SYMBOL(id_val, node_type, node_return)   \
     do\
     {\
         if (node_type == FUNC)\
-            res = tree_insert(&global_tree, id_val, node_type); \
+            res = tree_insert(&global_tree, id_val, node_type, &node_return); \
         else\
-            res = tree_insert(stack_top(&local_stack), id_val, node_type);\
+        {\
+            node_ptr _node = stack_top(&local_stack);\
+            res = tree_insert(&_node, id_val, node_type, &node_return);\
+        }\
         if (res != NO_ERR)  return res;     \
     } while (0)
 
-#define SEARCH_SYMBOL(id_val, node_return, err_type, node_type) \
+#define SEARCH_SYMBOL(id_val, node_type, node_return) \
     do\
     {\
         if (node_type == FUNC)\
-            node_return = tree_search(&global_tree, id_val);\
+            node_return = tree_search(global_tree, id_val);\
         else\
         {\
+            stack_reset_index(&local_stack);\
             while (stack_isempty(&local_stack))   \
             {\
                 node_return = tree_search(stack_top(&local_stack), id_val);\
@@ -72,30 +78,66 @@
 #define DESTROY_SCOPE()\
     do\
     {\
-        node_ptr __local_tree  = stack_pop_frame(&local_stack);\
-        tree_destroy(&__local_tree);\
+        if (!stack_isempty(&local_stack))\
+        {\
+            node_ptr __local_tree  = stack_pop(&local_stack);\
+            tree_destroy(&__local_tree);\
+        }\
     } while(0)
+
+#define LOAD_TOKEN(token)                  \
+    do                                     \
+    {                                      \
+        token_delete(token);               \
+        if ((res = get_token(global_file, token)) != NO_ERR)\
+            return res;     \
+    } while (0)
+
+#define LOAD_AND_CHECK(token, my_type)     \
+    do                                     \
+    {                                      \
+        token_delete(token);               \
+        if ((res = get_token(global_file, token)) != NO_ERR)\
+            return res;     \
+        if ((*token)->type != my_type)     \
+            return ERR_SYNTAX;             \
+    } while (0)
+
+#define CHECK_AND_LOAD(token, my_type)     \
+    do                                     \
+    {                                      \
+        if ((*token)->type == my_type)     \
+        {                                  \
+            token_delete(token);           \
+            if ((res = get_token(global_file, token)) != NO_ERR)\
+                return res; \
+        }                                  \
+        else                               \
+            return ERR_SYNTAX;             \
+    } while (0)
+
 extern FILE *global_file;
 
 int syntax_analysis(FILE *file);
 
 int prg(token_t **token);
-int lof_e(token_t **token, list_t *lof_data);
-int lof_e_n(token_t **token, list_t *lof_data);
-int parm(token_t **token, list_t *lof_data);
-int parm_n(token_t **token, list_t *lof_data);
-int ret(token_t **token, list_t *lof_data);
-int def_parm(token_t **token, list_t *lof_data);
-int def_parm_n(token_t **token, list_t *lof_data);
+int lof_e(token_t **token, Istring *data);
+int lof_e_n(token_t **token, Istring *data);
+int parm(token_t **token, Istring *data);
+int parm_n(token_t **token, Istring *data);
+int ret(token_t **token, Istring *data);
+int ret_n(token_t **token, Istring *data);
+int def_parm(token_t **token, Istring *data);
+int def_parm_n(token_t **token, Istring *data);
 int expression(token_t **token, enum data_type *data_t);
-int code(token_t **token, list_t *lof_data);
+int code(token_t **token, node_ptr *func_node);
 int var_init_assign(token_t **token, enum data_type *data_t);
-int else_block(token_t **token, list_t *lof_data);
-int func_or_assign(token_t **token, list_t *lof_data);
-int multi_var(token_t **token, list_t *lof_data);
-int multi_var_n(token_t **token, list_t *lof_data);
-int multi_e(token_t **token, list_t *lof_data);
-int multi_e_n(token_t **token, list_t *lof_data);
+int fun_or_exp(token_t **token, enum data_type *data_t);
+int else_block(token_t **token, node_ptr *func_node);
+int func_or_assign(token_t **token, node_ptr *node);
+int multi_var_n(token_t **token, Istring *data);
+int fun_or_multi_e(token_t **token, Istring *data);
+int multi_e_n(token_t **token, Istring *data);
 int d_type(token_t **token, enum data_type *data_t);
 
 #endif // _PARSER_H_
