@@ -242,6 +242,7 @@ void import_builtin_functions()
     /// %%param1 - univerzální první parametr funkce
     /// %%param2 - univerzální druhý parametr funkce
     /// %%param3 - univerzální třetí parametr funkce
+    /// %%cokoli - pomocné proměnné
 
     /// print reads
     fprintf(stdout,"LABEL reads\n"
@@ -281,6 +282,46 @@ void import_builtin_functions()
                    "POPFRAME\n"
                    "RETURN\n\n");
     /// print substr
+    fprintf(stdout,"LABEL substr\n"
+                   "PUSHFRAME\n"
+                   "DEFVAR TF@%%cond\n"
+                   "TYPE TF@%%cond LF@%%param1\n"
+                   "JUMPIFNEQ substr&exit TF@%%cond string@string\n"
+                   "TYPE TF@%%cond LF@%%param2\n"
+                   "JUMPIFNEQ substr&exit TF@%%cond string@int\n"
+                   "TYPE TF@%%cond LF@%%param3\n"
+                   "JUMPOFNEQ substr&exit TF@%%cond string@int\n"
+                   "DEFVAR LF@%%retval\n"
+                   "MOVE LF@%%retval string@\n"
+                   "DEFVAR TF@%%cond_length\n"
+                   "STRLEN TF@%%cond_length LF@%%param1\n"
+                   "LT TF@%%cond LF@%%param2 int@1\n"
+                   "JUMPIFEQ substr&return TF@%%cond bool@true\n"
+                   "GT TF@%%cond LF@%%param2 TF@%%cond_length\n"
+                   "JUMPIFEQ substr&return TF@%%cond bool@true\n"
+                   "LT TF@%%cond LF@%%param3 int@1\n"
+                   "JUMPIFEQ substr&return TF@%%cond bool@true\n"
+                   "GT TF@%%cond LF@%%param3 TF@%%cond_length\n"
+                   "JUMPIFEQ substr&return TF@%%cond bool@true\n"
+                   "GT TF@cond LF@%%param3 LF@%%param2\n"
+                   "JUMPIFEQ substr&return TF@%%cond bool@true\n"
+                   "DEFVAR TF@%%item\n"
+                   "DEFVAR TF@%%i\n"
+                   "SUB TF@%%i LF@%%param2 int@1\n"
+                   "DEFVAR TF@%%j\n"
+                   "SUB TF@%%j LF@%%param3 int@1\n"
+                   "LABEL substr@for\n"
+                   "GT TF@%%cond TF@%%i TF@%%j\n"
+                   "JUMPIFEQ substr&return TF@%%cond bool@true\n"
+                   "GETCHAR TF@%%item LF@%%param1 TF@%%i\n"
+                   "CONCAT LF@%%retval TF@%%item\n"
+                   "ADD TF@%%i TF@%%i int@1\n"
+                   "JUMP substr&for\n"
+                   "LABEL substr&return\n"
+                   "POPFRAME\n"
+                   "RETURN\n"
+                   "LABEL substr&exit\n"
+                   "EXIT int@8\n\n");
     /// print ord
     fprintf(stdout,"LABEL ord\n"
                    "PUSHFRAME\n"
@@ -291,9 +332,10 @@ void import_builtin_functions()
                    "JUMPIFNEQ ord&exit LF@%%retval string@int\n"
                    "MOVE LF@%%retval nil@nil\n"
                    "DEFVAR TF@%%cond_length\n"
-                   "LT TF@%%cond_length LF@%%param2 int@1\n"
+                   "LT TF@%%cond_length LF@%%param2 int@0\n"
                    "JUMPIFEQ ord&return TF@%%cond_length bool@true\n"
                    "STRLEN TF@%%cond_length LF@%%param1\n"
+                   "SUB TF@%%cond_length TF@%%cond_length int@1\n"
                    "GT TF@%%cond_length LF@%%param2 TF@%%cond_length\n"
                    "JUMPIFEQ ord&return TF@%%cond_length bool@true\n"
                    "STRI2INT LF@%%retval LF@%%param1 LF@%%param2\n"
