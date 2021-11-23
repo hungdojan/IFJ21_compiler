@@ -235,3 +235,37 @@ void queue_add(queue_t *q, code_t *item)
         q->last = item;
     }
 }
+
+void import_builtin_functions()
+{
+    /// print reads
+    fprintf(stdout,"LABEL reads\n"
+                   "PUSHFRAME\n"
+                   "DEFVAR LF@%%retval\n"
+                   "READ LF@%%retval string\n"
+                   "POPFRAME\n"
+                   "RETURN\n");
+
+    /// print readi
+    fprintf(stdout,"LABEL readi\n"
+                   "PUSHFRAME\n"
+                   "DEFVAR LF@%%retval\n"
+                   "READ LF@%%retval int\n"
+                   "POPFRAME\n"
+                   "RETURN\n");
+
+    /// print readn
+    fprintf(stdout,"LABEL readn\n"
+                   "PUSHFRAME\n"
+                   "DEFVAR LF@%%retval\n"
+                   "READ LF@%%retval number\n"
+                   "POPFRAME\n"
+                   "RETURN\n");
+
+    /// print write
+    /// print tointeger
+    /// print substr
+    /// print ord
+    /// print chr
+
+}
