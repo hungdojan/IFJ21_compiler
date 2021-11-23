@@ -95,7 +95,7 @@ int gen_code(queue_t *q, enum ins_type type, char* dest, char* first_op, char* s
 void queue_flush(queue_t *q);
 void queue_init(queue_t *q);
 void queue_destroy(queue_t *q);
-int queue_add(queue_t *q, code_t *item);
+void queue_add(queue_t *q, code_t *item);
 
 void import_builtin_functions();
 
