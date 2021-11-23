@@ -97,4 +97,6 @@ void queue_init(queue_t *q);
 void queue_destroy(queue_t *q);
 int queue_add(queue_t *q, code_t *item);
 
+void import_builtin_functions();
+
 #endif // _GEN_CODE_H_

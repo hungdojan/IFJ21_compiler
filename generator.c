@@ -235,3 +235,90 @@ void queue_add(queue_t *q, code_t *item)
         q->last = item;
     }
 }
+
+void import_builtin_functions()
+{
+    /// %%retval - univerzální návratová proměnná
+    /// %%param1 - univerzální první parametr funkce
+    /// %%param2 - univerzální druhý parametr funkce
+    /// %%param3 - univerzální třetí parametr funkce
+
+    /// print reads
+    fprintf(stdout,"LABEL reads\n"
+                   "PUSHFRAME\n"
+                   "DEFVAR LF@%%retval\n"
+                   "READ LF@%%retval string\n"
+                   "POPFRAME\n"
+                   "RETURN\n\n");
+
+    /// print readi
+    fprintf(stdout,"LABEL readi\n"
+                   "PUSHFRAME\n"
+                   "DEFVAR LF@%%retval\n"
+                   "READ LF@%%retval int\n"
+                   "POPFRAME\n"
+                   "RETURN\n\n");
+
+    /// print readn
+    fprintf(stdout,"LABEL readn\n"
+                   "PUSHFRAME\n"
+                   "DEFVAR LF@%%retval\n"
+                   "READ LF@%%retval number\n"
+                   "POPFRAME\n"
+                   "RETURN\n\n");
+
+    /// print write
+    /// print tointeger
+    fprintf(stdout,"LABEL tointeger\n"
+                   "PUSHFRAME\n"
+                   "DEFVAR LF@%%retval\n"
+                   "MOVE LF@%%retval nil@nil\n"
+                   "DEFVAR TF@%%cond\n"
+                   "TYPE TF@%%cond LF@%%param1\n"
+                   "JUMPIFEQ tointeger&return TF@%%cond bool@true\n"
+                   "FLOAT2INT LF@%%retval LF@%%param1\n"
+                   "LABEL tointeger&return\n"
+                   "POPFRAME\n"
+                   "RETURN\n\n");
+    /// print substr
+    /// print ord
+    fprintf(stdout,"LABEL ord\n"
+                   "PUSHFRAME\n"
+                   "DEFVAR LF@%%retval\n"
+                   "TYPE LF@%%retval LF@%%param1\n"
+                   "JUMPIFNEQ ord&exit LF@%%retval string@string\n"
+                   "TYPE LF@%%retval LF@%%param2\n"
+                   "JUMPIFNEQ ord&exit LF@%%retval string@int\n"
+                   "MOVE LF@%%retval nil@nil\n"
+                   "DEFVAR TF@%%cond_length\n"
+                   "LT TF@%%cond_length LF@%%param2 int@1\n"
+                   "JUMPIFEQ ord&return TF@%%cond_length bool@true\n"
+                   "STRLEN TF@%%cond_length LF@%%param1\n"
+                   "GT TF@%%cond_length LF@%%param2 TF@%%cond_length\n"
+                   "JUMPIFEQ ord&return TF@%%cond_length bool@true\n"
+                   "STRI2INT LF@%%retval LF@%%param1 LF@%%param2\n"
+                   "LABEL ord&return\n"
+                   "POPFRAME\n"
+                   "RETURN\n"
+                   "LABEL ord&exit\n"
+                   "EXIT int@8\n\n");
+    /// print chr
+    fprintf(stdout,"LABEL chr\n"
+                   "PUSHFRAME\n"
+                   "DEFVAR TF@%%cond\n"
+                   "TYPE TF@%%cond LF@%%param1\n"
+                   "JUMPIFNEQ chr&exit TF@%%cond string@int\n"
+                   "DEFVAR LF@%%retval\n"
+                   "MOVE LF@%%retval nil@nil\n"
+                   "LT TF@%%cond LF@%%param1 int@0\n"
+                   "JUMPIFEQ chr@return TF@%%cond bool@true\n"
+                   "GT TF@%%cond LF@%%param1 int@255\n"
+                   "JUMPIFEQ chr@return TF@%%cond bool@true\n"
+                   "INT2CHAR LF@%%retval LF@%%param1\n"
+                   "LABEL chr&return\n"
+                   "POPFRAME\n"
+                   "RETURN\n"
+                   "LABEL char&exit\n"
+                   "EXIT int@8\n\n");
+
+}
