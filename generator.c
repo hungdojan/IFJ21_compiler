@@ -201,7 +201,8 @@ void queue_flush(queue_t *q)
                 fprintf(stdout,"DPRINT %s\n",item->dest);
                 break;
             default:
-                // chyba
+                // error?
+                // the end of queue?
                 break;
         }
     }
@@ -245,7 +246,6 @@ void import_builtin_functions()
     /// %%cokoli - pomocné proměnné
 
 
-
     /// print reads
     fprintf(stdout,"LABEL reads\n"
                    "PUSHFRAME\n"
@@ -274,6 +274,24 @@ void import_builtin_functions()
                    "RETURN\n\n");
 
     /// print write
+    fprintf(stdout,"LABEL write\n"
+                   "PUSHFRAME\n"
+                   "DEFVAR TF@%%param1\n"
+                   "DEFVAR TF@%%cond\n"
+                   "DEFVAR TF@%%i\n"
+                   "POPS TF@%%i\n"
+                   "SUBS TF@%%i TF@%%i int@1\n"
+                   "LABEL write&cycle\n"
+                   "LT TF@%%cond TF@%%i int@0\n"
+                   "JUMPIFEQ write&return TF@%%cond bool@true\n"
+                   "POPS TF@%%param1\n"
+                   "WRITE TF@%%param1\n"
+                   "SUBS TF@%%i TF@%%i int@1\n"
+                   "JUMP write&cycle\n"
+                   "LABEL write&return\n"
+                   "POPFRAME\n"
+                   "RETURN\n\n");
+
     /// print tointeger
     fprintf(stdout,"LABEL tointeger\n"
                    "PUSHFRAME\n"
@@ -288,6 +306,7 @@ void import_builtin_functions()
                    "LABEL tointeger&return\n"
                    "POPFRAME\n"
                    "RETURN\n\n");
+
     /// print substr
     fprintf(stdout,"LABEL substr\n"
                    "PUSHFRAME\n"
@@ -335,6 +354,7 @@ void import_builtin_functions()
                    "RETURN\n"
                    "LABEL substr&exit\n"
                    "EXIT int@8\n\n");
+
     /// print ord
     fprintf(stdout,"LABEL ord\n"
                    "PUSHFRAME\n"
@@ -361,6 +381,7 @@ void import_builtin_functions()
                    "RETURN\n"
                    "LABEL ord&exit\n"
                    "EXIT int@8\n\n");
+
     /// print chr
     fprintf(stdout,"LABEL chr\n"
                    "PUSHFRAME\n"
@@ -381,5 +402,4 @@ void import_builtin_functions()
                    "RETURN\n"
                    "LABEL char&exit\n"
                    "EXIT int@8\n\n");
-
 }
