@@ -1,10 +1,10 @@
 /**
  * @file stack.c
- * @brief Definice funkci struktury specialniho zasobniku
+ * @brief Definice funkci struktury rozsireneho zasobniku
  *
- * @authors Petr Kolarik       (xkolar79)
- *          Hung Do            (xdohun00)
+ * @authors Hung Do            (xdohun00)
  *          David Kedra        (xkedra00)
+ *          Petr Kolarik       (xkolar79)
  *          Jaroslav Kvasnicka (xkvasn14)
  *
  * Reseni projektu IFJ a IAL, FIT VUT 21/22
@@ -18,15 +18,11 @@ int stack_init(frame_stack *stack)
 {
     if (stack != NULL)
     {
-        /* TODO:
-         * Naalokuje prostor pro pole zasobniku (stack->array) na velikost FRAME_STACK_SIZE
-         *      - FRAME_STACK_SIZE je definovany v "stack.h"
-         *      - pokud nechces resit inicializaci kazdeho prvni, pouzij misto malloc calloc
-         *          - viz. manualova stranka - man calloc -> void *calloc(int pocet_prvku, int velikost_prvku)
-         *      - v pripade neuspechu ihned vrati ERR_INTERNAL
-         * Nastavi oba indexy na -1; alokovanou velikost na FRAME_STACK_SIZE
-         * Vrati bezchybnou hodnotu (tedy 0)
-         */
+        stack->array = (node_ptr *)calloc(FRAME_STACK_SIZE, sizeof(node_ptr));
+        if (stack->array == NULL)
+            return ERR_INTERNAL;
+        stack->alloc_size = FRAME_STACK_SIZE;
+        stack->last_index = stack->curr_index = -1;
     }
     return 0;
 }
@@ -35,94 +31,65 @@ int stack_push_frame(frame_stack *stack, const node_ptr root)
 {
     if (stack != NULL)
     {
-        /* TODO:
-         * Nejprve zjisti, zda pridanim prvku nepresahne velikost alokovane pameti
-         *  -> last_index + 1 >= alloc_size
-         *  -> pokud ano, musi dojit k realokaci
-         *      Proces realokace:
-         *          void *ptr = realloc(ukazatel na pole, nova velikost);
-         *          if (ptr != NULL)    // alokace se povedla
-         *              ukazatel na pole = ptr;
-         *              aloc size = nova velikost
-         *          else
-         *              vrat ERR_INTERNAL
-         * nove realokovane pole musi byt 2x vetsi nez jeho predchudce
-         *
-         * priradi novy prvek na (root) na pozici last + 1
-         * incrementuje last a nastavi curr na last
-         * vrati bezchybny stav
-         */
+        if (stack->last_index + 1 >= stack->alloc_size)
+        {
+            void *temp = realloc(stack->array, stack->alloc_size * 2);
+            if (temp == NULL)
+                return ERR_INTERNAL;
+            stack->array = temp;
+            stack->alloc_size *= 2;
+        }
+        stack->array[++(stack->last_index)] = root;
+        stack->curr_index = stack->last_index;
     }
     return 0;
 }
 
 node_ptr stack_pop(frame_stack *stack)
 {
-    if (stack != NULL)
+    node_ptr node = NULL;
+    if (stack != NULL && stack->last_index >= 0)
     {
-        /* TODO:
-         * Pokud je zasobnik prazdny -> vrati NULL
-         * Jinak vrati ptr na pozici last
-         * Dekrementuje last; nastavi curr na last
-         */
+        node = stack->array[(stack->last_index)--];
+        stack->curr_index = stack->last_index;
     }
-    return NULL;
+    return node;
 }
 
 node_ptr stack_top(const frame_stack *stack)
 {
-    if (stack != NULL)
-    {
-        /* TODO:
-         * Pokud je zasobnik prazdny -> vrati NULL
-         * Jinak vrati ptr, na ktery ukazuje curr
-         */
-    }
-    return NULL;
+    node_ptr node = NULL;
+    if (stack != NULL && stack->curr_index >= 0)
+        node = stack->array[stack->curr_index];
+    return node;
 }
 
 int stack_isempty(const frame_stack *stack)
 {
-    if (stack != NULL)
-    {
-        /* TODO:
-         * Asi neni moc nad cim diskutovat
-         * 1 == TRUE; 0 == FALSE
-         */
-    }
+    if (stack != NULL && stack->last_index >= 0)
+        return 0;
     return 1;
 }
 
 void stack_reset_index(frame_stack *stack)
 {
     if (stack != NULL)
-    {
-        /* TODO:
-         * Nastavi hodnotu curr na last
-         */
-    }
+        stack->curr_index = stack->last_index;
 }
 
 void stack_dec_index(frame_stack *stack)
 {
     if (stack != NULL)
-    {
-        /* TODO:
-         * Dekrementuje hodnotu stack
-         * Pozor na krajni hodnoty
-         */
-    }
+        (stack->curr_index)--;
 }
 
 void stack_destroy(frame_stack *stack, void (*clear_table_func)(node_ptr *root))
 {
     if (stack != NULL)
     {
-        /* TODO:
-         * Projde vsechny prvky pole a nad kazdym prvkem zavola fci clear_table_func
-         * (*clear_table_func)(&stack->array[i])
-         * uvolni pamet pro cele pole
-         */
+        for (int i = stack->last_index; i >= 0; i--)
+            (*clear_table_func)(&stack->array[i]);
+        free(stack->array);
     }
 }
 

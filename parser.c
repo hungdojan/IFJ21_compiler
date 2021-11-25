@@ -1,18 +1,5 @@
-#include "scanner.h"
+#include "expression.h"
 #include "parser.h"
-#include "symtable.h"
-#include "stack.h"
-#include "token.h"
-#include "error.h"
-
-#define NO_ERR 0
-#define CHECK_TOKEN(token, TYPE) \
-    do { \
-        if ((*token)->type == TYPE)  \
-            get_token(token);       \
-        else                        \
-            return ERR_SYNTAX;      \
-    } while (0)
 
 /**
  * @brief Implementace <prg>
@@ -22,575 +9,222 @@
  */
 int prg(token_t **token)
 {
+    if (token == NULL || *token == NULL)    return ERR_INTERNAL;
     int res = NO_ERR;
+    Istring lof_data = { 0, };
+    node_ptr node = NULL;
     INIT_TOKEN(token, res);
 
-    switch((*token)->type)
+    switch ((*token)->type)
     {
-        // <prg> -> eps
+        // <prg> -> eof <prg>
         case TYPE_EOF:
             token_delete(token);
             break;
 
-        // <prg> -> require "string" <prg>
+            // <prg> -> require "string" <prg>
         case TYPE_KW_REQUIRE:
-            get_token(token, f);
-
             // "string"
-            CHECK_TOKEN(token, TYPE_STRING);
+            LOAD_AND_CHECK(token, TYPE_STRING);
 
+            LOAD_TOKEN(token);
             return prg(token);
 
-        // <prg> -> id <func_or_assign> <prg>
-        case TYPE_IDENTIFIER:
-            get_token(token, f);
-
-            // func_or_assign
-            res = func_or_assign(token);
-            if (res != NO_ERR)
-                return res;
-
-            // prg
-            return prg(token);
-
-        // <prg> -> return <ret_exp>
-        case TYPE_KW_RETURN:
-            get_token(token, f);
-
-            // ret_exp
-            return ret_exp(token);
-
-        // <prg> -> <func_dec> <prg>
+            // <prg> -> global id : function ( <parm> ) <ret> <prg>
         case TYPE_KW_GLOBAL:
+            LOAD_AND_CHECK(token, TYPE_IDENTIFIER);             // id
 
-            //func_dec
-            res = func_dec(token);
-            if (res != NO_ERR)
-                return res;
-            
-            // prg
+            INSERT_SYMBOL((*token)->value.str_val, FUNC, node);
+
+            LOAD_TOKEN(token);
+
+            CHECK_AND_LOAD(token, TYPE_DECLARE);                // :
+
+            CHECK_AND_LOAD(token, TYPE_KW_FUNCTION);            // function
+
+            CHECK_AND_LOAD(token, TYPE_LEFT_PARENTHESES);       // (
+            // inicializace a pridani datovych typ
+            if ((res = string_Init(&node->lof_params)) != NO_ERR)    return res;
+            if ((res = parm(token, &node->lof_params)) != NO_ERR)    return res;
+
+            CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);      // )
+
+            // inicializace a pridani datovych typ
+            if ((res = string_Init(&node->lof_rets)) != NO_ERR)      return res;
+            if ((res = ret(token, &node->lof_rets, false)) != NO_ERR)       return res;
+
+            // zapis flagu, ze funkce byla jiz deklarovana
+            node->is_declared = 1;
+
             return prg(token);
 
-        // <prg> -> <func_def> <prg>
+            // <prg> -> id ( <lof_e> ) <prg>
+        case TYPE_IDENTIFIER:
+            SEARCH_SYMBOL((*token)->value.str_val, FUNC, node);
+            if (node == NULL)   return ERR_SEM_DEF;
+            LOAD_TOKEN(token);
+            CHECK_AND_LOAD(token, TYPE_LEFT_PARENTHESES);       // (
+            int index = 0;
+
+            // TODO: GEN_CODE(CREATEFRAME, NULL, NULL, NULL)
+
+            // inicializace a pridani datovych typu
+            if ((res = lof_e(token, node, &index, 1)) != NO_ERR)        goto error;
+
+            // TODO: GEN_CODE(PUSHS, "int@$index", NULL, NULL)
+
+            CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);      // )
+
+            // TODO: GEN_CODE(call, NULL, NULL, function_name)
+            return prg(token);
+
+            // <prg> -> function id ( <def_parm> ) <ret> <code> end <prg>
         case TYPE_KW_FUNCTION:
 
-            //func_def
-            res = func_def(token);
-            if (res != NO_ERR)
-                return res;
-            
-            // prg
+            LOAD_AND_CHECK(token, TYPE_IDENTIFIER);             // id
+            SEARCH_SYMBOL((*token)->value.str_val, FUNC, node);
+
+            // TODO: GEN_CODE(label, NULL, NULL, function_name)
+            // TODO: GEN_CODE(PUSHFRAME, NULL, NULL, NULL)
+
+            LOAD_TOKEN(token);
+
+            // funkce jeste neexistuje
+            if (node == NULL)
+                INSERT_SYMBOL((*token)->value.str_val, FUNC, node);
+            else
+                if (node->is_defined)   return ERR_SEM_DEF;
+
+            CHECK_AND_LOAD(token, TYPE_LEFT_PARENTHESES);       // (
+
+            INIT_SCOPE();   // potreba nacist jmena promennych
+
+            // inicializace a pridani datovych typ
+            if (!node->is_declared)
+            {
+                // <parm>
+                if ((res = string_Init(&node->lof_params)) != NO_ERR)        return res;
+                if ((res = def_parm(token, &node->lof_params)) != NO_ERR)    return res;
+
+                CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);  // )
+
+                // inicializace a pridani datovych typ
+                // <ret>
+                if ((res = string_Init(&node->lof_rets)) != NO_ERR)  return res;
+                if ((res = ret(token, &node->lof_rets, true)) != NO_ERR)   return res;
+                node->is_declared = 1;
+            }
+            else    // jiz deklarovana funkce
+            {
+                // <parm>
+                if ((res = string_Init(&lof_data)) != NO_ERR)       goto error;
+                if ((res = def_parm(token, &lof_data)) != NO_ERR)   goto error;
+                // typova kontrola
+                if (string_compare(&node->lof_params, &lof_data))    { res = ERR_SEM_DEF; goto error; }
+                string_Free(&lof_data);
+
+                CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);  // )
+                // <ret>
+                if ((res = string_Init(&lof_data)) != NO_ERR)       goto error;
+                if ((res = ret(token, &lof_data, true)) != NO_ERR)   goto error;
+                // typova kontrola
+                if (string_compare(&node->lof_rets, &lof_data))      { res = ERR_SEM_DEF; goto error; }
+                string_Free(&lof_data);
+            }
+
+            // TODO: pripravit navratove promenne??
+
+            if ((res = code(token, &node)) != NO_ERR)   goto error;
+
+            DESTROY_SCOPE();
+            // TODO: GEN_CODE(POPFRAME, NULL, NULL, NULL);
+            // TODO: GEN_CODE(RETURN, NULL, NULL, NULL);
+
+            // TODO: check whether ret types match
+
+            CHECK_AND_LOAD(token, TYPE_KW_END);                 // end
+            node->is_defined = 1;
+
             return prg(token);
 
-        // <prg> -> <var_init> <prg>
-        case TYPE_KW_LOCAL:
-
-            //var_init
-            res = var_init(token);
-            if (res != NO_ERR)
-                return res;
-            
-            // prg
-            return prg(token);
-
-        // <prg> -> <if_block> <prg>
-        case TYPE_KW_IF:
-
-            //if_block
-            res = if_block(token);
-            if (res != NO_ERR)
-                return res;
-            
-            // prg
-            return prg(token);
-
-        // <prg> -> <while_block> <prg>
-        case TYPE_KW_WHILE:
-
-            //while_block
-            res = while_block(token);
-            if (res != NO_ERR)
-                return res;
-            
-            // prg
-            return prg(token);
-
-        // <prg> -> <repeat_block> <prg>
-        case TYPE_KW_REPEAT:
-
-            //repeat_block
-            res = repeat_block(token);
-            if (res != NO_ERR)
-                return res;
-            
-            // prg
-            return prg(token);
-
-        // <prg> -> <for_block> <prg>
-        case TYPE_KW_FOR:
-
-            //for_block
-            res = for_block(token);
-            if (res != NO_ERR)
-                return res;
-            
-            // prg
-            return prg(token);
-
         default:
             res = ERR_SYNTAX;
             break;
     }
     return res;
-}
-
-int func_dec(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <func_dec> -> global id : function ( <parm> ) : <ret>
-        case TYPE_KW_GLOBAL:
-            get_token(token, f);
-
-            // id
-            CHECK_TOKEN(token, TYPE_IDENTIFIER);
-
-            // :
-            CHECK_TOKEN(token, TYPE_DECLARE);
-
-            // function
-            CHECK_TOKEN(token, TYPE_KW_FUNCTION);
-
-            CHECK_TOKEN(token, TYPE_LEFT_PARENTHESES);
-
-            res = parm(token);
-            if (res != NO_ERR)
-                return res;
-
-            CHECK_TOKEN(token, TYPE_RIGHT_PARENTHESES);
-
-            CHECK_TOKEN(token, TYPE_DECLARE);
-
-            return ret(token);
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
+error:
+    string_Free(&lof_data);
     return res;
 }
-int func_def(token_t **token)
+
+// TODO: predavat list ocekavanych parametru + index -> pro parsovani pri volani funkce
+// id se bude prirazovat na ramec, semantika bude probihat na teto urovni (nebude se nic vracet)
+int lof_e(token_t **token, node_ptr node, int *index, bool is_parm)
 {
+    if (node == NULL)   return ERR_INTERNAL;
     int res = NO_ERR;
+    exp_nterm_t *final_exp = NULL;
+    enum data_type data_t = DATA_NIL;
+    Istring *exp = is_parm ? &node->lof_params         : &node->lof_rets;
     INIT_TOKEN(token, res);
 
-    switch((*token)->type)
+    switch ((*token)->type)
     {
-        // <func_def> -> function id ( <args> ) : <ret> <code> end
-        case TYPE_KW_FUNCTION:
-            get_token(token, f);
-            
-            // id
-            CHECK_TOKEN(token, TYPE_IDENTIFIER);
-
-            // (
-            CHECK_TOKEN(token, TYPE_LEFT_PARENTHESES);
-
-            // args
-            res = args(token);
-            if (res != NO_ERR)
-                return res;
-
-            // )
-            CHECK_TOKEN(token, TYPE_RIGHT_PARENTHESES);
-
-            // :
-            CHECK_TOKEN(token, TYPE_DECLARE);
-
-            // ret
-            res = ret(token);
-            if (res != NO_ERR)
-                return res;
-
-            // code
-            res = code(token);
-            if (res != NO_ERR)
-                return res;
-
-            // end
-            CHECK_TOKEN(token, TYPE_KW_END);
-
-            break;
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
-int if_block(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <if_block> -> if <expression> then <code > <elif_block> <else_block> end
-        case TYPE_KW_IF:
-            get_token(token, f);
-
-            // expression
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            // then
-            CHECK_TOKEN(token, TYPE_KW_THEN);
-
-            // code
-            res = code(token);
-            if (res != NO_ERR)
-                return res;
-
-            // elif
-            res = elif_block(token);
-            if (res != NO_ERR)
-                return res;
-
-            // else
-            res = else_block(token);
-            if (res != NO_ERR)
-                return res;
-
-            // end
-            CHECK_TOKEN(token, TYPE_KW_END);
-
-            break;
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
-int while_block(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <while_block> -> while <expression> do <code> end
-        case TYPE_KW_WHILE:
-            get_token(token, f);
-
-            // expression
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            // do
-            CHECK_TOKEN(token, TYPE_KW_DO);
-
-            // code
-            res = code(token);
-            if (res != NO_ERR)
-                return res;
-
-            // end
-            CHECK_TOKEN(token, TYPE_KW_END);
-
-            break;
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
-int repeat_block(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <repeat_block> -> repeat <code> until ( <expresssion )
-        case TYPE_KW_REPEAT:
-            get_token(token, f);
-
-            // code
-            res = code(token);
-            if (res != NO_ERR)
-                return res;
-
-            // until
-            CHECK_TOKEN(token, TYPE_KW_UNTIL);
-
-            // (
-            CHECK_TOKEN(token, TYPE_LEFT_PARENTHESES);
-
-            // exp
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            // )
-            CHECK_TOKEN(token, TYPE_RIGHT_PARENTHESES);
-
-            break;
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
-int for_block(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <for_block> -> for <expression> , <expression> <exp_opt> do <code> end
-        case TYPE_KW_FOR:
-            get_token(token, f);
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            CHECK_TOKEN(token, TYPE_COMMA);
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            res = exp_opt(token);
-            if (res != NO_ERR)
-                return res;
-
-            CHECK_TOKEN(token, TYPE_KW_DO);
-
-            res = code(token);
-            if (res != NO_ERR)
-                return res;
-
-            CHECK_TOKEN(token, TYPE_KW_END);
-
-            break;
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
-int var_init(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <var_init> -> local id : <d_type> <var_init_assign>
-        case TYPE_KW_LOCAL:
-            get_token(token, f);
-
-            CHECK_TOKEN(token, TYPE_IDENTIFIER);
-
-            CHECK_TOKEN(token, TYPE_DECLARE);
-
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-
-            return var_init_assign(token);
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
-int func_or_assign(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <func_or_assign> -> ( <func_args> )
-        case TYPE_LEFT_PARENTHESES:
-            get_token(token, f);
-
-            res = func_args(token);
-            if (res != NO_ERR)
-                return res;
-
-            CHECK_TOKEN(token, TYPE_RIGHT_PARENTHESES);
-
-            break;
-
-        // <func_or_assign> -> <multi_var> = <expression> <multi_exp>
-        case TYPE_COMMA:
-
-            res = multi_var(token);
-            if (res != NO_ERR)
-                return res;
-
-            CHECK_TOKEN(token, TYPE_ASSIGN);
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            return multi_exp(token);
-
-        // <func_or_assign> -> <multi_var> = <expression> <multi_exp>
-        case TYPE_ASSIGN:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            return multi_exp(token);
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
-int ret_exp(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <ret_exp> -> eps
-        case TYPE_EOF:
-            token_delete(token);
-            break;
-
-        // <ret_exp> -> <expression> <ret_exp_n>
-        case TYPE_IDENTIFIER:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_exp_n(token);
-
-        // <ret_exp> -> eps
-        case TYPE_KW_ELSEIF:
-            break;
-
-        // <ret_exp> -> eps
-        case TYPE_KW_ELSE:
-            break;
-
-        // <ret_exp> -> eps
-        case TYPE_KW_UNTIL:
-            break;
-
-        // <ret_exp> -> <expression> <ret_exp_n>
-        case TYPE_LEFT_PARENTHESES:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_exp_n(token);
-
-        // <ret_exp> -> <expression> <ret_exp_n>
+        // <lof_e> -> <expression> <lof_e_n>
         case TYPE_STRING:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_exp_n(token);
-
-        // <ret_exp> -> <expression> <ret_exp_n>
-        case TYPE_NUMBER:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_exp_n(token);
-
-        // <ret_exp> -> <expression> <ret_exp_n>
+        case TYPE_LEFT_PARENTHESES:
+        case TYPE_BOOLEAN:
         case TYPE_INTEGER:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_exp_n(token);
-
-        // <ret_exp> -> <expression> <ret_exp_n>
         case TYPE_KW_NIL:
+        case TYPE_NUMBER:
+        case TYPE_IDENTIFIER:
 
-            res = expression(token);
-            if (res != NO_ERR)
+            // predava se moc argumentu
+            if (!node->unlim_parms && is_parm && exp->length == 0)           return ERR_SEM_FUNC;
+            // if (*index >= exp->length - 1)                              return ERR_SEM_FUNC;
+
+            // ziska datovy typ vyrazu a porovna to s ocekavanym
+            if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)           return res;
+
+            // TODO: jeste zkontrolovat!!!
+            if (type_control(data_t, (exp->value)[*index]))
+            {
+                exp_nterm_destroy(&final_exp);
+                return ERR_SEM_FUNC;
+            }
+
+            if (data_t == DATA_INT && (exp->value)[*index] == DATA_NIL)
+                ; // TODO: pretypovani
+
+            // TODO: MOVE TMP_EXP TO PARM$index+1
+            *index += 1;
+            // TODO: add to passing argumets ???
+
+            if (!is_parm)
+                ; // TODO: GEN_CODE(MOVE, "_tmp$temp_index", NULL, "retval$index");
+                  // TODO: pokud chybi -> doplnim nil
+            generate_code_nterm(&final_exp);
+            exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
+            if ((res = lof_e_n(token, node, index, is_parm)) != NO_ERR)
                 return res;
-            
-            return ret_exp_n(token);
 
-        // <ret_exp> -> <expression> <ret_exp_n>
-        case TYPE_STRLEN:
+            // XXX: bude prace se zasobnikem
+            // int temp_index = gener_code_exp(final_exp)
+            if (is_parm)
+                ; // TODO: GEN_CODE(PUSHS, NULL, NULL, "_tmp$temp_index")
+            break;
 
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_exp_n(token);
-
-        // <ret_exp> -> <expression> <ret_exp_n>
-        case TYPE_KW_TRUE:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_exp_n(token);
-
-        // <ret_exp> -> <expression> <ret_exp_n>
-        case TYPE_KW_FALSE:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_exp_n(token);
-
-        // <ret_exp> -> <expression> <ret_exp_n>
-        case TYPE_KW_NOT:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_exp_n(token);
-
-        // <ret_exp> -> <expression> <ret_exp_n>
-        case TYPE_CONCAT:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_exp_n(token);
-
-        // <ret_exp> -> eps
+            // <lof_e> -> eps
         case TYPE_KW_END:
+        case TYPE_RIGHT_PARENTHESES:
+        case TYPE_KW_LOCAL:
+        case TYPE_KW_IF:
+        case TYPE_KW_WHILE:
+        case TYPE_KW_RETURN:
+        case TYPE_KW_ELSE:
+            // predalo male argumentu
+            if (!node->unlim_parms && is_parm && exp->length != 0)       return ERR_SEM_FUNC; 
+            // TODO: pro !is_parm je potreba donastavit nil hodnoty pri generovani -> mozno udelat az venku
             break;
 
         default:
@@ -599,52 +233,93 @@ int ret_exp(token_t **token)
     }
     return res;
 }
-int parm(token_t **token)
+
+int lof_e_n(token_t **token, node_ptr node, int *index, bool is_parm)
 {
+    if (node == NULL)   return ERR_INTERNAL;
     int res = NO_ERR;
+    enum data_type data_t = DATA_NIL;
+    exp_nterm_t *final_exp = NULL;
+    Istring *exp = is_parm ? &node->lof_params         : &node->lof_rets;
     INIT_TOKEN(token, res);
 
-    switch((*token)->type)
+    switch ((*token)->type)
+    {
+        // <lof_e_n> -> eps
+        case TYPE_IDENTIFIER:
+        case TYPE_RIGHT_PARENTHESES:
+        case TYPE_KW_END:
+        case TYPE_KW_LOCAL:
+        case TYPE_KW_IF:
+        case TYPE_KW_WHILE:
+        case TYPE_KW_RETURN:
+        case TYPE_KW_ELSE:
+            // pokud se ocekava vic parametru
+            if (!node->unlim_parms && is_parm && *index != exp->length - 1)       return ERR_SEM_FUNC; 
+            // TODO: pro !is_parm je potreba donastavit nil hodnoty pri generovani -> mozno udelat az venku
+            // if ((res = string_Add_Char(lof_data, DATA_NIL)) != NO_ERR)  return res;
+            break;
+
+            // <lof_e_n> -> , <expression> <lof_e_n>
+        case TYPE_COMMA:
+            LOAD_TOKEN(token);
+            // pokud se ocekava mene parametru
+            if (!node->unlim_parms && *index > exp->length - 1)       return ERR_SEM_FUNC;
+
+            if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)           return res;
+
+            // TODO: GEN_CODE
+
+            if (type_control(data_t, (exp->value)[*index]))             return ERR_SEM_FUNC;
+            if (data_t == DATA_INT && (exp->value)[*index] == DATA_NUM)
+                ; // TODO: pretypovani
+
+            // TODO: MOVE TMP_EXP TO PARM$index+1
+            *index += 1;
+            // TODO: add to passing argumets ???
+
+            if (!is_parm)
+                ; // TODO: GEN_CODE(MOVE, "_tmp$temp_index", NULL, "retval$index");
+
+            generate_code_nterm(&final_exp);
+            exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
+            if ((res = lof_e_n(token, node, index, is_parm)) != NO_ERR)
+                return res;
+
+            // int temp_index = gener_code_exp(final_exp)
+            if (is_parm)
+                ; // TODO: GEN_CODE(PUSHS, NULL, NULL, "_tmp$temp_index")
+            break;
+        default:
+            res = ERR_SYNTAX;
+            break;
+    }
+    return res;
+}
+
+int parm(token_t **token, Istring *lof_data)
+{
+    int res = NO_ERR;
+    enum data_type data_t;
+    INIT_TOKEN(token, res);
+
+    switch ((*token)->type)
     {
         // <parm> -> eps
         case TYPE_RIGHT_PARENTHESES:
+            if ((res = string_Add_Char(lof_data, DATA_NIL)) != NO_ERR) return res;
             break;
 
-        // <parm> -> <d_type> <parm_n>
+            // <parm> -> <d_type> <parm_n>
         case TYPE_KW_STRING:
-
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return parm_n(token);
-
-        // <parm> -> <d_type> <parm_n>
         case TYPE_KW_INTEGER:
-
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return parm_n(token);
-
-        // <parm> -> <d_type> <parm_n>
         case TYPE_KW_NUMBER:
-
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return parm_n(token);
-
-        // <parm> -> <d_type> <parm_n>
         case TYPE_KW_BOOLEAN:
 
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return parm_n(token);
+            if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
+            if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
+
+            return parm_n(token, lof_data);
 
         default:
             res = ERR_SYNTAX;
@@ -652,101 +327,72 @@ int parm(token_t **token)
     }
     return res;
 }
-int ret(token_t **token)
+
+int parm_n(token_t **token, Istring *lof_data)
 {
     int res = NO_ERR;
+    enum data_type data_t;
     INIT_TOKEN(token, res);
 
-    switch((*token)->type)
+    switch ((*token)->type)
+    {
+        // <parm_n> -> , <d_type> <parm_n>
+        case TYPE_COMMA:
+            LOAD_TOKEN(token);
+
+            if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
+            if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
+
+            return parm_n(token, lof_data);
+
+            // <parm_n> -> eps
+        case TYPE_RIGHT_PARENTHESES:
+            if ((res = string_Add_Char(lof_data, DATA_NIL)) != NO_ERR) return res;
+            break;
+
+        default:
+            res = ERR_SYNTAX;
+            break;
+    }
+    return res;
+}
+
+int ret(token_t **token, Istring *lof_data, bool gen_code)
+{
+    int res = NO_ERR;
+    enum data_type data_t = DATA_NIL;
+    INIT_TOKEN(token, res);
+
+    switch ((*token)->type)
     {
         // <ret> -> eps
         case TYPE_EOF:
-            token_delete(token);
-            break;
-
-        // <ret> -> eps
         case TYPE_KW_REQUIRE:
-            break;
-
-        // <ret> -> eps
-        case TYPE_IDENTIFIER:
-            break;
-
-        // <ret> -> eps
-        case TYPE_KW_RETURN:
-            break;
-
-        // <ret> -> eps
         case TYPE_KW_GLOBAL:
-            break;
-
-        // <ret> -> eps
+        case TYPE_IDENTIFIER:
         case TYPE_KW_FUNCTION:
-            break;
-
-        // <ret> -> eps
-        case TYPE_KW_LOCAL:
-            break;
-
-        // <ret> -> eps
-        case TYPE_KW_IF:
-            break;
-
-        // <ret> -> eps
-        case TYPE_KW_WHILE:
-            break;
-
-        // <ret> -> eps
-        case TYPE_KW_REPEAT:
-            break;
-
-        // <ret> -> eps
-        case TYPE_KW_FOR:
-            break;
-
-        // <ret> -> eps
         case TYPE_KW_END:
+        case TYPE_KW_LOCAL:
+        case TYPE_KW_IF:
+        case TYPE_KW_WHILE:
+        case TYPE_KW_RETURN:
+            if ((res = string_Add_Char(lof_data, DATA_NIL)) != NO_ERR) return res;
             break;
 
-        // <ret> -> <d_type> <ret_n>
-        case TYPE_KW_STRING:
+            // <ret> -> : <d_type> <ret_n>
+        case TYPE_DECLARE:
+            LOAD_TOKEN(token);
 
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_n(token);
+            if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
+            if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
 
-        // <ret> -> <d_type> <ret_n>
-        case TYPE_KW_INTEGER:
+            if (gen_code)
+            {
+                // TODO: GEN_CODE(DEFVAR, retvar$i1, NULL, NULL)
+                // TODO: GEN_CODE(MOVE, nil@nil, NULL, retvar$1)
+            }
 
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_n(token);
-
-        // <ret> -> <d_type> <ret_n>
-        case TYPE_KW_NUMBER:
-
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_n(token);
-
-        // <ret> -> <d_type> <ret_n>
-        case TYPE_KW_BOOLEAN:
-
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_n(token);
-
-        // <ret> -> eps
-        case TYPE_KW_BREAK:
-            break;
+            return ret_n(token, lof_data, gen_code, 1);
 
         default:
             res = ERR_SYNTAX;
@@ -754,165 +400,78 @@ int ret(token_t **token)
     }
     return res;
 }
-int d_type(token_t **token)
+
+int ret_n(token_t **token, Istring *lof_data, bool gen_code, int index)
 {
     int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <d_type> -> string
-        case TYPE_KW_STRING:
-            get_token(token, f);
-            // TODO:
-            break;
-
-        // <d_type> -> integer
-        case TYPE_KW_INTEGER:
-            get_token(token, f);
-            // TODO:
-            break;
-
-        // <d_type> -> number
-        case TYPE_KW_NUMBER:
-            get_token(token, f);
-            // TODO:
-            break;
-
-        // <d_type> -> boolean
-        case TYPE_KW_BOOLEAN:
-            get_token(token, f);
-            // TODO:
-            break;
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
-int parm_n(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <parm_n> -> <d_type> <parm_n>
-        case TYPE_COMMA:
-
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-
-            return parm_n(token);
-
-        // <parm_n> -> eps
-        case TYPE_RIGHT_PARENTHESES:
-            break;
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
-int ret_n(token_t **token)
-{
-    int res = NO_ERR;
+    enum data_type data_t = DATA_NIL;
     INIT_TOKEN(token, res);
 
     switch((*token)->type)
     {
         // <ret_n> -> eps
         case TYPE_EOF:
-            token_delete(token);
-            break;
-
-        // <ret_n> -> eps
         case TYPE_KW_REQUIRE:
-            break;
-
-        // <ret_n> -> eps
-        case TYPE_IDENTIFIER:
-            break;
-
-        // <ret_n> -> eps
-        case TYPE_KW_RETURN:
-            break;
-
-        // <ret_n> -> eps
         case TYPE_KW_GLOBAL:
-            break;
-
-        // <ret_n> -> eps
-        case TYPE_KW_FUNCTION:
-            break;
-
-        // <ret_n> -> eps
-        case TYPE_KW_LOCAL:
-            break;
-
-        // <ret_n> -> eps
-        case TYPE_KW_IF:
-            break;
-
-        // <ret_n> -> eps
-        case TYPE_KW_WHILE:
-            break;
-
-        // <ret_n> -> eps
-        case TYPE_KW_REPEAT:
-            break;
-
-        // <ret_n> -> eps
-        case TYPE_KW_FOR:
-            break;
-
-        // <ret_n> -> eps
-        case TYPE_KW_END:
-            break;
-
-        // <ret_n> -> eps
-        case TYPE_KW_BREAK:
-            break;
-
-        // <ret_n> -> <d_type> <ret_n>
-        case TYPE_COMMA:
-
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return ret_n(token);
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
-int args(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <args> -> id : <d_type> <args_n>
         case TYPE_IDENTIFIER:
-            get_token(token, f);
+        case TYPE_KW_FUNCTION:
+        case TYPE_KW_END:
+        case TYPE_KW_LOCAL:
+        case TYPE_KW_IF:
+        case TYPE_KW_WHILE:
+        case TYPE_KW_RETURN:
+            if ((res = string_Add_Char(lof_data, DATA_NIL)) != NO_ERR)  return res;
+            break;
+            // <ret_n> -> , <d_type> <ret_n>
+        case TYPE_COMMA:
+            LOAD_TOKEN(token);
+            if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
+            if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
 
-            CHECK_TOKEN(token, TYPE_DECLARE);
+            if (gen_code)
+            {
+                // TODO: GEN_CODE(DEFVAR, retvar$i1, NULL, NULL)
+                // TODO: GEN_CODE(MOVE, nil@nil, NULL, retvar$1)
+            }
 
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return args_n(token);
+            return ret_n(token, lof_data, gen_code, index + 1);
+ 
+        default:
+            res = ERR_SYNTAX;
+            break;
+    }
+    return res;
+}
 
-        // <args> -> eps
+int def_parm(token_t **token, Istring *lof_data)
+{
+    int res = NO_ERR;
+    enum data_type data_t;
+    node_ptr node;
+    INIT_TOKEN(token, res);
+
+    switch ((*token)->type)
+    {
+        // <def_parm> -> id : <d_type> <def_parm_n>
+        case TYPE_IDENTIFIER:
+            // pridava parametr do TS
+            INSERT_SYMBOL((*token)->value.str_val, VAR, node);
+            LOAD_TOKEN(token);
+
+            CHECK_AND_LOAD(token, TYPE_DECLARE);    // :
+
+            if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
+            node->var_type = data_t;
+            if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
+
+            // TODO: GEN_CODE(DEFVAR, id, NULL, NULL);
+            // TODO: GEN_CODE(POPS, NULL, NULL, id);
+
+            return def_parm_n(token, lof_data);
+
+            // <def_parm> -> eps
         case TYPE_RIGHT_PARENTHESES:
+            if ((res = string_Add_Char(lof_data, DATA_NIL)) != NO_ERR) return res;
             break;
 
         default:
@@ -921,259 +480,330 @@ int args(token_t **token)
     }
     return res;
 }
-int code(token_t **token)
+
+int def_parm_n(token_t **token, Istring *lof_data)
 {
     int res = NO_ERR;
+    enum data_type data_t;
+    node_ptr node;
     INIT_TOKEN(token, res);
 
-    switch((*token)->type)
+    switch ((*token)->type)
+    {
+        // <def_parm_n> -> eps
+        case TYPE_RIGHT_PARENTHESES:
+            if ((res = string_Add_Char(lof_data, DATA_NIL)) != NO_ERR) return res;
+            break;
+
+            // <def_parm_n> -> , id : <d_type> <def_parm_n>
+        case TYPE_COMMA:
+            // pridava parametr do TS
+            LOAD_AND_CHECK(token, TYPE_IDENTIFIER);             // id
+            INSERT_SYMBOL((*token)->value.str_val, VAR, node);
+
+            LOAD_TOKEN(token);
+            CHECK_AND_LOAD(token, TYPE_DECLARE);                // :
+
+            if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
+            node->var_type = data_t;
+            if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
+
+            // TODO: GEN_CODE(DEFVAR, id, NULL, NULL);
+            // TODO: GEN_CODE(POPS, NULL, NULL, id);
+
+            return def_parm_n(token, lof_data);
+
+        default:
+            res = ERR_SYNTAX;
+            break;
+    }
+    return res;
+}
+
+int code(token_t **token, node_ptr *func_node)
+{
+    int res = NO_ERR;
+    enum data_type data_t = DATA_NIL;
+    node_ptr local_node;
+    exp_nterm_t *final_exp = NULL;
+    INIT_TOKEN(token, res);
+
+    switch ((*token)->type)
     {
         // <code> -> id <func_or_assign> <code>
         case TYPE_IDENTIFIER:
-            get_token(token, f);
+            // hleda zaznam v TS
+            SEARCH_SYMBOL((*token)->value.str_val, FUNC, local_node);
+            if (local_node == NULL)
+            {
+                // stack_reset_index(&local_stack);
+                // while (stack_isempty(&local_stack))   
+                // {
+                //     local_node = tree_search(stack_top(&local_stack), (*token)->value.str_val);
+                //     if (local_node != NULL)    
+                //         break;
+                //     else
+                //         stack_dec_index(&local_stack);
+                // }
+                SEARCH_SYMBOL((*token)->value.str_val, VAR, local_node);
+            }
+            LOAD_TOKEN(token);
 
-            res = func_or_assign(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return code(token);
+            if ((res = func_or_assign(token, &local_node)) != NO_ERR)   return res;
 
-        // <code> -> return <ret_exp>
-        case TYPE_KW_RETURN:
-            get_token(token, f);
+            return code(token, func_node);
 
-            CHECK_TOKEN(token, TYPE_KW_RETURN);
-
-            return ret_exp(token);
-
-        // <code> -> <var_init> <code>
+            // <code> -> local id : <d_type> <var_init_assign> <code>
         case TYPE_KW_LOCAL:
+            LOAD_AND_CHECK(token, TYPE_IDENTIFIER);             // id
+            INSERT_SYMBOL((*token)->value.str_val, VAR, local_node);
 
-            res = var_init(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return code(token);
+            // TODO: GEN_CODE(DEF_VAR, id, NULL, NULL)
+            LOAD_TOKEN(token);
 
-        // <code> -> <if_block> <code>
+            CHECK_AND_LOAD(token, TYPE_DECLARE);                // :
+
+            if ((res = d_type(token, &data_t)) != NO_ERR)   return res;
+
+            local_node->var_type = data_t;
+
+            if ((res = var_init_assign(token, &data_t, &local_node)) != NO_ERR)    return res;
+            // kontrola prirazeni; pokud neprobehne prirazeni, bude se ocekavat v data_t NIL
+            if (type_control(data_t, local_node->var_type))
+                return ERR_SEM_ASSIGN;
+
+            return code(token, func_node);
+
+            // <code> -> if <expression> then <code> <elseif_block> <else_block> end <code>
         case TYPE_KW_IF:
+            LOAD_TOKEN(token);
 
-            res = if_block(token);
-            if (res != NO_ERR)
+            // expression muze byt jakykoliv vyraz -> pokud to neni false nebo NIL
+            // pak je to vzdy true; toto je ale reseno az pri generovani kodu
+            if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
+            generate_code_nterm(&final_exp);
+            exp_nterm_destroy(&final_exp);
+            // TODO: gen_code
+
+            // TODO: jump to label ELSE if false
+
+            CHECK_AND_LOAD(token, TYPE_KW_THEN);                // then
+
+            INIT_SCOPE();
+            // jde hlavne o kontrolu, pokud se zavola return
+            if ((res = code(token, func_node)) != NO_ERR)    return res;
+            DESTROY_SCOPE();
+
+            if ((res = elseif_block(token, func_node)) != NO_ERR)   return res;
+
+            // TODO: jump to lable END_IF
+
+            if ((res = else_block(token, func_node)) != NO_ERR)    return res;
+
+            CHECK_AND_LOAD(token, TYPE_KW_END);                 // end
+
+            // TODO: label END
+
+            return code(token, func_node);
+
+            // <code> -> while <expression> do <code> end <code>
+        case TYPE_KW_WHILE:
+            LOAD_TOKEN(token);
+
+            // expression muze byt jakykoliv vyraz -> pokud to neni false nebo NIL
+            // pak je to vzdy true; toto je ale reseno az pri generovani kodu
+            if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
+            generate_code_nterm(&final_exp);
+            exp_nterm_destroy(&final_exp);
+
+            // TODO: GEN_CODE
+
+            // TODO: jump to END_WHILE if false
+            // TODO: label while
+
+            CHECK_AND_LOAD(token, TYPE_KW_DO);
+
+            INIT_SCOPE();
+            // jde hlavne o kontrolu navratovych hodnot returnu ve scopu
+            if ((res = code(token, func_node)) != NO_ERR)    return res;
+
+            // TODO: go thru SYMTABLE and define vars
+            // TODO: go thru gen_code_queue and change delete init
+            // TODO: flush code
+            // TODO: jump to while label
+
+            DESTROY_SCOPE();
+
+            CHECK_AND_LOAD(token, TYPE_KW_END);
+            // TODO: create END_WHILE label
+
+            return code(token, func_node);
+
+            // <code> -> return <lof_e>
+        case TYPE_KW_RETURN:
+            LOAD_TOKEN(token);
+
+            // TODO: pred return se musi zkontrolovat stav listu
+            int index = 0;
+            if ((res = lof_e(token, *func_node, &index, 0)) != NO_ERR)
                 return res;
-            
-            return code(token);
 
-        // <code> -> eps
-        case TYPE_KW_ELSEIF:
+            // TODO: donastavit nil pro chybejici parametry -> nebo mozno jiz implicitne nastavit predem
+
+            // TODO: passing variable to return variable ??
+
+            // TODO: typova kontrola
+            // if (lof_type_control(&lof_data, (*func_node)->lof_rets))
+            //     res = ERR_SEM_FUNC;
+
+            // string_Free(&lof_data);
             break;
 
-        // <code> -> eps
+            // <code> -> eps
+        case TYPE_KW_END:
         case TYPE_KW_ELSE:
             break;
 
-        // <code> -> <while_block> <code>
-        case TYPE_KW_WHILE:
-
-            res = while_block(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return code(token);
-
-        // <code> -> <repeat_block> <code>
-        case TYPE_KW_REPEAT:
-
-            res = repeat_block(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return code(token);
-
-        // <code> -> eps
-        case TYPE_KW_UNTIL:
-            break;
-
-        // <code> -> <for_block> <code>
-        case TYPE_KW_FOR:
-
-            res = for_block(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return code(token);
-
-        // <code> -> eps
-        case TYPE_KW_END:
-            break;
-
-        // <code> -> break
-        case TYPE_KW_BREAK:
-            get_token(token, f);
-
-            CHECK_TOKEN(token, TYPE_KW_BREAK);
-
-            break;
-
         default:
             res = ERR_SYNTAX;
             break;
     }
     return res;
 }
-int args_n(token_t **token)
+
+int var_init_assign(token_t **token, enum data_type *data_t, node_ptr *var_node)
 {
     int res = NO_ERR;
     INIT_TOKEN(token, res);
 
-    switch((*token)->type)
+    switch ((*token)->type)
     {
-        // <args_n> -> eps
-        case TYPE_RIGHT_PARENTHESES:
-            break;
-
-        // <args_n> -> id : <d_type> <args_n>
-        case TYPE_COMMA:
-            get_token(token, f);
-
-            CHECK_TOKEN(token, TYPE_IDENTIFIER);
-            
-            CHECK_TOKEN(token, TYPE_DECLARE);
-            
-            res = d_type(token);
-            if (res != NO_ERR)
-                return res;
-            
-            return args_n(token);
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
-int var_init_assign(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <var_init_assign> -> eps
-        case TYPE_EOF:
-            token_delete(token);
-            break;
-
-        // <var_init_assign> -> eps
-        case TYPE_KW_REQUIRE:
-            break;
-
         // <var_init_assign> -> eps
         case TYPE_IDENTIFIER:
-            break;
-
-        // <var_init_assign> -> eps
-        case TYPE_KW_RETURN:
-            break;
-
-        // <var_init_assign> -> eps
-        case TYPE_KW_GLOBAL:
-            break;
-
-        // <var_init_assign> -> eps
-        case TYPE_KW_FUNCTION:
-            break;
-
-        // <var_init_assign> -> eps
-        case TYPE_KW_LOCAL:
-            break;
-
-        // <var_init_assign> -> eps
-        case TYPE_KW_IF:
-            break;
-
-        // <var_init_assign> -> eps
-        case TYPE_KW_ELSEIF:
-            break;
-
-        // <var_init_assign> -> eps
-        case TYPE_KW_ELSE:
-            break;
-
-        // <var_init_assign> -> eps
-        case TYPE_KW_WHILE:
-            break;
-
-        // <var_init_assign> -> eps
-        case TYPE_KW_REPEAT:
-            break;
-
-        // <var_init_assign> -> eps
-        case TYPE_KW_UNTIL:
-            break;
-
-        // <var_init_assign> -> eps
-        case TYPE_KW_FOR:
-            break;
-
-        // <var_init_assign> -> eps
         case TYPE_KW_END:
+        case TYPE_KW_LOCAL:
+        case TYPE_KW_IF:
+        case TYPE_KW_WHILE:
+        case TYPE_KW_RETURN:
+        case TYPE_KW_ELSE:
+            *data_t = DATA_NIL;
             break;
 
-        // <var_init_assign> -> eps
-        case TYPE_KW_BREAK:
-            break;
-
-        // <var_init_assign> -> = <expression>
+            // <var_init_assign> -> = <fun_or_exp>
         case TYPE_ASSIGN:
-            get_token(token, f);
-
-            return expression(token);
-
+            LOAD_AND_CHECK(token, TYPE_ASSIGN);     // =
+            if ((res = fun_or_exp(token, data_t, var_node)) != NO_ERR)    return res;
+            break;
         default:
             res = ERR_SYNTAX;
             break;
     }
     return res;
 }
-int expression(token_t **token)
-{
-    //TODO:
-}
-int elif_block(token_t **token)
+
+int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node)
 {
     int res = NO_ERR;
+    node_ptr local_node;
     INIT_TOKEN(token, res);
 
     switch((*token)->type)
     {
-        // <elif_block> -> elseif <expression> do <code> end
+        case TYPE_IDENTIFIER:
+            SEARCH_SYMBOL((*token)->value.str_val, FUNC, local_node);
+            if (local_node != NULL)
+            {
+                // ziska, jakou navratovou hodnotu vraci fcu
+                // pokud funkce nevraci nic, nastavi se DATA_NIL
+                *data_t = local_node->lof_rets.value[0];
+
+                // TODO: GEN_CODE(CREATEFRAME, NULL, NULL, NULL);
+                LOAD_AND_CHECK(token, TYPE_LEFT_PARENTHESES);      // (
+                LOAD_TOKEN(token);
+                int index = 0;
+
+                // kontrola parametru a prirazeni
+                if ((res = lof_e(token, local_node, &index, true)) != NO_ERR)
+                    return res;
+                if (index != local_node->lof_params.length - 1)
+                    return ERR_SEM_FUNC;
+
+                // string_Free(&lof_data);
+                CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);     // )
+
+                // TODO: GEN_CODE(call, NULL, NULL, local_node->key);
+                // TODO: GEN_CODE(MOVE, retval1, NULL, var_node->key);
+            }
+            else
+            {
+                exp_nterm_t *final_exp = NULL;
+                if ((res = expression(token, data_t, &final_exp)) != NO_ERR)
+                    return res;
+                generate_code_nterm(&final_exp);
+                exp_nterm_destroy(&final_exp);
+
+                // TODO: gen_code(final_exp);
+                // TODO: GEN_CODE(MOVE, "_tmp$temp_index", NULL, var_node->key);
+            }
+            break;
+        case TYPE_BOOLEAN:
+        case TYPE_STRING:
+        case TYPE_NUMBER:
+        case TYPE_INTEGER:
+        case TYPE_LEFT_PARENTHESES:
+        case TYPE_KW_NIL:
+            {
+                exp_nterm_t *final_exp = NULL;
+                if ((res = expression(token, data_t, &final_exp)) != NO_ERR)
+                    return res;
+                generate_code_nterm(&final_exp);
+                exp_nterm_destroy(&final_exp);
+
+                // TODO: gen_code(final_exp);
+                // TODO: GEN_CODE(MOVE, "_tmp$temp_index", NULL, var_node->key);
+            }
+            break;
+        default:
+            res = ERR_SYNTAX;
+            break;
+    }
+    return res;
+}
+
+int elseif_block(token_t **token, node_ptr *func_node)
+{
+    int res = NO_ERR;
+    enum data_type data_t;
+    exp_nterm_t *final_exp = NULL;
+    INIT_TOKEN(token, res);
+
+    switch ((*token)->type)
+    {
+        // <elseif_block> -> elseif <expression> then <code> <elseif_block>
         case TYPE_KW_ELSEIF:
-            get_token(token, f);
+            LOAD_TOKEN(token);
 
-            // expression
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
+            if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
+            generate_code_nterm(&final_exp);
+            exp_nterm_destroy(&final_exp);
 
-            // do
-            CHECK_TOKEN(token, TYPE_KW_DO);
+            // TODO: generovat exp
 
-            // code
-            res = code(token);
-            if (res != NO_ERR)
-                return res;
+            CHECK_AND_LOAD(token, TYPE_KW_THEN);    // then
 
-            // end
-            CHECK_TOKEN(token, TYPE_KW_END);
+            // TODO: jump to END_ELSEIF_cislo if false
 
-            break;
+            INIT_SCOPE();
+            // TODO: LABEL ELSEIF_cislo
+            res = code(token, func_node);
+            DESTROY_SCOPE();
 
-        // <elif_block> -> eps
+            if (res != NO_ERR)  return res;
+            // TODO: LABEL END_ELSEIF_cislo
+            return elseif_block(token, func_node);
+
+            // <elseif_block> -> eps
         case TYPE_KW_ELSE:
-            break;
-
-        // <elif_block> -> eps
         case TYPE_KW_END:
             break;
 
@@ -1183,20 +813,25 @@ int elif_block(token_t **token)
     }
     return res;
 }
-int else_block(token_t **token)
+
+int else_block(token_t **token, node_ptr *func_node)
 {
     int res = NO_ERR;
     INIT_TOKEN(token, res);
 
-    switch((*token)->type)
+    switch ((*token)->type)
     {
         // <else_block> -> else <code>
         case TYPE_KW_ELSE:
-            get_token(token, f);
+            LOAD_TOKEN(token);
 
-            return code(token);
+            INIT_SCOPE();
+            // TODO: LABEL ELSE
+            res = code(token, func_node);
+            DESTROY_SCOPE();
+            break;
 
-        // <else_block> -> eps
+            // <else_block> -> eps
         case TYPE_KW_END:
             break;
 
@@ -1206,140 +841,76 @@ int else_block(token_t **token)
     }
     return res;
 }
-int exp_opt(token_t **token)
+
+int func_or_assign(token_t **token, node_ptr *node)
 {
     int res = NO_ERR;
     INIT_TOKEN(token, res);
 
-    switch((*token)->type)
+    if (node == NULL)           return ERR_INTERNAL;
+    if (*node == NULL)          return ERR_SEM_DEF;
+    switch ((*token)->type)
     {
-        // <exp_opt> -> eps
-        case TYPE_KW_DO:
-            break;
-
-        // <exp_opt> -> "integer"
-        case TYPE_COMMA:
-            get_token(token, f);
-
-            CHECK_TOKEN(token, TYPE_INTEGER);
-
-            break;
-
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
-int func_args(token_t **token)
-{
-    int res = NO_ERR;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <func_args> -> <expression> <func_args_n>
-        case TYPE_IDENTIFIER:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            return func_args_n(token);
-
-        // <func_args> -> <expression> <func_args_n>
+        // <func_or_assign> -> ( <lof_e> )
         case TYPE_LEFT_PARENTHESES:
+            if ((*node)->type != FUNC)  return ERR_SEM_DEF;
+            LOAD_AND_CHECK(token, TYPE_LEFT_PARENTHESES);       // (
+            LOAD_TOKEN(token);
 
-            res = expression(token);
-            if (res != NO_ERR)
+            int index = 0;
+
+            // TODO: GEN_CODE(CREATEFRAME, NULL, NULL, NULL);
+
+            // kontrola a prirazeni parametru
+            if ((res = lof_e(token, *node, &index, 1)) != NO_ERR)
                 return res;
 
-            return func_args_n(token);
+            CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);      // )
 
-        // <func_args> -> eps
-        case TYPE_RIGHT_PARENTHESES:
+            // TODO: somehow call the function
+            // GEN_CODE(CALL, NULL, NULL, (*node)->key);
+
             break;
 
-        // <func_args> -> <expression> <func_args_n>
-        case TYPE_STRING:
+            // <func_or_assign> -> <multi_var> = <fun_or_multi_e>
+        case TYPE_COMMA:
+        case TYPE_ASSIGN:
+            if ((*node)->type != VAR)   return ERR_SEM_DEF;
 
-            res = expression(token);
-            if (res != NO_ERR)
+            // TODO: vytvorit list leve strany a list prave strany -> ty se pak postupne priradi
+            // leva strana vyrazu
+            stack_var_t lof_vars;
+            stack_var_init(&lof_vars);
+
+            // pridani prvni promenne
+            if ((res = stack_var_push(&lof_vars, *node)) != NO_ERR)
+            {
+                stack_var_destroy(&lof_vars);
                 return res;
+            }
 
-            return func_args_n(token);
-
-        // <func_args> -> <expression> <func_args_n>
-        case TYPE_NUMBER:
-
-            res = expression(token);
-            if (res != NO_ERR)
+            if ((res = multi_var_n(token, &lof_vars)) != NO_ERR)
+            {
+                stack_var_destroy(&lof_vars);
                 return res;
+            }
 
-            return func_args_n(token);
+            CHECK_AND_LOAD(token, TYPE_ASSIGN);         // =
 
-        // <func_args> -> <expression> <func_args_n>
-        case TYPE_INTEGER:
-
-            res = expression(token);
-            if (res != NO_ERR)
+            if ((res = fun_or_multi_e(token, &lof_vars)) != NO_ERR)
+            {
+                stack_var_destroy(&lof_vars);
                 return res;
+            }
 
-            return func_args_n(token);
+            // na leve strane je vice promennych nez na prave
+            if (!stack_var_isempty(lof_vars))
+                res = ERR_SEMANT;
 
-        // <func_args> -> <expression> <func_args_n>
-        case TYPE_KW_NIL:
+            stack_var_destroy(&lof_vars);
 
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            return func_args_n(token);
-
-        // <func_args> -> <expression> <func_args_n>
-        case TYPE_STRLEN:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            return func_args_n(token);
-
-        // <func_args> -> <expression> <func_args_n>
-        case TYPE_KW_TRUE:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            return func_args_n(token);
-
-        // <func_args> -> <expression> <func_args_n>
-        case TYPE_KW_FALSE:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            return func_args_n(token);
-
-        // <func_args> -> <expression> <func_args_n>
-        case TYPE_KW_NOT:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            return func_args_n(token);
-
-        // <func_args> -> <expression> <func_args_n>
-        case TYPE_CONCAT:
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            return func_args_n(token);
+            // TODO: get list of nodes and assign them all ??
+            break;
 
         default:
             res = ERR_SYNTAX;
@@ -1347,210 +918,366 @@ int func_args(token_t **token)
     }
     return res;
 }
-int multi_var(token_t **token)
+
+int multi_var_n(token_t **token, stack_var_t *lof_vars)
 {
     int res = NO_ERR;
+    node_ptr node = NULL;
     INIT_TOKEN(token, res);
 
-    switch((*token)->type)
+    switch ((*token)->type)
     {
-        // <multi_var> -> eps
+        // <multi_var_n> -> , id <multi_var_n>
+        case TYPE_COMMA:
+            LOAD_AND_CHECK(token, TYPE_IDENTIFIER);
+
+            // vyhleda, zda byla promenna jiz definovana a pak ji tam prida
+            SEARCH_SYMBOL((*token)->value.str_val, VAR, node);
+            if (node == NULL)   return ERR_SEM_DEF;
+            // pridani promenne do zasobniku
+            if ((res = stack_var_push(lof_vars, node)) != NO_ERR) return res;
+            LOAD_TOKEN(token);
+
+            // TODO: add to assign list??
+
+            return multi_var_n(token, lof_vars);
+
+            // <multi_var_n> -> eps
         case TYPE_ASSIGN:
             break;
 
-        // <multi_var> -> id <multi_var>
-        case TYPE_COMMA:
-            get_token(token, f);
-
-            CHECK_TOKEN(token, TYPE_IDENTIFIER);
-
-            return multi_var(token);
-
         default:
             res = ERR_SYNTAX;
             break;
     }
     return res;
 }
-int multi_exp(token_t **token)
+
+int fun_or_multi_e(token_t **token, stack_var_t *lof_vars)
 {
+    if (lof_vars == NULL)   return ERR_INTERNAL;
     int res = NO_ERR;
+    enum data_type data_t = DATA_NIL;
+    exp_nterm_t *final_exp = NULL;
+    node_ptr local_node;
     INIT_TOKEN(token, res);
 
-    switch((*token)->type)
+    switch ((*token)->type)
     {
-        // <multi_exp> -> eps
-        case TYPE_EOF:
-            token_delete(token);
-            break;
+        // <multi_e> -> <expression> <multi_var_n>
+        case TYPE_IDENTIFIER:
+            SEARCH_SYMBOL((*token)->value.str_val, FUNC, local_node);
+            if (local_node != NULL)
+            {
+                LOAD_AND_CHECK(token, TYPE_LEFT_PARENTHESES);
+                LOAD_TOKEN(token);
+                int index = 0;
 
-        // <multi_exp> -> eps
-        case TYPE_KW_REQUIRE:
-            break;
+                // TODO: GEN_CODE(CREATEFRAME, NULL, NULL, NULL);
 
-        // <multi_exp> -> eps
+                // TODO: nastaveni navratovych hodnot podle curr_val
+                // kontrola parametru
+                if ((res = lof_e(token, local_node, &index, 1)) != NO_ERR)
+                    return res;
+
+                // TODO: check lof_data and node->lof_parms
+
+                CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);
+
+                // TODO: GEN_CODE(CALL, NULL, NULL, local_node->key);
+                int nof_ret_vals = local_node->lof_rets.length - 1;
+                while (lof_vars->len > 0)
+                {
+                    // pokud je vice promennych na leve strane, je jim zprava prirazena hodnota nil
+                    if (lof_vars->len > nof_ret_vals)
+                    {
+                        item_var_t *item = stack_var_pop(lof_vars);
+                        // TODO: GEN_CODE(MOVE, nil, NULL, var->id);
+                        item_var_destroy(&item);
+                    }
+                    else    // jinak se jim prirazuje vysledek samotny a odecitaji se indexy
+                    {
+                        item_var_t *item = stack_var_pop(lof_vars);
+                        if (item->var_node->var_type != (enum data_type)(local_node->lof_rets.value)[nof_ret_vals])
+                            return ERR_SEM_FUNC;
+                        // TODO: GEN_CODE(MOVE, retval$nof_ret_vals, NULL, var->id);
+                        item_var_destroy(&item);
+                        nof_ret_vals--;
+                    }
+                }
+
+                // TODO: parse with lof_vars
+                // je to zasobnik, takze se musi prirazovat odzadu
+                // pres porovnani delky -> node->lof_rets->length - 1 if not 0
+            }
+            else
+            {
+                if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
+                if (stack_var_isempty(*lof_vars))
+                    return ERR_SEMANT;
+
+                // nacte datovy typ do data
+                if ((res =  multi_e_n(token, lof_vars)) != NO_ERR)  return res;
+                // TODO: generovani kodu prirazeni
+                // popnuti a prirazeni
+
+                item_var_t *item = stack_var_pop(lof_vars);
+                if (data_t != DATA_NIL && data_t != item->var_node->var_type)
+                    return ERR_SEM_TYPE;
+                generate_code_nterm(&final_exp);
+                exp_nterm_destroy(&final_exp);
+                // TODO: int ind = gen_exp(final_exp)
+                // TODO: GEN_CODE(MOVE, _tmp$ind, NULL, item->var_node->key);
+                item_var_destroy(&item);
+            }
+            break;
+        case TYPE_STRING:
+        case TYPE_LEFT_PARENTHESES:
+        case TYPE_NUMBER:
+        case TYPE_INTEGER:
+        case TYPE_BOOLEAN:
+        case TYPE_KW_NIL:
+            if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
+            if (stack_var_isempty(*lof_vars))
+                return ERR_SEMANT;
+
+            // nacte datovy typ do data
+            if ((res =  multi_e_n(token, lof_vars)) != NO_ERR)  return res;
+            // TODO: generovani kodu prirazeni
+            // popnuti a prirazeni
+
+            item_var_t *item = stack_var_pop(lof_vars);
+            if (data_t != DATA_NIL && data_t != item->var_node->var_type)
+                return ERR_SEM_TYPE;
+            generate_code_nterm(&final_exp);
+            exp_nterm_destroy(&final_exp);  // XXX: toto se pozdeni zmeni
+            // TODO: int ind = gen_exp(final_exp)
+            // TODO: GEN_CODE(MOVE, _tmp$ind, NULL, item->var_node->key);
+            item_var_destroy(&item);        // XXX: toto se muze pozdeji zmenit
+            break;
+        default:
+            res = ERR_SYNTAX;
+            break;
+    }
+    return res;
+}
+
+int multi_e_n(token_t **token, stack_var_t *lof_vars)
+{
+    int res = NO_ERR;
+    enum data_type data_t = DATA_NIL;
+    exp_nterm_t *final_exp = NULL;
+    INIT_TOKEN(token, res);
+
+    switch ((*token)->type)
+    {
+        // <multi_e_n> -> , <expression> <multi_e_n>
+        case TYPE_COMMA:
+            LOAD_TOKEN(token);
+
+            if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
+            if (stack_var_isempty(*lof_vars))
+                return ERR_SEMANT;
+
+            // nacte datovy typ do data
+            if ((res =  multi_e_n(token, lof_vars)) != NO_ERR)  return res;
+            // TODO: generovani kodu prirazeni
+            // popnuti a prirazeni
+
+            item_var_t *item = stack_var_pop(lof_vars);
+            if (data_t != DATA_NIL && data_t != item->var_node->var_type)
+                return ERR_SEM_TYPE;
+            // TODO: int ind = gen_exp(final_exp)
+            // TODO: GEN_CODE(MOVE, _tmp$ind, NULL, item->var_node->key);
+
+            // <multi_e_n> -> eps
+        case TYPE_KW_LOCAL:
+        case TYPE_KW_IF:
+        case TYPE_KW_WHILE:
+        case TYPE_KW_ELSE:
+        case TYPE_KW_END:
+        case TYPE_KW_RETURN:    // TODO: ZKONTROLOVAT GRAMATIKU?!
         case TYPE_IDENTIFIER:
             break;
 
-        // <multi_exp> -> eps
-        case TYPE_KW_RETURN:
-            break;
-
-        // <multi_exp> -> eps
-        case TYPE_KW_GLOBAL:
-            break;
-
-        // <multi_exp> -> eps
-        case TYPE_KW_FUNCTION:
-            break;
-
-        // <multi_exp> -> eps
-        case TYPE_KW_LOCAL:
-            break;
-
-        // <multi_exp> -> eps
-        case TYPE_KW_IF:
-            break;
-
-        // <multi_exp> -> eps
-        case TYPE_KW_ELSEIF:
-            break;
-
-        // <multi_exp> -> eps
-        case TYPE_KW_ELSE:
-            break;
-
-        // <multi_exp> -> eps
-        case TYPE_KW_WHILE:
-            break;
-
-        // <multi_exp> -> eps
-        case TYPE_KW_REPEAT:
-            break;
-
-        // <multi_exp> -> eps
-        case TYPE_KW_UNTIL:
-            break;
-
-        // <multi_exp> -> eps
-        case TYPE_KW_FOR:
-            break;
-
-        // <multi_exp> -> , <expression> <multi_exp>
-        case TYPE_COMMA:
-            get_token(token, f);
-
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
-
-            return multi_exp(token);
-
-        // <multi_exp> -> eps
-        case TYPE_KW_END:
-            break;
-
-        // <multi_exp> -> eps
-        case TYPE_KW_BREAK:
-            break;
-
         default:
             res = ERR_SYNTAX;
             break;
     }
     return res;
 }
-int func_args_n(token_t **token)
+
+int d_type(token_t **token, enum data_type *data_t)
 {
     int res = NO_ERR;
     INIT_TOKEN(token, res);
 
-    switch((*token)->type)
+    switch ((*token)->type)
     {
-        // <func_args_n> -> eps
-        case TYPE_RIGHT_PARENTHESES:
+        // <d_type> -> string
+        case TYPE_KW_STRING:
+            LOAD_TOKEN(token);
+            *data_t = DATA_STR;
             break;
 
-        // <func_args_n> -> , <expression> <func_args_n>
-        case TYPE_COMMA:
-            get_token(token, f);
+            // <d_type> -> integer
+        case TYPE_KW_INTEGER:
+            LOAD_TOKEN(token);
+            *data_t = DATA_INT;
+            break;
 
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
+            // <d_type> -> number
+        case TYPE_KW_NUMBER:
+            LOAD_TOKEN(token);
+            *data_t = DATA_NUM;
+            break;
 
-            return func_args_n(token);
+            // <d_type> -> boolean
+        case TYPE_KW_BOOLEAN:
+            LOAD_TOKEN(token);
+            *data_t = DATA_BOOL;
+            break;
 
         default:
+            *data_t = DATA_NIL;
             res = ERR_SYNTAX;
             break;
     }
     return res;
 }
-int ret_exp_n(token_t **token)
+
+static int insert_lib_functions()
 {
+    node_ptr node = NULL;
     int res = NO_ERR;
-    INIT_TOKEN(token, res);
 
-    switch((*token)->type)
-    {
-        // <ret_exp_n> -> eps
-        case TYPE_EOF:
-            token_delete(token);
-            break;
+    // funciton reads() : string
+    INSERT_SYMBOL("reads", FUNC, node);
+    if (node == NULL)   return ERR_INTERNAL;
+    node->is_defined = node->is_declared = 1;
+    // pridavani navratovych hodnot
+    if ((res = string_Init(&node->lof_rets)) != NO_ERR)  return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_STR)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_NIL)) != NO_ERR) return res;
 
-        // <ret_exp_n> -> eps
-        case TYPE_KW_ELSEIF:
-            break;
+    // funciton readi() : integer
+    INSERT_SYMBOL("readi", FUNC, node);
+    if (node == NULL)   return ERR_INTERNAL;
+    node->is_defined = node->is_declared = 1;
+    // pridavani navratovych hodnot
+    if ((res = string_Init(&node->lof_rets)) != NO_ERR)  return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_INT)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_NIL)) != NO_ERR) return res;
 
-        // <ret_exp_n> -> eps
-        case TYPE_KW_ELSE:
-            break;
+    // funciton tointeger(f: number) : integer
+    INSERT_SYMBOL("tointeger", FUNC, node);
+    if (node == NULL)   return ERR_INTERNAL;
+    node->is_defined = node->is_declared = 1;
+    // pridavani parametru
+    if ((res = string_Init(&node->lof_params)) != NO_ERR)  return res;
+    if ((res = string_Add_Char(&node->lof_params, DATA_NUM)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_params, DATA_NIL)) != NO_ERR) return res;
+    // pridavani navratovych hodnot
+    if ((res = string_Init(&node->lof_rets)) != NO_ERR)  return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_INT)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_NIL)) != NO_ERR) return res;
 
-        // <ret_exp_n> -> eps
-        case TYPE_KW_UNTIL:
-            break;
+    // funciton ord(s: string, i: integer) : integer
+    INSERT_SYMBOL("ord", FUNC, node);
+    if (node == NULL)   return ERR_INTERNAL;
+    node->is_defined = node->is_declared = 1;
+    // pridavani parametru
+    if ((res = string_Init(&node->lof_params)) != NO_ERR)  return res;
+    if ((res = string_Add_Char(&node->lof_params, DATA_STR)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_params, DATA_INT)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_params, DATA_NIL)) != NO_ERR) return res;
+    // pridavani navratovych hodnot
+    if ((res = string_Init(&node->lof_rets)) != NO_ERR)  return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_INT)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_NIL)) != NO_ERR) return res;
 
-        // <ret_exp_n> -> , <expression> <ret_exp_n>
-        case TYPE_COMMA:
-            get_token(token, f);
+    // function write(id1, id2, ..., idn)
+    // ma konecny pocet (predem nedefinovany) parametru
+    INSERT_SYMBOL("write", FUNC, node);
+    if (node == NULL)   return ERR_INTERNAL;
+    node->is_declared = node->is_defined = node->unlim_parms = 1;
 
-            res = expression(token);
-            if (res != NO_ERR)
-                return res;
+    // funciton readn() : number
+    INSERT_SYMBOL("readn", FUNC, node);
+    if (node == NULL)   return ERR_INTERNAL;
+    node->is_defined = node->is_declared = 1;
+    // pridavani navratovych hodnot
+    if ((res = string_Init(&node->lof_rets)) != NO_ERR)  return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_NUM)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_NIL)) != NO_ERR) return res;
 
-            return ret_exp_n(token);
+    // funciton substr(s: string, i: number, j: number) : string
+    INSERT_SYMBOL("substr", FUNC, node);
+    if (node == NULL)   return ERR_INTERNAL;
+    node->is_defined = node->is_declared = 1;
+    // pridavani parametru
+    if ((res = string_Init(&node->lof_params)) != NO_ERR)  return res;
+    if ((res = string_Add_Char(&node->lof_params, DATA_STR)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_params, DATA_NUM)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_params, DATA_NUM)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_params, DATA_NIL)) != NO_ERR) return res;
+    // pridavani navratovych hodnot
+    if ((res = string_Init(&node->lof_rets)) != NO_ERR)  return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_STR)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_NIL)) != NO_ERR) return res;
 
-        // <ret_exp_n> -> eps
-        case TYPE_KW_END:
-            break;
+    // funciton chr(i: integer) : string
+    INSERT_SYMBOL("chr", FUNC, node);
+    if (node == NULL)   return ERR_INTERNAL;
+    node->is_defined = node->is_declared = 1;
+    // pridavani parametru
+    if ((res = string_Init(&node->lof_params)) != NO_ERR)  return res;
+    if ((res = string_Add_Char(&node->lof_params, DATA_INT)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_params, DATA_NIL)) != NO_ERR) return res;
+    // pridavani navratovych hodnot
+    if ((res = string_Init(&node->lof_rets)) != NO_ERR)  return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_STR)) != NO_ERR) return res;
+    if ((res = string_Add_Char(&node->lof_rets, DATA_NIL)) != NO_ERR) return res;
 
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
     return res;
 }
 
-int syntax_analysis(FILE *f)
+FILE *global_file;
+frame_stack local_stack;
+node_ptr global_tree;
+unsigned file_line = 1;
+
+int syntax_analysis(FILE *file)
 {
     int res;
     token_t *token = NULL;
-    
+    global_file = file;
+
     // inicializace globalni TS a zasobniku TS
-    if ( (res = tree_init(&global_tree))   != NO_ERR)  goto tree_init_error;
-    if ( (res = stack_init(&global_stack)) != NO_ERR)  goto post_tree_error;
+    if ((res = tree_init(&global_tree)) != NO_ERR)
+        goto tree_init_error;
+    if ((res = stack_init(&local_stack)) != NO_ERR)
+        goto post_tree_error;
+
+    if ((res = insert_lib_functions()) != NO_ERR)
+        goto post_local_stack_error;
+
+    // TODO: insert lib functions
     // TODO: generate code init
 
+    // TODO: vlozeni vnitrnich funkci do TS
+
     // poslani prvniho tokenu do <prg>
-    res = get_token(f, &token);
-    if (res != NO_ERR)   goto post_stack_error;
+    if ((res = get_token(global_file, &token)) != NO_ERR)
+        goto post_local_stack_error;
 
     res = prg(&token);
+    if (res != NO_ERR)
+        token_delete(&token);
 
     // TODO: destroy generate code
-post_stack_error:
-    stack_destroy(&global_stack, &tree_destroy);
+post_local_stack_error:
+    stack_destroy(&local_stack, &tree_destroy);
 post_tree_error:
     tree_destroy(&global_tree);
 tree_init_error:

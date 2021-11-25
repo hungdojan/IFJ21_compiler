@@ -14,6 +14,7 @@
 #define _TOKEN_H_
 
 #include "istring.h"
+#include <stdbool.h>
 
 enum Token_type {
     TYPE_PLUS,
@@ -21,8 +22,6 @@ enum Token_type {
     TYPE_MULTIPLY,
     TYPE_DIVIDE,
     TYPE_DIVIDE_WHOLE,
-    TYPE_DIVIDE_MODULO,
-    TYPE_POWER,
     TYPE_GREATER_OR_EQ,
     TYPE_GREATER,
     TYPE_LESSER_OR_EQ,
@@ -58,16 +57,19 @@ enum Token_type {
     TYPE_KW_WHILE,
     // extensions:
     TYPE_EOF,
+    TYPE_DIVIDE_MODULO,
+    TYPE_POWER,
+    TYPE_BOOLEAN,
     TYPE_KW_REPEAT,
     TYPE_KW_FOR,
-    TYPE_KW_TRUE,
-    TYPE_KW_FALSE,
     TYPE_KW_NOT,
     TYPE_KW_ELSEIF,
     TYPE_KW_UNTIL,
     TYPE_KW_BOOLEAN,
-    TYPE_KW_BREAK
-} type;
+    TYPE_KW_BREAK,
+    TYPE_KW_AND,
+    TYPE_KW_OR,
+};
 
 // mozne typy atributu tokenu, vyuzije se jeden z nich
 typedef union
@@ -75,6 +77,7 @@ typedef union
     int     int_val;
     double  float_val;
     char *  str_val;
+    bool    bool_val;
 } token_value_t;
 
 // struktura pro token

@@ -4,11 +4,11 @@ CFLAGS=-std=c99 -Wall -Wextra -g -pedantic -fcommon
 LOGIN=xdohun00
 TARGET=ifj21c
 TEST_TARGET=./build/ifj21c-test
-OBJS=main.o symtable.o istring.o scanner.o token.o error.o stack.o parser.o generator.o
+OBJS=main.o symtable.o istring.o scanner.o token.o error.o stack.o parser.o exp_stack.o expression.o generator.o
 TEST_DEPEND=*.h *.c
 # ----------------------------
 
-.PHONY: all clean test
+.PHONY: all clean test debug
 
 # ---------------------------
 
@@ -28,6 +28,9 @@ $(TEST_TARGET): ./build/Makefile test_source.cpp $(TEST_DEPEND)
 
 ./build/Makefile: CMakeLists.txt
 	cmake . -B./build
+
+debug: $(TARGET)
+	gdb -tui ./$(TARGET)
 
 pack:
 	rm -f *.zip

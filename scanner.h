@@ -14,6 +14,7 @@
 #define _SCANNER_H_
 
 #include "token.h"
+#include <stdio.h>
 
 enum State {
     STATE_NEW,
@@ -26,6 +27,8 @@ enum State {
     STATE_END_LOAD
     // STATE_ERROR
 };
+
+extern unsigned file_line;
 
 /**
  * @brief Ziska token ze zdrojoveho souboru
