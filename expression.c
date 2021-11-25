@@ -472,6 +472,8 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
         *final_exp = NULL;
         return res;
     }
+    if ((*token)->type == TYPE_IDENTIFIER)
+        res = exp_stack_reduce(&s);
     if (exp_stack_top_term(&s)->type != SYM_DOLLAR)
     {
         exp_stack_destroy(&s);
