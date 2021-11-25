@@ -433,6 +433,7 @@ int get_rid_of_comments(FILE *f)
                             ; // preskakuje znak
                         is_comment = 0;
                     }
+                    file_line++;
                 }
                 break;
             case START_MULTI:
@@ -441,14 +442,20 @@ int get_rid_of_comments(FILE *f)
                 {
                     if (c != '\n' && c != EOF)
                         while ((c = fgetc(f)) != '\n' && c != EOF)
+                        {
+                            if (c == '\n')
+                                file_line++;
                             ; // preskakuje znak
+                        }
                 }
                 break;
             case MULTI_LINE_COMM:
                 if (c == ']')        state = END_MULTI;
+                else if (c == '\n')  file_line++;
                 break;
             case END_MULTI:
                 if (c == ']')        is_comment = 0;
+                else if (c == ']')   { file_line++; state = MULTI_LINE_COMM; }
                 else                 state = MULTI_LINE_COMM;
                 break;
         }

@@ -87,13 +87,12 @@ int prg(token_t **token)
             // TODO: GEN_CODE(label, NULL, NULL, function_name)
             // TODO: GEN_CODE(PUSHFRAME, NULL, NULL, NULL)
 
-            LOAD_TOKEN(token);
-
             // funkce jeste neexistuje
             if (node == NULL)
                 INSERT_SYMBOL((*token)->value.str_val, FUNC, node);
             else
                 if (node->is_defined)   return ERR_SEM_DEF;
+            LOAD_TOKEN(token);
 
             CHECK_AND_LOAD(token, TYPE_LEFT_PARENTHESES);       // (
 
@@ -223,7 +222,7 @@ int lof_e(token_t **token, node_ptr node, int *index, bool is_parm)
         case TYPE_KW_RETURN:
         case TYPE_KW_ELSE:
             // predalo male argumentu
-            if (!node->unlim_parms && is_parm && exp->length != 0)       return ERR_SEM_FUNC; 
+            if (!node->unlim_parms && is_parm && exp->length-1 != 0)       return ERR_SEM_FUNC; 
             // TODO: pro !is_parm je potreba donastavit nil hodnoty pri generovani -> mozno udelat az venku
             break;
 
