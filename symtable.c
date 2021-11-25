@@ -198,6 +198,8 @@ node_ptr tree_search(node_ptr tree, char *key)
 {
     if(!tree)
         return NULL;
+    if (tree->type == ROOT)
+        return NULL;
 
     while(tree != NULL)
     {
