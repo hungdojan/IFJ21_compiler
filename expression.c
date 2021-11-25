@@ -24,8 +24,9 @@ static int get_index_from_token(enum Token_type type)
         case TYPE_LESSER:
         case TYPE_LESSER_OR_EQ:
         case TYPE_GREATER:
-        case TYPE_GREATER_OR_EQ:     return TI_LOGIC;
         case TYPE_EQ:
+        case TYPE_NOT_EQ:
+        case TYPE_GREATER_OR_EQ:     return TI_LOGIC;
         case TYPE_KW_AND:            return TI_AND;
         case TYPE_KW_OR:             return TI_OR;
         case TYPE_COMMA:             return TI_COMMA;

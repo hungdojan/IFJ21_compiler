@@ -30,7 +30,7 @@
         }\
         else if ((token)->type == TYPE_STRING ||     \
                 (token)->type == TYPE_INTEGER || (token)->type == TYPE_NUMBER ||    \
-                (token)->type == TYPE_BOOLEAN)                                      \
+                (token)->type == TYPE_BOOLEAN || (token)->type == TYPE_KW_NIL)                                      \
         {                                                                           \
             exp_data_t __temp_data;                                                 \
             if ((res = exp_data_init(&__temp_data, (token))) != NO_ERR)             \

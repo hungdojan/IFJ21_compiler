@@ -20,7 +20,7 @@ int main() {
     // TODO:
     printf("%d\n", res);
     if (res)
-        printf("chyba na radku: %u\n", file_line);
+        printf("chyba je mezi radky %u a %u\n", file_line-1, file_line);
     return res;
 }
 
