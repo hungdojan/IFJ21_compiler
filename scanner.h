@@ -47,4 +47,6 @@ int get_token(FILE *f, token_t **ref);
  */
 int get_rid_of_comments(FILE *f);
 
+
+
 #endif // _SCANNER_H_
