@@ -523,7 +523,7 @@ int code(token_t **token, node_ptr *func_node)
 {
     int res = NO_ERR;
     enum data_type data_t = DATA_NIL;
-    node_ptr local_node;
+    node_ptr local_node = NULL;
     exp_nterm_t *final_exp = NULL;
     INIT_TOKEN(token, res);
 
@@ -570,6 +570,10 @@ int code(token_t **token, node_ptr *func_node)
             // kontrola prirazeni; pokud neprobehne prirazeni, bude se ocekavat v data_t NIL
             if (type_control(data_t, local_node->var_type))
                 return ERR_SEM_ASSIGN;
+
+            local_node->is_defined = 1;
+
+            // vlozeni do tabulky symbolu
 
             return code(token, func_node);
 
@@ -690,7 +694,7 @@ int var_init_assign(token_t **token, enum data_type *data_t, node_ptr *var_node)
 
             // <var_init_assign> -> = <fun_or_exp>
         case TYPE_ASSIGN:
-            LOAD_AND_CHECK(token, TYPE_ASSIGN);     // =
+            CHECK_AND_LOAD(token, TYPE_ASSIGN);     // =
             if ((res = fun_or_exp(token, data_t, var_node)) != NO_ERR)    return res;
             break;
         default:

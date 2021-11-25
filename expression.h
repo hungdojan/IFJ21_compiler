@@ -4,6 +4,7 @@
 #include "error.h"
 #include "token.h"
 #include "symtable.h"
+#include "parser.h"
 #include "exp_stack.h"
 #include <stdbool.h>
 
@@ -12,7 +13,22 @@
 #define PUSH_DATA_TO_EXP_STACK(stack, token, res)\
     do\
     {\
-        if ((token)->type == TYPE_IDENTIFIER || (token)->type == TYPE_STRING ||     \
+        if ((token)->type == TYPE_IDENTIFIER)\
+        {\
+            node_ptr __local_node = NULL;       \
+            SEARCH_SYMBOL((token)->value.str_val, VAR, __local_node);\
+            if (__local_node == NULL || !__local_node->is_defined)\
+            {\
+                res = ERR_SEM_DEF;\
+                break;\
+            }\
+            exp_data_t __temp_data;                                                 \
+            if ((res = exp_data_init(&__temp_data, (token))) != NO_ERR)             \
+                break;\
+            if ((res = exp_stack_push(&stack, SYM_TERM, NULL, &__temp_data, NULL)) != NO_ERR) \
+                break;\
+        }\
+        else if ((token)->type == TYPE_STRING ||     \
                 (token)->type == TYPE_INTEGER || (token)->type == TYPE_NUMBER ||    \
                 (token)->type == TYPE_BOOLEAN)                                      \
         {                                                                           \

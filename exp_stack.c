@@ -289,6 +289,14 @@ int exp_nterm_add_parameter(exp_nterm_t *func, exp_data_t parm)
 }
 #endif
 
+int exp_stack_contains_shift(const exp_stack_t s)
+{
+    int i = s.len - 1;
+    for (; i >= 0 && s.array[i].type != SYM_SHIFT; i--)
+        ;
+    return i >= 0;
+}
+
 void exp_stack_destroy_item(exp_item_t *item)
 {
     if (item != NULL)
