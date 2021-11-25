@@ -310,6 +310,7 @@ void filter_defvar(queue_t *q)
             free(item);
             item = NULL;
         }
+        item = q->first;
         while (item != NULL && item->next != NULL)
         {
             if (item->next->instruction == INS_DEFVAR)
@@ -328,6 +329,7 @@ void filter_defvar(queue_t *q)
                 free(temp);
                 temp = NULL;
             }
+            item = item->next;
         }
     }
 }
@@ -340,7 +342,8 @@ void import_builtin_functions()
     /// %%param3 - univerzální třetí parametr funkce
     /// %%cokoli - pomocné proměnné
 
-    fprintf(stdout,"JUMP $$main\n"
+    fprintf(stdout,".IFJcode21\n\n"
+                   "JUMP $$main\n"
             "DEFVAR GF@%%temp_var1\n"
             "DEFVAR GF@%%temp_var2\n"
             "DEFVAR GF@%%temp_var3\n\n");
