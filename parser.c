@@ -552,8 +552,8 @@ int def_parm(token_t **token, Istring *lof_data)
 
             // TODO: GEN_CODE(DEFVAR, id, NULL, NULL);
             // TODO: GEN_CODE(POPS, id, NULL, NULL);
-            gen_code(NULL, INS_DEFVAR,(*token)->value.str_val, NULL, NULL);
-            gen_code(NULL, INS_POPS,(*token)->value.str_val,NULL,NULL);
+            gen_code(NULL, INS_DEFVAR,node->key, NULL, NULL);
+            gen_code(NULL, INS_POPS,  node->key,NULL,NULL);
 
             return def_parm_n(token, lof_data);
 
@@ -599,8 +599,8 @@ int def_parm_n(token_t **token, Istring *lof_data)
 
             // TODO: GEN_CODE(DEFVAR, id, NULL, NULL);
             // TODO: GEN_CODE(POPS, id, NULL, NULL);
-            gen_code(NULL, INS_DEFVAR, (*token)->value.str_val, NULL, NULL);
-            gen_code(NULL, INS_POPS, (*token)->value.str_val, NULL, NULL);
+            gen_code(NULL, INS_DEFVAR, node->key, NULL, NULL);
+            gen_code(NULL, INS_POPS,   node->key, NULL, NULL);
 
             return def_parm_n(token, lof_data);
 
@@ -652,7 +652,7 @@ int code(token_t **token, node_ptr *func_node)
             INSERT_SYMBOL((*token)->value.str_val, VAR, local_node);
 
             // TODO: GEN_CODE(DEF_VAR, id, NULL, NULL)
-            gen_code(NULL, INS_DEFVAR,(*token)->value.str_val,NULL,NULL);
+            gen_code(NULL, INS_DEFVAR,local_node->key,NULL,NULL);
             LOAD_TOKEN(token);
 
             CHECK_AND_LOAD(token, TYPE_DECLARE);                // :
@@ -714,8 +714,8 @@ int code(token_t **token, node_ptr *func_node)
             // pak je to vzdy true; toto je ale reseno az pri generovani kodu
             if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
 
-            char w[10];
-            char w_end[14];
+            char w[10] = { 0, };
+            char w_end[14] = { 0, };
             sprintf(w,"while_%d",index_while);
 
             // TODO: GENCODE LABEL WHILE_index
@@ -759,6 +759,7 @@ int code(token_t **token, node_ptr *func_node)
             gen_code(&q,INS_LABEL,w_end,NULL,NULL);
             index_while += 1;
 
+            filter_defvar(&q);
             queue_flush(&q);
 
             return code(token, func_node);

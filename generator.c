@@ -288,6 +288,50 @@ void flush_item(code_t *item)
     }
 }
 
+void filter_defvar(queue_t *q)
+{
+    if (q != NULL)
+    {
+        code_t *item = NULL;
+        // pokud je to na zacatku instrukce definice
+        while (q->first != NULL && q->first->instruction == INS_DEFVAR)
+        {
+            // vypis instrukce
+            flush_item(q->first);
+
+            // posun ve fronte
+            item = q->first;
+            q->first = item->next;
+
+            // mazani instrukce
+            free(item->dest);
+            free(item->second_op);
+            free(item->first_op);
+            free(item);
+            item = NULL;
+        }
+        while (item != NULL && item->next != NULL)
+        {
+            if (item->next->instruction == INS_DEFVAR)
+            {
+                // vypis instrukce 
+                flush_item(item->next);
+
+                // posun ve fronte
+                code_t *temp = item->next;
+                item->next = temp->next;
+
+                // mazani instrukce
+                free(temp->dest);
+                free(temp->second_op);
+                free(temp->first_op);
+                free(temp);
+                temp = NULL;
+            }
+        }
+    }
+}
+
 void import_builtin_functions()
 {
     /// %%retval - univerzální návratová proměnná - předávaná pomocí TF(ad)retval
@@ -297,172 +341,172 @@ void import_builtin_functions()
     /// %%cokoli - pomocné proměnné
 
     fprintf(stdout,"JUMP $$main\n"
-                   "DEFVAR GF@%%temp_var1\n"
-                   "DEFVAR GF@%%temp_var2\n"
-                   "DEFVAR GF@%%temp_var3\n\n");
+            "DEFVAR GF@%%temp_var1\n"
+            "DEFVAR GF@%%temp_var2\n"
+            "DEFVAR GF@%%temp_var3\n\n");
 
 
     /// print reads
     fprintf(stdout,"LABEL reads\n"
-                   "PUSHFRAME\n"
-                   "DEFVAR LF@%%retval\n"
-                   "POPS LF@%%retval\n" // empty pop
-                   "MOVE LF@%%retval nil@nil\n"
-                   "READ LF@%%retval string\n"
-                   "POPFRAME\n"
-                   "RETURN\n\n");
+            "PUSHFRAME\n"
+            "DEFVAR LF@%%retval\n"
+            "POPS LF@%%retval\n" // empty pop
+            "MOVE LF@%%retval nil@nil\n"
+            "READ LF@%%retval string\n"
+            "POPFRAME\n"
+            "RETURN\n\n");
 
     /// print readi
     fprintf(stdout,"LABEL readi\n"
-                   "PUSHFRAME\n"
-                   "DEFVAR LF@%%retval\n"
-                   "POPS LF@%%retval\n" // empty pop
-                   "MOVE LF@%%retval nil@nil\n"
-                   "READ LF@%%retval int\n"
-                   "POPFRAME\n"
-                   "RETURN\n\n");
+            "PUSHFRAME\n"
+            "DEFVAR LF@%%retval\n"
+            "POPS LF@%%retval\n" // empty pop
+            "MOVE LF@%%retval nil@nil\n"
+            "READ LF@%%retval int\n"
+            "POPFRAME\n"
+            "RETURN\n\n");
 
     /// print readn
     fprintf(stdout,"LABEL readn\n"
-                   "PUSHFRAME\n"
-                   "DEFVAR LF@%%retval\n"
-                   "POPS LF@%%retval\n" // empty pop
-                   "MOVE LF@%%retval nil@nil\n"
-                   "READ LF@%%retval number\n"
-                   "POPFRAME\n"
-                   "RETURN\n\n");
+            "PUSHFRAME\n"
+            "DEFVAR LF@%%retval\n"
+            "POPS LF@%%retval\n" // empty pop
+            "MOVE LF@%%retval nil@nil\n"
+            "READ LF@%%retval number\n"
+            "POPFRAME\n"
+            "RETURN\n\n");
 
     /// print write
     fprintf(stdout,"LABEL write\n"
-                   "PUSHFRAME\n"
-                   "DEFVAR TF@%%param1\n"
-                   "DEFVAR TF@%%cond\n"
-                   "DEFVAR TF@%%i\n"
-                   "POPS TF@%%i\n"
-                   "SUBS TF@%%i TF@%%i int@1\n"
-                   "LABEL write&cycle\n"
-                   "LT TF@%%cond TF@%%i int@0\n"
-                   "JUMPIFEQ write&return TF@%%cond bool@true\n"
-                   "POPS TF@%%param1\n"
-                   "WRITE TF@%%param1\n"
-                   "SUBS TF@%%i TF@%%i int@1\n"
-                   "JUMP write&cycle\n"
-                   "LABEL write&return\n"
-                   "POPFRAME\n"
-                   "RETURN\n\n");
+            "PUSHFRAME\n"
+            "DEFVAR TF@%%param1\n"
+            "DEFVAR TF@%%cond\n"
+            "DEFVAR TF@%%i\n"
+            "POPS TF@%%i\n"
+            "SUBS TF@%%i TF@%%i int@1\n"
+            "LABEL write&cycle\n"
+            "LT TF@%%cond TF@%%i int@0\n"
+            "JUMPIFEQ write&return TF@%%cond bool@true\n"
+            "POPS TF@%%param1\n"
+            "WRITE TF@%%param1\n"
+            "SUBS TF@%%i TF@%%i int@1\n"
+            "JUMP write&cycle\n"
+            "LABEL write&return\n"
+            "POPFRAME\n"
+            "RETURN\n\n");
 
     /// print tointeger
     fprintf(stdout,"LABEL tointeger\n"
-                   "PUSHFRAME\n"
-                   "DEFVAR LF@%%retval\n"
-                   "MOVE LF@%%retval nil@nil\n"
-                   "DEFVAR TF@%%cond\n"
-                   "DEFVAR TF@%%param1\n"
-                   "POPS TF@%%param1\n" // empty pop
-                   "POPS TF@%%param1\n"
-                   "TYPE TF@%%cond TF@%%param1\n"
-                   "JUMPIFEQ tointeger&return TF@%%cond string@number\n"
-                   "FLOAT2INT LF@%%retval TF@%%param1\n"
-                   "LABEL tointeger&return\n"
-                   "POPFRAME\n"
-                   "RETURN\n\n");
+            "PUSHFRAME\n"
+            "DEFVAR LF@%%retval\n"
+            "MOVE LF@%%retval nil@nil\n"
+            "DEFVAR TF@%%cond\n"
+            "DEFVAR TF@%%param1\n"
+            "POPS TF@%%param1\n" // empty pop
+            "POPS TF@%%param1\n"
+            "TYPE TF@%%cond TF@%%param1\n"
+            "JUMPIFEQ tointeger&return TF@%%cond string@number\n"
+            "FLOAT2INT LF@%%retval TF@%%param1\n"
+            "LABEL tointeger&return\n"
+            "POPFRAME\n"
+            "RETURN\n\n");
 
     /// print substr
     fprintf(stdout,"LABEL substr\n"
-                   "PUSHFRAME\n"
-                   "DEFVAR TF@%%cond\n"
-                   "DEFVAR TF@%%param1\n"
-                   "POPS TF@%%param1\n" // empty pop
-                   "POPS TF@%%param1\n"
-                   "TYPE TF@%%cond TF@%%param1\n"
-                   "JUMPIFNEQ substr&exit TF@%%cond string@string\n"
-                   "DEFVAR TF@%%param2\n"
-                   "POPS TF@%%param2\n"
-                   "TYPE TF@%%cond TF@%%param2\n"
-                   "JUMPIFNEQ substr&exit TF@%%cond string@int\n"
-                   "DEFVAR TF@%%param3\n"
-                   "POPS TF@%%param3\n"
-                   "TYPE TF@%%cond TF@%%param3\n"
-                   "JUMPOFNEQ substr&exit TF@%%cond string@int\n"
-                   "DEFVAR LF@%%retval\n"
-                   "MOVE LF@%%retval string@\n"
-                   "DEFVAR TF@%%cond_length\n"
-                   "STRLEN TF@%%cond_length TF@%%param1\n"
-                   "LT TF@%%cond TF@%%param2 int@1\n"
-                   "JUMPIFEQ substr&return TF@%%cond bool@true\n"
-                   "GT TF@%%cond TF@%%param2 TF@%%cond_length\n"
-                   "JUMPIFEQ substr&return TF@%%cond bool@true\n"
-                   "LT TF@%%cond TF@%%param3 int@1\n"
-                   "JUMPIFEQ substr&return TF@%%cond bool@true\n"
-                   "GT TF@%%cond TF@%%param3 TF@%%cond_length\n"
-                   "JUMPIFEQ substr&return TF@%%cond bool@true\n"
-                   "GT TF@cond TF@%%param3 TF@%%param2\n"
-                   "JUMPIFEQ substr&return TF@%%cond bool@true\n"
-                   "DEFVAR TF@%%item\n"
-                   "DEFVAR TF@%%i\n"
-                   "SUB TF@%%i TF@%%param2 int@1\n"
-                   "DEFVAR TF@%%j\n"
-                   "SUB TF@%%j TF@%%param3 int@1\n"
-                   "LABEL substr@for\n"
-                   "GT TF@%%cond TF@%%i TF@%%j\n"
-                   "JUMPIFEQ substr&return TF@%%cond bool@true\n"
-                   "GETCHAR TF@%%item TF@%%param1 TF@%%i\n"
-                   "CONCAT LF@%%retval TF@%%item\n"
-                   "ADD TF@%%i TF@%%i int@1\n"
-                   "JUMP substr&for\n"
-                   "LABEL substr&return\n"
-                   "POPFRAME\n"
-                   "RETURN\n"
-                   "LABEL substr&exit\n"
-                   "EXIT int@8\n\n");
+            "PUSHFRAME\n"
+            "DEFVAR TF@%%cond\n"
+            "DEFVAR TF@%%param1\n"
+            "POPS TF@%%param1\n" // empty pop
+            "POPS TF@%%param1\n"
+            "TYPE TF@%%cond TF@%%param1\n"
+            "JUMPIFNEQ substr&exit TF@%%cond string@string\n"
+            "DEFVAR TF@%%param2\n"
+            "POPS TF@%%param2\n"
+            "TYPE TF@%%cond TF@%%param2\n"
+            "JUMPIFNEQ substr&exit TF@%%cond string@int\n"
+            "DEFVAR TF@%%param3\n"
+            "POPS TF@%%param3\n"
+            "TYPE TF@%%cond TF@%%param3\n"
+            "JUMPOFNEQ substr&exit TF@%%cond string@int\n"
+            "DEFVAR LF@%%retval\n"
+            "MOVE LF@%%retval string@\n"
+            "DEFVAR TF@%%cond_length\n"
+            "STRLEN TF@%%cond_length TF@%%param1\n"
+            "LT TF@%%cond TF@%%param2 int@1\n"
+            "JUMPIFEQ substr&return TF@%%cond bool@true\n"
+            "GT TF@%%cond TF@%%param2 TF@%%cond_length\n"
+            "JUMPIFEQ substr&return TF@%%cond bool@true\n"
+            "LT TF@%%cond TF@%%param3 int@1\n"
+            "JUMPIFEQ substr&return TF@%%cond bool@true\n"
+            "GT TF@%%cond TF@%%param3 TF@%%cond_length\n"
+            "JUMPIFEQ substr&return TF@%%cond bool@true\n"
+            "GT TF@cond TF@%%param3 TF@%%param2\n"
+            "JUMPIFEQ substr&return TF@%%cond bool@true\n"
+            "DEFVAR TF@%%item\n"
+            "DEFVAR TF@%%i\n"
+            "SUB TF@%%i TF@%%param2 int@1\n"
+            "DEFVAR TF@%%j\n"
+            "SUB TF@%%j TF@%%param3 int@1\n"
+            "LABEL substr@for\n"
+            "GT TF@%%cond TF@%%i TF@%%j\n"
+            "JUMPIFEQ substr&return TF@%%cond bool@true\n"
+            "GETCHAR TF@%%item TF@%%param1 TF@%%i\n"
+            "CONCAT LF@%%retval TF@%%item\n"
+            "ADD TF@%%i TF@%%i int@1\n"
+            "JUMP substr&for\n"
+            "LABEL substr&return\n"
+            "POPFRAME\n"
+            "RETURN\n"
+            "LABEL substr&exit\n"
+            "EXIT int@8\n\n");
 
     /// print ord
     fprintf(stdout,"LABEL ord\n"
-                   "PUSHFRAME\n"
-                   "DEFVAR LF@%%retval\n"
-                   "DEFVAR TF@%%param1\n"
-                   "POPS TF@%%param1\n" // empty pop
-                   "POPS TF@%%param1\n"
-                   "TYPE LF@%%retval TF@%%param1\n"
-                   "JUMPIFNEQ ord&exit LF@%%retval string@string\n"
-                   "DEFVAR TF@%%param2\n"
-                   "POPS TF@%%param2\n"
-                   "TYPE LF@%%retval TF@%%param2\n"
-                   "JUMPIFNEQ ord&exit LF@%%retval string@int\n"
-                   "MOVE LF@%%retval nil@nil\n"
-                   "DEFVAR TF@%%cond_length\n"
-                   "LT TF@%%cond_length TF@%%param2 int@0\n"
-                   "JUMPIFEQ ord&return TF@%%cond_length bool@true\n"
-                   "STRLEN TF@%%cond_length TF@%%param1\n"
-                   "SUB TF@%%cond_length TF@%%cond_length int@1\n"
-                   "GT TF@%%cond_length TF@%%param2 TF@%%cond_length\n"
-                   "JUMPIFEQ ord&return TF@%%cond_length bool@true\n"
-                   "STRI2INT LF@%%retval TF@%%param1 TF@%%param2\n"
-                   "LABEL ord&return\n"
-                   "POPFRAME\n"
-                   "RETURN\n"
-                   "LABEL ord&exit\n"
-                   "EXIT int@8\n\n");
+            "PUSHFRAME\n"
+            "DEFVAR LF@%%retval\n"
+            "DEFVAR TF@%%param1\n"
+            "POPS TF@%%param1\n" // empty pop
+            "POPS TF@%%param1\n"
+            "TYPE LF@%%retval TF@%%param1\n"
+            "JUMPIFNEQ ord&exit LF@%%retval string@string\n"
+            "DEFVAR TF@%%param2\n"
+            "POPS TF@%%param2\n"
+            "TYPE LF@%%retval TF@%%param2\n"
+            "JUMPIFNEQ ord&exit LF@%%retval string@int\n"
+            "MOVE LF@%%retval nil@nil\n"
+            "DEFVAR TF@%%cond_length\n"
+            "LT TF@%%cond_length TF@%%param2 int@0\n"
+            "JUMPIFEQ ord&return TF@%%cond_length bool@true\n"
+            "STRLEN TF@%%cond_length TF@%%param1\n"
+            "SUB TF@%%cond_length TF@%%cond_length int@1\n"
+            "GT TF@%%cond_length TF@%%param2 TF@%%cond_length\n"
+            "JUMPIFEQ ord&return TF@%%cond_length bool@true\n"
+            "STRI2INT LF@%%retval TF@%%param1 TF@%%param2\n"
+            "LABEL ord&return\n"
+            "POPFRAME\n"
+            "RETURN\n"
+            "LABEL ord&exit\n"
+            "EXIT int@8\n\n");
 
     /// print chr
     fprintf(stdout,"LABEL chr\n"
-                   "PUSHFRAME\n"
-                   "DEFVAR TF@%%cond\n"
-                   "DEFVAR TF@%%param1\n"
-                   "POPS TF@%%param1\n" // empty pop
-                   "POPS TF@%%param1\n"
-                   "TYPE TF@%%cond TF@%%param1\n"
-                   "JUMPIFNEQ chr&exit TF@%%cond string@int\n"
-                   "DEFVAR LF@%%retval\n"
-                   "MOVE LF@%%retval nil@nil\n"
-                   "LT TF@%%cond TF@%%param1 int@0\n"
-                   "JUMPIFEQ chr@return TF@%%cond bool@true\n"
-                   "GT TF@%%cond TF@%%param1 int@255\n"
-                   "JUMPIFEQ chr@return TF@%%cond bool@true\n"
-                   "INT2CHAR LF@%%retval TF@%%param1\n"
-                   "LABEL chr&return\n"
-                   "POPFRAME\n"
-                   "RETURN\n"
-                   "LABEL char&exit\n"
-                   "EXIT int@8\n\n");
+            "PUSHFRAME\n"
+            "DEFVAR TF@%%cond\n"
+            "DEFVAR TF@%%param1\n"
+            "POPS TF@%%param1\n" // empty pop
+            "POPS TF@%%param1\n"
+            "TYPE TF@%%cond TF@%%param1\n"
+            "JUMPIFNEQ chr&exit TF@%%cond string@int\n"
+            "DEFVAR LF@%%retval\n"
+            "MOVE LF@%%retval nil@nil\n"
+            "LT TF@%%cond TF@%%param1 int@0\n"
+            "JUMPIFEQ chr@return TF@%%cond bool@true\n"
+            "GT TF@%%cond TF@%%param1 int@255\n"
+            "JUMPIFEQ chr@return TF@%%cond bool@true\n"
+            "INT2CHAR LF@%%retval TF@%%param1\n"
+            "LABEL chr&return\n"
+            "POPFRAME\n"
+            "RETURN\n"
+            "LABEL char&exit\n"
+            "EXIT int@8\n\n");
 }
