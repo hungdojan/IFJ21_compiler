@@ -99,6 +99,7 @@ void queue_init(queue_t *q);
 void queue_destroy(queue_t *q);
 void queue_add(queue_t *q, code_t *item);
 void flush_item(code_t *item);
+
 void filter_defvar(queue_t *q);
 
 void import_builtin_functions();

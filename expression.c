@@ -549,9 +549,11 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
 
             // jeden operand a operator
         case RULE_STRLEN:
+
             //printf("(#");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
             //printf(")");
+
             // TODO: def vars temp_var1, temp_var2 -- DONE
             // TODO: GEN_CODE(POPS, string@temp_var1, NULL, NULL);
             // TODO: GEN_CODE(STRLEN, string@temp_var1, NULL, int@temp_var2);
