@@ -77,13 +77,14 @@ int prg(token_t **token)
             if ((res = lof_e(token, node, &index, 1)) != NO_ERR)        goto error;
 
             // TODO: GEN_CODE(PUSHS, "int@$index", NULL, NULL)
-            char s[14];
+            char s[8] = {0,};
             sprintf(s,"int@%d",index);
+            printf("%d\n",index);
             gen_code(&q_identifier,INS_PUSHS,s,NULL,NULL);
             CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);      // )
 
             // TODO: GEN_CODE(call, function_name, NULL, NULL)
-            gen_code(&q_identifier,INS_CALL,(*token)->value.str_val,NULL,NULL);
+            gen_code(&q_identifier,INS_CALL,node->key,NULL,NULL);
 
             return prg(token);
 
@@ -355,7 +356,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index, bool is_parm)
             if (!is_parm)
             {
                 // TODO: GEN_CODE(MOVE, "_tmp$temp_index", "retval$index", NULL);
-                char s[14];
+                char s[14] = {0,};
                 sprintf(s,"LF@%%retvar$%d",*index);
                 gen_code(NULL, INS_POPS, s,NULL,NULL);
             }
@@ -513,7 +514,7 @@ int ret_n(token_t **token, Istring *lof_data, bool gen_code_print, int index)
             {
                 // TODO: GEN_CODE(DEFVAR, retvar$i1, NULL, NULL)
                 // TODO: GEN_CODE(MOVE, retvar$1, nil@nil, NULL)
-                char s[14];
+                char s[14] = {0,};
                 sprintf(s,"LF@%%retvar$%d",index);
                 gen_code(NULL,INS_DEFVAR,s,NULL, NULL);
                 gen_code(NULL, INS_MOVE,s,"nil@nil",NULL);
@@ -1143,7 +1144,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars)
                             return ERR_SEM_FUNC;
                         }
                         // TODO: GEN_CODE(MOVE, item->var_node->key, retval$nof_ret_vals, NULL);
-                        char s[14];
+                        char s[14] = {0,};
                         sprintf(s,"TF@%%retvar$%d",nof_ret_vals);
                         gen_code(NULL,INS_MOVE, item->var_node->key, s,NULL);
                         item_var_destroy(&item);
