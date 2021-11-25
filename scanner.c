@@ -16,23 +16,30 @@
 #include "istring.h"
 #include "error.h"
 
+static void fxxx(Istring *str, char c)
+{
+    string_Add_Char(str, c / 100 % 10 + '0');
+    string_Add_Char(str, c / 10 % 10 + '0');
+    string_Add_Char(str, c / 1 % 10 + '0');
+}
+
+
 static int esc_seq(Istring *s, FILE *f)
 {
     if (f == NULL)
         return 99;
     int c = fgetc(f);
-    if (c == 'n')       string_Add_Char(s, '\n');
-    else if (c == 't')  string_Add_Char(s, '\t');
-    else if (c == 'a')  string_Add_Char(s, '\a');
-    else if (c == 'b')  string_Add_Char(s, '\b');
-    else if (c == 'f')  string_Add_Char(s, '\f');
+    if (c == 'n')       {c = '\n';fxxx(s,c);}
+    else if (c == 't')  {c = '\t';fxxx(s,c);}
+    else if (c == 'a')  {c = '\a';fxxx(s,c);}
+    else if (c == 'b')  {c = '\b';fxxx(s,c);}
+    else if (c == 'f')  {c = '\f';fxxx(s,c);}
+    else if (c == 'r')  {c = '\r';fxxx(s,c);}
+    else if (c == 'v')  {c = '\v';fxxx(s,c);}
+    else if (c == '\\') {c = '\\';fxxx(s,c);}
+    else if (c == '\"') c = '\"';
+    else if (c == '\'') {c = '\'';fxxx(s,c);}
 
-    else if (c == 'r')  string_Add_Char(s, '\r');
-    else if (c == 'v')  string_Add_Char(s, '\v');
-    else if (c == '\\') string_Add_Char(s, '\\');
-    else if (c == '\"') string_Add_Char(s, '\"');
-    else if (c == '\'') string_Add_Char(s, '\'');
-    // format \xxx
     else if (isdigit(c))
     {
         int val = (c - '0') * 100;
@@ -45,12 +52,14 @@ static int esc_seq(Istring *s, FILE *f)
         if (!isdigit(c))  return 1;
         else              val += (c - '0');
 
-        if (val >= 0 && val <= 255)     
+        if (val >= 0 && val <= 255)
             string_Add_Char(s, val);
         else
             return 1;
     }
     else                return 1;
+
+
     return 0;
 }
 
@@ -213,7 +222,7 @@ int get_token(FILE *f, token_t **ref)
                     state = STATE_END_LOAD;
                 }
                 else if (c == '#')
-                { 
+                {
                     // samostatny operator pro zjisteni delky retezce
                     string_Add_Char(&str, c);
                     type = TYPE_STRLEN;
@@ -373,14 +382,22 @@ int get_token(FILE *f, token_t **ref)
                 }
                 else if (c == '\\')
                 {
+                    string_Add_Char(&str,'\\');
                     if (esc_seq(&str, f) != 0)
                         return print_error(ERR_LEX, &str, NULL, "chybna escape sekvence stringu");
                         //goto error;
                 }
                 else
                 {
-                    /// TODO: pridat specialni znaky /032, /092, /010 ...
-                    string_Add_Char(&str, c);
+                    if(c <= 32)
+                    {
+                        string_Add_Char(&str,'\\');
+                        string_Add_Char(&str, c / 100 % 10 + '0');
+                        string_Add_Char(&str, c / 10 % 10 + '0');
+                        string_Add_Char(&str, c / 1 % 10 + '0');
+                    }
+                    else
+                        string_Add_Char(&str,c);
                 }
                 break;
             default:
@@ -464,5 +481,7 @@ int get_rid_of_comments(FILE *f)
 
     // vraci posledni nacteny znak
     return c;
+
 }
+
 /* scanner.c */
