@@ -273,6 +273,8 @@ int get_token(FILE *f, token_t **ref)
                     type = TYPE_EOF;
                     state = STATE_END_LOAD;
                 }
+                else if (c == '\n')
+                    file_line++;
                 else if (isspace(c)) { }
                 else
                     return print_error(ERR_LEX, &str, NULL, "neplatny znak \"%c\"", c);
@@ -394,12 +396,12 @@ int get_token(FILE *f, token_t **ref)
                 break;
         }
     } while (c != EOF && loading);
-    if (c == EOF)
-    {
-        string_Free(&str);
-        return EOF;
-    }
-    return 0;
+    // if (c == EOF)
+    // {
+    //     string_Free(&str);
+    //     return EOF;
+    // }
+    return NO_ERR;
 /*error:
     string_Free(&str);
     return 1;

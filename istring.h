@@ -39,6 +39,11 @@ int string_Init(Istring *s);
 int string_Add_Char(Istring *s, char c);
 
 /**
+ * @brief Porovnava dva retezce
+ */
+int string_compare(Istring *s1, Istring *s2);
+
+/**
  * @brief Uvolneni pameti po Istring
  *
  * @param s Ukazatel na strukturu Istring

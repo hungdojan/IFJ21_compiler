@@ -51,7 +51,7 @@ int token_create(Istring *s, enum Token_type type, token_t **ref_token)
             // je potreba dealokovat puvodni obsah istringu
             string_Free(s);
         }
-        else if(type == TYPE_NUMBER || type == TYPE_NUMBER)
+        else if(type == TYPE_NUMBER)
         {
             // konverze hodnoty na konstatni cislo typu C double
             token->value.float_val = strtod(s->value, NULL);
@@ -61,9 +61,17 @@ int token_create(Istring *s, enum Token_type type, token_t **ref_token)
         }
         else if(type == TYPE_IDENTIFIER)
         {
-            // kontrola, jestli neni identifikator klicovym slovem jazyka
-            token->type = check_key_words(s->value);
-            
+            int bool_val = 1;
+            if ((bool_val = !strcmp(s->value, "false")) || !strcmp(s->value, "true"))
+            {
+                token->type = TYPE_BOOLEAN;
+                token->value.bool_val = bool_val;
+            }
+            else
+            {
+                // kontrola, jestli neni identifikator klicovym slovem jazyka
+                token->type = check_key_words(s->value);
+            }
             // pokud je typem key word, nemusi se uz ukladat do hodnoty
             if(token->type == TYPE_IDENTIFIER)
                 token->value.str_val = s->value;
@@ -107,8 +115,8 @@ void token_delete(token_t **token)
         }
 
         free(*token);
+        *token = NULL;
     }
-    *token = NULL;
 }
 
 
@@ -121,6 +129,7 @@ int check_key_words(char *identif)
     else if(!strcmp(identif, "if"))         return TYPE_KW_IF;
     else if(!strcmp(identif, "require"))    return TYPE_KW_REQUIRE;
     else if(!strcmp(identif, "end"))        return TYPE_KW_END;
+    else if(!strcmp(identif, "elseif"))     return TYPE_KW_ELSEIF;
     else if(!strcmp(identif, "integer"))    return TYPE_KW_INTEGER;
     else if(!strcmp(identif, "return"))     return TYPE_KW_RETURN;
     else if(!strcmp(identif, "function"))   return TYPE_KW_FUNCTION;

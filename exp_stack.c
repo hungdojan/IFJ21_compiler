@@ -9,6 +9,7 @@ int exp_nterm_init(exp_nterm_t **n)
     {
         *n = (exp_nterm_t *)calloc(1, sizeof(exp_nterm_t));
         if (*n == NULL)     return ERR_INTERNAL;
+        (*n)->val1_to_num = (*n)->val2_to_num = false;
         // val1 rule a val2 jsou explicitne definovane
         // (*n)->parms = NULL;
         // (*n)->parm_len = 0;
@@ -30,6 +31,7 @@ int exp_data_init(exp_data_t *data, token_t *token)
             if (data->value.string == NULL)
                 return ERR_INTERNAL;
             strcpy(data->value.string, token->value.str_val);
+            data->type = DATA_ID;
         }
         else if (token->type == TYPE_STRING)
         {
@@ -37,6 +39,7 @@ int exp_data_init(exp_data_t *data, token_t *token)
             if (data->value.id == NULL)
                 return ERR_INTERNAL;
             strcpy(data->value.id, token->value.str_val);
+            data->type = DATA_STR;
         }
         else
         {
@@ -61,6 +64,7 @@ int exp_data_init(exp_data_t *data, token_t *token)
                     return ERR_INTERNAL;
             }
         }
+        return NO_ERR;
     }
     return ERR_INTERNAL;
 }
@@ -118,11 +122,28 @@ void exp_nterm_destroy(exp_nterm_t **n)
     if (n != NULL && *n != NULL)
     {
         // ruseni val1
-        if ((*n)->val1.type == DATA_SUB_EXP)
-            exp_data_destroy(&(*n)->val1);
+        // if ((*n)->val1.type == DATA_SUB_EXP)
+        exp_data_destroy(&(*n)->val1);
         // ruseni val2
-        if ((*n)->val2.type == DATA_SUB_EXP)
+        // if ((*n)->val2.type == DATA_SUB_EXP)
+        if ((*n)->rule == RULE_POWER ||
+            (*n)->rule == RULE_CONCAT ||
+            (*n)->rule == RULE_PLUS ||
+            (*n)->rule == RULE_MINUS || 
+            (*n)->rule == RULE_MULTIPLY ||
+            (*n)->rule == RULE_DIVIDE ||
+            (*n)->rule == RULE_DIVIDE_WHOLE ||
+            (*n)->rule == RULE_MODULO ||
+            (*n)->rule == RULE_EQ ||
+            (*n)->rule == RULE_NE ||
+            (*n)->rule == RULE_GE ||
+            (*n)->rule == RULE_GT ||
+            (*n)->rule == RULE_LE ||
+            (*n)->rule == RULE_LT ||
+            (*n)->rule == RULE_AND ||
+            (*n)->rule == RULE_OR)
             exp_data_destroy(&(*n)->val2);
+#if 0
         // ruseni parametru fci
         for (int i = 0; i < (*n)->parm_len; i++)
         {
@@ -132,6 +153,7 @@ void exp_nterm_destroy(exp_nterm_t **n)
                 ((*n)->parms)[i].value.sub_expr = NULL;
             }
         }
+#endif
         free(*n);
         *n = NULL;
     }
@@ -146,6 +168,7 @@ int exp_stack_init(exp_stack_t *s)
         if (s->array == NULL)   return ERR_INTERNAL;
         s->alloc_size = EXP_STACK_SIZE;
         s->len = 0;
+        return NO_ERR;
     }
     return ERR_INTERNAL;
 }
@@ -204,6 +227,16 @@ exp_item_t *exp_stack_top(const exp_stack_t *s)
 {
     if (s != NULL)
     {
+        if (s->len > 0)
+            return &(s->array)[s->len - 1];
+    }
+    return NULL;
+}
+
+exp_item_t *exp_stack_top_term(const exp_stack_t *s)
+{
+    if (s != NULL && s->len > 0)
+    {
         // vrati prvni neterm
         for (int i = s->len - 1; i >= 0; i--)
         {
@@ -217,7 +250,7 @@ exp_item_t *exp_stack_top(const exp_stack_t *s)
 // vrati prvni vec na zasobniku
 exp_item_t *exp_stack_pop(exp_stack_t *s)
 {
-    if (s != NULL)
+    if (s != NULL && s->len > 0)
         return  &(s->array)[--(s->len)];
     return NULL;
 }
@@ -229,6 +262,7 @@ int exp_stack_isempty(const exp_stack_t *s)
     return 1;
 }
 
+#if 0
 // vlozi parametr fce
 int exp_nterm_add_parameter(exp_nterm_t *func, exp_data_t parm)
 {
@@ -253,6 +287,18 @@ int exp_nterm_add_parameter(exp_nterm_t *func, exp_data_t parm)
     }
     return ERR_INTERNAL;
 }
+#endif
+
+void exp_stack_destroy_item(exp_item_t *item)
+{
+    if (item != NULL)
+    {
+        if (item->type == SYM_EXPR)
+            exp_nterm_destroy(&item->data.nterm);
+        else if (item->type == SYM_TERM)
+            exp_data_destroy(&item->data.term);
+    }
+}
 
 // odstraneni zasobniku a uvolneni alokovane pameti
 void exp_stack_destroy(exp_stack_t *s)
@@ -261,15 +307,12 @@ void exp_stack_destroy(exp_stack_t *s)
     {
         for (int i = s->len-1; i >= 0; i--)
         {
-            if ((s->array)[i].type == SYM_EXPR)
-                exp_nterm_destroy(&(s->array)[i].data.nterm);
-            else if ((s->array)[i].type == SYM_EXPR)
-                exp_data_destroy(&(s->array)[i].data.term);
-            free(s->array);
-            s->array = NULL;
-            s->len = -1;
-            s->alloc_size = 0;
+            exp_stack_destroy_item(&(s->array)[i]);
         }
+        free(s->array);
+        s->array = NULL;
+        s->len = -1;
+        s->alloc_size = 0;
     }
 }
 
