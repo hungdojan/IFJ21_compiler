@@ -203,7 +203,7 @@ int lof_e(token_t **token, node_ptr node, int *index, bool is_parm)
                 if (!is_parm)
                     ; // TODO: GEN_CODE(MOVE, "_tmp$temp_index", NULL, "retval$index");
                 // TODO: pokud chybi -> doplnim nil
-                generate_code_nterm(&final_exp);
+                generate_code_nterm(&final_exp,NULL);
                 exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
                 if ((res = lof_e_n(token, node, index, is_parm)) != NO_ERR)
                     return res;
@@ -322,7 +322,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index, bool is_parm)
                 if (!is_parm)
                     ; // TODO: GEN_CODE(MOVE, "_tmp$temp_index", NULL, "retval$index");
 
-                generate_code_nterm(&final_exp);
+                generate_code_nterm(&final_exp,NULL);
                 exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
                 if ((res = lof_e_n(token, node, index, is_parm)) != NO_ERR)
                     return res;
