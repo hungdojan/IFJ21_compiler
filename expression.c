@@ -504,7 +504,7 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
     return res;
 }
 
-static int push_to_gen_stack(exp_nterm_t *expr)
+static int push_to_gen_stack(exp_nterm_t *expr, queue_t *q)
 {
     char s[100] = "\0"; // omezeni poctu desetinych mist
     char temp_var1[] = "GF@%%temp_var1";
@@ -517,34 +517,34 @@ static int push_to_gen_stack(exp_nterm_t *expr)
         case RULE_ID:
             printf("%s", expr->val1.value.id);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.id, NULL, NULL)
-            gen_code(NULL, INS_PUSHS,expr->val1.value.id, NULL, NULL);
+            gen_code(q, INS_PUSHS,expr->val1.value.id, NULL, NULL);
             break;
         case RULE_BOOL:
             printf("%s", expr->val1.value.boolean ? "true" : "false");
             // TODO: GEN_CODE(PUSHS, expr->val1.value.boolean, NULL, NULL)
-            gen_code(NULL, INS_PUSHS, expr->val1.value.boolean ? "true" : "false", NULL, NULL);
+            gen_code(q, INS_PUSHS, expr->val1.value.boolean ? "true" : "false", NULL, NULL);
             break;
         case RULE_INT:
             printf("%d", expr->val1.value.integer);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.integer, NULL, NULL)
             sprintf(s,"%d",expr->val1.value.integer);
-            gen_code(NULL, INS_PUSHS, s, NULL, NULL);
+            gen_code(q, INS_PUSHS, s, NULL, NULL);
             break;
         case RULE_NIL:
             printf("nil");
             // TODO: GEN_CODE(PUSHS, nil, NULL, NULL)
-            gen_code(NULL, INS_PUSHS, "nil", NULL, NULL);
+            gen_code(q, INS_PUSHS, "nil", NULL, NULL);
             break;
         case RULE_NUM:
             printf("%g", expr->val1.value.number);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.number, NULL, NULL)
             sprintf(s,"%g",expr->val1.value.number);
-            gen_code(NULL, INS_PUSHS, s, NULL, NULL);
+            gen_code(q, INS_PUSHS, s, NULL, NULL);
             break;
         case RULE_STR:
             printf("%s", expr->val1.value.string);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.string, NULL, NULL)
-            gen_code(NULL, INS_PUSHS, expr->val1.value.string, NULL, NULL);
+            gen_code(q, INS_PUSHS, expr->val1.value.string, NULL, NULL);
             break;
 
             // jeden operand a operator
@@ -556,9 +556,9 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             // TODO: GEN_CODE(POPS, string@temp_var1, NULL, NULL);
             // TODO: GEN_CODE(STRLEN, string@temp_var1, NULL, int@temp_var2);
             // TODO: GEN_CODE(PUSHS, int@temp_var2, NULL, NULL);
-            gen_code(NULL,INS_POPS,temp_var1,NULL,NULL);
-            gen_code(NULL,INS_STRLEN,temp_var2,temp_var1,NULL);
-            gen_code(NULL,INS_PUSHS,temp_var2,NULL,NULL);
+            gen_code(q,INS_POPS,temp_var1,NULL,NULL);
+            gen_code(q,INS_STRLEN,temp_var2,temp_var1,NULL);
+            gen_code(q,INS_PUSHS,temp_var2,NULL,NULL);
 
             break;
         case RULE_NOT:
@@ -566,7 +566,7 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             push_to_gen_stack(expr->val1.value.sub_expr);
             printf(")");
             // TODO: GEN_CODE(NOTS, NULL, NULL, NULL);
-            gen_code(NULL, INS_NOTS, NULL, NULL, NULL);
+            gen_code(q, INS_NOTS, NULL, NULL, NULL);
             break;
         case RULE_CONCAT:
             printf("(");
@@ -579,10 +579,10 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             // TODO: GEN_CODE(POPS, string@temp_var2, NULL, NULL);
             // TODO: GEN_CODE(CONCAT, string@temp_var1, string@temp_var2, string@temp_var3);
             // TODO: GEN_CODE(PUSHS, string@temp_var3, NULL, NULL);
-            gen_code(NULL,INS_POPS,temp_var1,NULL,NULL);
-            gen_code(NULL,INS_POPS,temp_var2,NULL,NULL);
-            gen_code(NULL,INS_CONCAT,temp_var3,temp_var1,temp_var2);
-            gen_code(NULL,INS_PUSHS,temp_var3,NULL,NULL);
+            gen_code(q,INS_POPS,temp_var1,NULL,NULL);
+            gen_code(q,INS_POPS,temp_var2,NULL,NULL);
+            gen_code(q,INS_CONCAT,temp_var3,temp_var1,temp_var2);
+            gen_code(q,INS_PUSHS,temp_var3,NULL,NULL);
             break;
         case RULE_PLUS:
             printf("(");
@@ -591,7 +591,7 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             push_to_gen_stack(expr->val1.value.sub_expr);
             printf(")");
             // TODO: GEN_CODE(ADDS, NULL, NULL, NULL);
-            gen_code(NULL,INS_ADDS,NULL,NULL,NULL);
+            gen_code(q,INS_ADDS,NULL,NULL,NULL);
             break;
         case RULE_MINUS:
             printf("(");
@@ -600,7 +600,7 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             push_to_gen_stack(expr->val1.value.sub_expr);
             printf(")");
             // TODO: GEN_CODE(SUBS, NULL, NULL, NULL);
-            gen_code(NULL,INS_SUBS,NULL,NULL,NULL);
+            gen_code(q,INS_SUBS,NULL,NULL,NULL);
             break;
         case RULE_MULTIPLY:
             printf("(");
@@ -609,7 +609,7 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             push_to_gen_stack(expr->val1.value.sub_expr);
             printf(")");
             // TODO: GEN_CODE(MULS, NULL, NULL, NULL);
-            gen_code(NULL, INS_MULS, NULL, NULL , NULL);
+            gen_code(q, INS_MULS, NULL, NULL , NULL);
             break;
         case RULE_DIVIDE:
             printf("(");
@@ -618,7 +618,7 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             push_to_gen_stack(expr->val1.value.sub_expr);
             printf(")");
             // TODO: GEN_CODE(DIVS, NULL, NULL, NULL);
-            gen_code(NULL, INS_DIVS, NULL, NULL, NULL);
+            gen_code(q, INS_DIVS, NULL, NULL, NULL);
             break;
         case RULE_DIVIDE_WHOLE:
             printf("(");
@@ -627,7 +627,7 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             push_to_gen_stack(expr->val1.value.sub_expr);
             printf(")");
             // TODO: GEN_CODE(IDIVS, NULL, NULL, NULL);
-            gen_code(NULL, INS_IDIVS, NULL, NULL, NULL);
+            gen_code(q, INS_IDIVS, NULL, NULL, NULL);
             break;
         case RULE_EQ:
             printf("(");
@@ -636,7 +636,7 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             push_to_gen_stack(expr->val1.value.sub_expr);
             printf(")");
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
-            gen_code(NULL, INS_EQS, NULL, NULL, NULL);
+            gen_code(q, INS_EQS, NULL, NULL, NULL);
             break;
         case RULE_NE:
             printf("(");
@@ -646,8 +646,8 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             printf(")");
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
             // TODO: GEN_CODE(NOTS, NULL, NULL, NULL);
-            gen_code(NULL, INS_EQS, NULL, NULL, NULL);
-            gen_code(NULL, INS_NOTS, NULL, NULL, NULL);
+            gen_code(q, INS_EQS, NULL, NULL, NULL);
+            gen_code(q, INS_NOTS, NULL, NULL, NULL);
             break;
         case RULE_GT:
             printf("(");
@@ -656,7 +656,7 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             push_to_gen_stack(expr->val1.value.sub_expr);
             printf(")");
             // TODO: GEN_CODE(GTS, NULL, NULL, NULL);
-            gen_code(NULL, INS_GTS, NULL, NULL, NULL);
+            gen_code(q, INS_GTS, NULL, NULL, NULL);
             break;
         case RULE_GE:
             printf("(");
@@ -669,26 +669,26 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             // TODO: def vars temp_var1, temp_var2, temp_var3 -- DONE
             // TODO: GEN_CODE(POPS, temp_var1, NULL, NULL);
             // TODO: GEN_CODE(POPS, temp_var2, NULL, NULL);
-            gen_code(NULL,INS_POPS,temp_var1,NULL,NULL);
-            gen_code(NULL,INS_POPS,temp_var2,NULL,NULL);
+            gen_code(q,INS_POPS,temp_var1,NULL,NULL);
+            gen_code(q,INS_POPS,temp_var2,NULL,NULL);
             //
             // TODO: GEN_CODE(PUSHS, temp_var2, NULL, NULL);
             // TODO: GEN_CODE(PUSHS, temp_var1, NULL, NULL);
             // TODO: GEN_CODE(GTS, NULL, NULL, NULL);
-            gen_code(NULL,INS_PUSHS,temp_var2,NULL,NULL);
-            gen_code(NULL,INS_PUSHS,temp_var1,NULL,NULL);
-            gen_code(NULL,INS_GTS,NULL,NULL,NULL);
+            gen_code(q,INS_PUSHS,temp_var2,NULL,NULL);
+            gen_code(q,INS_PUSHS,temp_var1,NULL,NULL);
+            gen_code(q,INS_GTS,NULL,NULL,NULL);
             //
             // TODO: GEN_CODE(PUSHS, temp_var2, NULL, NULL);
             // TODO: GEN_CODE(PUSHS, temp_var1, NULL, NULL);
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
-            gen_code(NULL,INS_PUSHS,temp_var2,NULL,NULL);
-            gen_code(NULL,INS_PUSHS,temp_var1,NULL,NULL);
-            gen_code(NULL,INS_GTS,NULL,NULL,NULL);
+            gen_code(q,INS_PUSHS,temp_var2,NULL,NULL);
+            gen_code(q,INS_PUSHS,temp_var1,NULL,NULL);
+            gen_code(q,INS_GTS,NULL,NULL,NULL);
 
             //
             // TODO: GEN_CODE(ORS, NULL, NULL, NULL);
-            gen_code(NULL,INS_ORS,NULL,NULL,NULL);
+            gen_code(q,INS_ORS,NULL,NULL,NULL);
             break;
         case RULE_LT:
             printf("(");
@@ -697,7 +697,7 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             push_to_gen_stack(expr->val1.value.sub_expr);
             printf(")");
             // TODO: GEN_CODE(LTS, NULL, NULL, NULL);
-            gen_code(NULL, INS_LTS, NULL, NULL, NULL);
+            gen_code(q, INS_LTS, NULL, NULL, NULL);
             break;
         case RULE_LE:
             printf("(");
@@ -710,27 +710,27 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             // TODO: def vars temp_var1, temp_var2, temp_var3 -- DONE
             // TODO: GEN_CODE(POPS, temp_var1, NULL, NULL);
             // TODO: GEN_CODE(POPS, temp_var2, NULL, NULL);
-            gen_code(NULL, INS_POPS, temp_var1, NULL, NULL);
-            gen_code(NULL, INS_POPS, temp_var2, NULL, NULL);
+            gen_code(q, INS_POPS, temp_var1, NULL, NULL);
+            gen_code(q, INS_POPS, temp_var2, NULL, NULL);
             //
             // TODO: GEN_CODE(PUSHS, temp_var2, NULL, NULL);
             // TODO: GEN_CODE(PUSHS, temp_var1, NULL, NULL);
             // TODO: GEN_CODE(LTS, NULL, NULL, NULL);
-            gen_code(NULL,INS_PUSHS,temp_var2,NULL,NULL);
-            gen_code(NULL,INS_PUSHS,temp_var1,NULL,NULL);
-            gen_code(NULL,INS_LTS,NULL,NULL,NULL);
+            gen_code(q,INS_PUSHS,temp_var2,NULL,NULL);
+            gen_code(q,INS_PUSHS,temp_var1,NULL,NULL);
+            gen_code(q,INS_LTS,NULL,NULL,NULL);
 
             //
             // TODO: GEN_CODE(PUSHS, temp_var2, NULL, NULL);
             // TODO: GEN_CODE(PUSHS, temp_var1, NULL, NULL);
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
-            gen_code(NULL,INS_PUSHS,temp_var2,NULL,NULL);
-            gen_code(NULL,INS_PUSHS,temp_var1,NULL,NULL);
-            gen_code(NULL,INS_EQS,NULL,NULL,NULL);
+            gen_code(q,INS_PUSHS,temp_var2,NULL,NULL);
+            gen_code(q,INS_PUSHS,temp_var1,NULL,NULL);
+            gen_code(q,INS_EQS,NULL,NULL,NULL);
 
             //
             // TODO: GEN_CODE(ORS, NULL, NULL, NULL);
-            gen_code(NULL,INS_ORS,NULL,NULL,NULL);
+            gen_code(q,INS_ORS,NULL,NULL,NULL);
 
             break;
         case RULE_AND:
@@ -740,7 +740,7 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             push_to_gen_stack(expr->val1.value.sub_expr);
             printf(")");
             // TODO: GEN_CODE(ANDS, NULL, NULL, NULL);
-            gen_code(NULL, INS_ANDS, NULL, NULL, NULL);
+            gen_code(q, INS_ANDS, NULL, NULL, NULL);
             break;
         case RULE_OR:
             printf("(");
@@ -749,7 +749,7 @@ static int push_to_gen_stack(exp_nterm_t *expr)
             push_to_gen_stack(expr->val1.value.sub_expr);
             printf(")");
             // TODO: GEN_CODE(ORS, NULL, NULL, NULL);
-            gen_code(NULL, INS_ORS, NULL, NULL, NULL);
+            gen_code(q, INS_ORS, NULL, NULL, NULL);
             break;
             // RULE_POWER,             // E -> E ^ E
             // RULE_MODULO,            // E -> E % E
@@ -759,14 +759,14 @@ static int push_to_gen_stack(exp_nterm_t *expr)
     return NO_ERR;
 }
 
-int generate_code_nterm(exp_nterm_t **expr)
+int generate_code_nterm(exp_nterm_t **expr, queue_t *q)
 {
     // TODO: GEN_CODE(CLEARS)
-    gen_code(NULL, INS_CLEARS, NULL, NULL, NULL);
+    gen_code(q, INS_CLEARS, NULL, NULL, NULL);
     if (expr != NULL && *expr != NULL)
     {
         printf("(");
-        int res = push_to_gen_stack(*expr);
+        int res = push_to_gen_stack(*expr,q);
         printf(")\n");
         return res;
     }

@@ -5,6 +5,7 @@
 #include "token.h"
 #include "symtable.h"
 #include "exp_stack.h"
+#include "generator.h"
 #include <stdbool.h>
 
 #define PREC_TABLE_SIZE 14
@@ -114,6 +115,6 @@ int exp_stack_shift(exp_stack_t *s, token_t *token);
 // bude prejmenovano na expression
 int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp);
 
-int generate_code_nterm(exp_nterm_t **expr);
+int generate_code_nterm(exp_nterm_t **expr, queue_t *q);
 
 #endif // _EXPRESSION_H_

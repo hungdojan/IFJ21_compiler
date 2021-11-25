@@ -213,7 +213,7 @@ int lof_e(token_t **token, node_ptr node, int *index, bool is_parm)
             *index += 1;
             // TODO: add to passing argumets ???
 
-            generate_code_nterm(&final_exp);
+            generate_code_nterm(&final_exp, NULL);
             if (!is_parm)
             {
                 // TODO: GEN_CODE(MOVE, "retvar$index", "_tmp$temp_index", NULL); -- POPS
@@ -312,7 +312,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index, bool is_parm)
                 sprintf(s,"LF@%%retvar$%d",*index);
                 gen_code(NULL, INS_POPS, s,NULL,NULL);
             }
-            generate_code_nterm(&final_exp);
+            generate_code_nterm(&final_exp, NULL);
             exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
             if ((res = lof_e_n(token, node, index, is_parm)) != NO_ERR)
                 return res;
@@ -625,7 +625,7 @@ int code(token_t **token, node_ptr *func_node)
             // expression muze byt jakykoliv vyraz -> pokud to neni false nebo NIL
             // pak je to vzdy true; toto je ale reseno az pri generovani kodu
             if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
-            generate_code_nterm(&final_exp);
+            generate_code_nterm(&final_exp, NULL);
             exp_nterm_destroy(&final_exp);
             // TODO: gen_code
 
@@ -661,18 +661,27 @@ int code(token_t **token, node_ptr *func_node)
             if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
 
             char w[10];
+            char w_end[14];
             sprintf(w,"while_%d",index_while);
-            // TODO: GENCODE LABEL WHILE
-            gen_code(&q,INS_LABEL,w,NULL,NULL);
-            generate_code_nterm(&final_exp);
-            // TODO: ničit strom až po while
-            // TODO: GENCODE LT, GT, EQ expression
-            // TODO: GEN_CODE JUMPIFEQ ENDWHILE
 
+            // TODO: GENCODE LABEL WHILE_index
+            gen_code(&q,INS_LABEL,w,NULL,NULL);
+
+            generate_code_nterm(&final_exp,&q);
+
+            // TODO: ničit strom až po while!
+            // TODO: GENCODE LT, GT, EQ expression
+            // TODO: GENCODE POPS GF@%%temp_var1
+            gen_code(&q,INS_POPS,"GF@%%temp_var1",NULL,NULL);
+
+            sprintf(w_end,"end_while_%d",index_while);
+
+            // TODO: GEN_CODE JUMPIFEQ ENDWHILE GF@%%temp_var1 nil@nil
+            // TODO: GENCODE JUMPIFEQ ENDWHILE GF@%%temp_var1 bool@false
+            gen_code(&q,INS_JUMPIFEQ,w_end,"GF@%%temp_var1","nil@nil");
+            gen_code(&q,INS_JUMPIFEQ,w_end,"GF@%%temp_var1","bool@false");
 
             exp_nterm_destroy(&final_exp);
-
-
 
 
             CHECK_AND_LOAD(token, TYPE_KW_DO);
@@ -682,15 +691,21 @@ int code(token_t **token, node_ptr *func_node)
             if ((res = code(token, func_node)) != NO_ERR)    return res;
 
             // TODO: go thru SYMTABLE and define vars
-            // TODO: go thru gen_code_queue and change delete init
+            // TODO: go thru queue_t and change delete init
             // TODO: flush code
             // TODO: jump to while label
 
+
+
+            gen_code(&q,INS_JUMP,w,NULL,NULL);
             DESTROY_SCOPE();
 
             CHECK_AND_LOAD(token, TYPE_KW_END);
             // TODO: GENCODE LABEL ENDWHILE
+            gen_code(&q,INS_LABEL,w_end,NULL,NULL);
             index_while += 1;
+
+            queue_flush(&q);
 
             return code(token, func_node);
 
@@ -797,7 +812,7 @@ int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node)
                 exp_nterm_t *final_exp = NULL;
                 if ((res = expression(token, data_t, &final_exp)) != NO_ERR)
                     return res;
-                generate_code_nterm(&final_exp);
+                generate_code_nterm(&final_exp, NULL);
                 exp_nterm_destroy(&final_exp);
 
                 // TODO: gen_code(final_exp);
@@ -816,7 +831,7 @@ int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node)
                 exp_nterm_t *final_exp = NULL;
                 if ((res = expression(token, data_t, &final_exp)) != NO_ERR)
                     return res;
-                generate_code_nterm(&final_exp);
+                generate_code_nterm(&final_exp, NULL);
                 exp_nterm_destroy(&final_exp);
 
                 // TODO: gen_code(final_exp);
@@ -846,7 +861,7 @@ int elseif_block(token_t **token, node_ptr *func_node)
             LOAD_TOKEN(token);
 
             if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
-            generate_code_nterm(&final_exp);
+            generate_code_nterm(&final_exp, NULL);
             exp_nterm_destroy(&final_exp);
 
             // TODO: generovat exp
@@ -1094,7 +1109,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars)
                 item_var_t *item = stack_var_pop(lof_vars);
                 if (data_t != DATA_NIL && data_t != item->var_node->var_type)
                     return ERR_SEM_TYPE;
-                generate_code_nterm(&final_exp);
+                generate_code_nterm(&final_exp, NULL);
                 exp_nterm_destroy(&final_exp);
                 // TODO: int ind = gen_exp(final_exp)
                 // TODO: GEN_CODE(MOVE, item->var_node->key, _tmp$ind, NULL);
@@ -1121,7 +1136,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars)
             item_var_t *item = stack_var_pop(lof_vars);
             if (data_t != DATA_NIL && data_t != item->var_node->var_type)
                 return ERR_SEM_TYPE;
-            generate_code_nterm(&final_exp);
+            generate_code_nterm(&final_exp, NULL);
             exp_nterm_destroy(&final_exp);  // XXX: toto se pozdeni zmeni
             // TODO: int ind = gen_exp(final_exp)
             // TODO: GEN_CODE(MOVE, item->var_node->key, _tmp$ind, NULL);
