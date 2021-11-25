@@ -13,6 +13,7 @@
 #ifndef _PARSER_H_
 #define _PARSER_H_
 
+#include "scanner.h"
 #include "istring.h"
 #include "token.h"
 #include "symtable.h"
@@ -20,6 +21,7 @@
 #include "exp_stack.h"
 #include "stack.h"
 #include <stdio.h>
+#include <stdbool.h>
 
 /*
  * Pokud neni nacteny token, pak se nove zavola dalsi
@@ -56,7 +58,7 @@
         else\
         {\
             stack_reset_index(&local_stack);\
-            while (stack_isempty(&local_stack))   \
+            while (!stack_isempty(&local_stack))   \
             {\
                 node_return = tree_search(stack_top(&local_stack), id_val);\
                 if (node_return != NULL)    \
@@ -118,26 +120,32 @@
 
 extern FILE *global_file;
 
+// typedef struct data_parser
+// {
+//     token_t **token;
+//     node_ptr node;
+// } data_parse_t;
+
 int syntax_analysis(FILE *file);
 
 int prg(token_t **token);
-int lof_e(token_t **token, Istring *data);
-int lof_e_n(token_t **token, Istring *data);
+int lof_e(token_t **token, node_ptr node, int *index, bool is_parm);
+int lof_e_n(token_t **token, node_ptr node, int *index, bool is_parm);
 int parm(token_t **token, Istring *data);
 int parm_n(token_t **token, Istring *data);
-int ret(token_t **token, Istring *data);
-int ret_n(token_t **token, Istring *data);
+int ret(token_t **token, Istring *data, bool gen_code);
+int ret_n(token_t **token, Istring *data, bool gen_code, int index);
 int def_parm(token_t **token, Istring *data);
 int def_parm_n(token_t **token, Istring *data);
-int expression(token_t **token, enum data_type *data_t);
 int code(token_t **token, node_ptr *func_node);
-int var_init_assign(token_t **token, enum data_type *data_t);
-int fun_or_exp(token_t **token, enum data_type *data_t);
+int var_init_assign(token_t **token, enum data_type *data_t, node_ptr *var_node);
+int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node);
+int elseif_block(token_t **token, node_ptr *func_node);
 int else_block(token_t **token, node_ptr *func_node);
 int func_or_assign(token_t **token, node_ptr *node);
-int multi_var_n(token_t **token, Istring *data);
-int fun_or_multi_e(token_t **token, Istring *data);
-int multi_e_n(token_t **token, Istring *data);
+int multi_var_n(token_t **token, stack_var_t *lof_vars);
+int fun_or_multi_e(token_t **token, stack_var_t *lof_vars);
+int multi_e_n(token_t **token, stack_var_t *lof_vars);
 int d_type(token_t **token, enum data_type *data_t);
 
 #endif // _PARSER_H_

@@ -25,11 +25,6 @@ enum exp_rules
     RULE_NOT,               // E -> not E
     RULE_POWER,             // E -> E ^ E
     RULE_CONCAT,            // E -> E..E
-    RULE_ID,                // E -> id
-//     RULE_FUNC_NO_ARG,       // E -> id ( )
-//     RULE_FUNC_ONE_ARG,      // E -> id ( E )
-//     RULE_FUNC_TWO_ARG,      // E -> id ( E , E )
-//     RULE_FUNC_MORE_ARGS,    // E -> id ( E , E , E )
     RULE_PLUS,              // E -> E + E
     RULE_MINUS,             // E -> E - E
     RULE_MULTIPLY,          // E -> E * E
@@ -38,18 +33,18 @@ enum exp_rules
     RULE_MODULO,            // E -> E % E
     RULE_EQ,                // E -> E == E
     RULE_NE,                // E -> E ~= E
-    RULE_GE,                // E -> E > E
-    RULE_GT,                // E -> E >= E
-    RULE_LE,                // E -> E < E
-    RULE_LT,                // E -> E <= E
+    RULE_GE,                // E -> E >= E
+    RULE_GT,                // E -> E > E
+    RULE_LE,                // E -> E <= E
+    RULE_LT,                // E -> E < E
     RULE_AND,               // E -> E and E
     RULE_OR,                // E -> E or E
+    RULE_ID,                // E -> id
     RULE_STR,               // E -> _str_
     RULE_INT,               // E -> _int_
     RULE_NUM,               // E -> _num_
     RULE_NIL,               // E -> _nil_
-    RULE_TRUE,              // E -> _true_
-    RULE_FALSE              // E -> _false_
+    RULE_BOOL,              // E -> _bool_
 };
 
 enum table_index
@@ -66,7 +61,6 @@ enum table_index
     TI_AND,
     TI_OR,
     TI_COMMA,
-//     TI_ID,
     TI_CONST,
     TI_DOLLAR
 };
@@ -95,12 +89,11 @@ typedef struct exp_nterm
 {
     enum data_type  data_t;      /// datovy typ
     enum exp_rules  rule;        /// pouzite pravidlo
+    unsigned        id;          /// pomocne id pri generovani kodu
     exp_data_t      val1;        /// hodnota na leve strane
+    bool            val1_to_num; /// pretypovani leveho operandu na number
     exp_data_t      val2;        /// hodnota na prave strane
-
-    int parm_len;
-    int parm_alloc_size;
-    exp_data_t     *parms;       /// seznam parametru
+    bool            val2_to_num; /// pretypovani praveho operandu na number
 } exp_nterm_t;
 
 // polozka v zasobniku
@@ -146,16 +139,18 @@ int exp_stack_push(exp_stack_t *s, enum exp_stack_symb sym, token_t *token, exp_
 // pridani rovnou itemu do zasobniku
 int exp_stack_push_item(exp_stack_t *s, struct exp_stack_item * item);
 
-// vraci prvni token zpatky
+// vraci prvni polozku zpatky
 struct exp_stack_item *exp_stack_top(const exp_stack_t *s);
+
+// vraci prvni term zpatky
+struct exp_stack_item *exp_stack_top_term(const exp_stack_t *s);
 
 // vrati prvni vec na zasobniku
 struct exp_stack_item *exp_stack_pop(exp_stack_t *s);
 
-// vlozi parametr fce
-int exp_nterm_add_parameter(exp_nterm_t *func, exp_data_t parm);
-
 int exp_stack_isempty(const exp_stack_t *s);
+
+void exp_stack_destroy_item(exp_item_t *item);
 
 // odstraneni zasobniku a uvolneni alokovane pameti
 void exp_stack_destroy(exp_stack_t *s);

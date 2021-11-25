@@ -10,9 +10,18 @@
  * Reseni projektu IFJ a IAL, FIT VUT 21/22
  */
 
+#include "parser.h"
+#include <stdio.h>
+
+extern unsigned file_line;
+
 int main() {
+    int res = syntax_analysis(stdin);
     // TODO:
-    return 0;
+    printf("%d\n", res);
+    if (res)
+        printf("chyba na radku: %u\n", file_line);
+    return res;
 }
 
 /* main.c */

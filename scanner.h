@@ -28,6 +28,8 @@ enum State {
     // STATE_ERROR
 };
 
+extern unsigned file_line;
+
 /**
  * @brief Ziska token ze zdrojoveho souboru
  *
