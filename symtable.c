@@ -97,6 +97,7 @@ int type_control(enum data_type received, enum data_type expected)
     // TODO:
     if (received == expected)       return NO_ERR;
     else if (received == DATA_NIL)  return NO_ERR;
+    else if (received == DATA_INT && expected == DATA_NUM) return NO_ERR;
     return 1;
 }
 
@@ -197,6 +198,8 @@ void tree_destroy(node_ptr *tree)
 node_ptr tree_search(node_ptr tree, char *key)
 {
     if(!tree)
+        return NULL;
+    if (tree->type == ROOT)
         return NULL;
 
     while(tree != NULL)

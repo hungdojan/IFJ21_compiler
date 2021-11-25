@@ -66,7 +66,7 @@ node_ptr stack_top(const frame_stack *stack)
 
 int stack_isempty(const frame_stack *stack)
 {
-    if (stack != NULL && stack->last_index >= 0)
+    if (stack != NULL && stack->curr_index >= 0)
         return 0;
     return 1;
 }

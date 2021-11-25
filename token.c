@@ -124,6 +124,7 @@ int check_key_words(char *identif)
 {
     if(!strcmp(identif, "do"))              return TYPE_KW_DO;
     else if(!strcmp(identif, "global"))     return TYPE_KW_GLOBAL;
+    else if(!strcmp(identif, "boolean"))    return TYPE_KW_BOOLEAN;
     else if(!strcmp(identif, "number"))     return TYPE_KW_NUMBER;
     else if(!strcmp(identif, "else"))       return TYPE_KW_ELSE;
     else if(!strcmp(identif, "if"))         return TYPE_KW_IF;

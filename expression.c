@@ -26,8 +26,9 @@ static int get_index_from_token(enum Token_type type)
         case TYPE_LESSER:
         case TYPE_LESSER_OR_EQ:
         case TYPE_GREATER:
-        case TYPE_GREATER_OR_EQ:     return TI_LOGIC;
         case TYPE_EQ:
+        case TYPE_NOT_EQ:
+        case TYPE_GREATER_OR_EQ:     return TI_LOGIC;
         case TYPE_KW_AND:            return TI_AND;
         case TYPE_KW_OR:             return TI_OR;
         case TYPE_COMMA:             return TI_COMMA;
@@ -121,6 +122,8 @@ int exp_stack_reduce(exp_stack_t *s)
                     new_nterm->rule = RULE_ID;
                     SEARCH_SYMBOL(operand1->data.term.value.id, VAR, node);
                     if (node == NULL)
+                        CLEAR_UP_IN_REDUCE(ERR_SEM_DEF);
+                    if (!node->is_defined)
                         CLEAR_UP_IN_REDUCE(ERR_SEM_DEF);
                     new_nterm->data_t = node->var_type;     // prirazeni podle hodnoty v TS
                 }
@@ -417,6 +420,7 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
     if ((res = exp_stack_init(&s)))    return res;
     if ((res = exp_stack_push(&s, SYM_DOLLAR, NULL, NULL, NULL)))   return res;
 
+    if (token == NULL || *token == NULL)   return ERR_INTERNAL;
     do
     {
         // TODO:
@@ -434,33 +438,19 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
                     PUSH_DATA_TO_EXP_STACK(s, *token, res);
                     if (res != NO_ERR)
                         loading = 0;
-                    // {
-                    //     exp_stack_destroy(&s);
-                    //     *final_exp = NULL;
-                    //     return res;
-                    // }
+                    else
+                        LOAD_TOKEN(token);
                 }
-                LOAD_TOKEN(token);
                 break;
             case S:
                 if ((res = exp_stack_shift(&s, *token)) != NO_ERR)
                     loading = 0;
-                // {
-                //     exp_stack_destroy(&s);
-                //     *final_exp = NULL;
-                //     return res;
-                // }
-                LOAD_TOKEN(token);
+                else
+                    LOAD_TOKEN(token);
                 break;
             case R:
                 if ((res = exp_stack_reduce(&s)) != NO_ERR)
                     loading=0;
-                // {
-                //     exp_stack_destroy(&s);
-                //     *final_exp = NULL;
-                //     return res;
-                // }
-                // LOAD_TOKEN(token);
                 break;
             case U:
                 // TODO: error handling
@@ -468,14 +458,24 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
                 break;
         }
     } while (loading);
-    if (res == ERR_INTERNAL)
+    if (res == ERR_INTERNAL || res == ERR_SEM_DEF)
     {
         exp_stack_destroy(&s);
         *final_exp = NULL;
         return res;
     }
     if ((*token)->type == TYPE_IDENTIFIER)
-        res = exp_stack_reduce(&s);
+    {
+        while (exp_stack_contains_shift(s))
+        {
+            if ((res = exp_stack_reduce(&s)) != NO_ERR)
+            {
+                exp_stack_destroy(&s);
+                *final_exp = NULL;
+                return res;
+            }
+        }
+    }
     if (exp_stack_top_term(&s)->type != SYM_DOLLAR)
     {
         exp_stack_destroy(&s);

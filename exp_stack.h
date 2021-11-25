@@ -150,6 +150,8 @@ struct exp_stack_item *exp_stack_pop(exp_stack_t *s);
 
 int exp_stack_isempty(const exp_stack_t *s);
 
+int exp_stack_contains_shift(const exp_stack_t s);
+
 void exp_stack_destroy_item(exp_item_t *item);
 
 // odstraneni zasobniku a uvolneni alokovane pameti
