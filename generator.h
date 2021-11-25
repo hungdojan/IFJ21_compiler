@@ -91,11 +91,14 @@ typedef struct queue
     code_t *last;
 } queue_t;
 
+extern queue_t q_identifier;
+
 int gen_code(queue_t *q, enum ins_type type, char* dest, char* first_op, char* second_op);
 void queue_flush(queue_t *q);
 void queue_init(queue_t *q);
 void queue_destroy(queue_t *q);
 void queue_add(queue_t *q, code_t *item);
+void flush_item(code_t *item);
 
 void import_builtin_functions();
 

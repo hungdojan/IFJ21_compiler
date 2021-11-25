@@ -379,6 +379,7 @@ int get_token(FILE *f, token_t **ref)
                 }
                 else
                 {
+                    /// TODO: pridat specialni znaky /032, /092, /010 ...
                     string_Add_Char(&str, c);
                 }
                 break;
