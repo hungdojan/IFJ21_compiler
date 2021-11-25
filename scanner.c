@@ -37,7 +37,7 @@ static int esc_seq(Istring *s, FILE *f)
     else if (c == 'r')  {c = '\r';fxxx(s,c);}
     else if (c == 'v')  {c = '\v';fxxx(s,c);}
     else if (c == '\\') {c = '\\';fxxx(s,c);}
-    else if (c == '\"') c = '\"';
+    else if (c == '\"') {c = '\"';fxxx(s,c);}
     else if (c == '\'') {c = '\'';fxxx(s,c);}
 
     else if (isdigit(c))

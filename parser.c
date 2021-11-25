@@ -79,7 +79,6 @@ int prg(token_t **token)
             // TODO: GEN_CODE(PUSHS, "int@$index", NULL, NULL)
             char s[8] = {0,};
             sprintf(s,"int@%d",index);
-            printf("%d\n",index);
             gen_code(&q_identifier,INS_PUSHS,s,NULL,NULL);
             CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);      // )
 
@@ -1422,8 +1421,7 @@ int syntax_analysis(FILE *file)
     int res;
     token_t *token = NULL;
     global_file = file;
-    queue_init(&q_identifier);
-    index_while = 0;
+
 
     // inicializace globalni TS a zasobniku TS
     if ((res = tree_init(&global_tree)) != NO_ERR)
@@ -1435,8 +1433,12 @@ int syntax_analysis(FILE *file)
         goto post_local_stack_error;
 
     // TODO: generate code init
+    queue_init(&q_identifier);
+    index_while = 0;
+    gen_code(&q_identifier,INS_LABEL,"$$main",NULL,NULL);
 
     // TODO: vlozeni vnitrnich funkci do TS
+    import_builtin_functions();
 
     // poslani prvniho tokenu do <prg>
     if ((res = get_token(global_file, &token)) != NO_ERR)

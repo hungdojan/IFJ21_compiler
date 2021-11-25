@@ -506,7 +506,7 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
 
 static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
 {
-    char s[100] = "\0"; // omezeni poctu desetinych mist
+    char s[128] = {0,}; // omezeni poctu desetinych mist
     char temp_var1[] = "GF@%%temp_var1";
     char temp_var2[] = "GF@%%temp_var2";
     char temp_var3[] = "GF@%%temp_var3";
@@ -516,35 +516,38 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
         // jeden operand
         case RULE_ID:
             ////printf("%s", expr->val1.value.id);
-            // TODO: GEN_CODE(PUSHS, expr->val1.value.id, NULL, NULL)
+            // TODO: GEN_CODE(PUSHS, expr->val1.value.id, NULL, NULL) - bacha na LF/TF!
+            sprintf(s,"LF@%s",expr->val1.value.id);
             gen_code(q, INS_PUSHS,expr->val1.value.id, NULL, NULL);
             break;
         case RULE_BOOL:
             ////printf("%s", expr->val1.value.boolean ? "true" : "false");
             // TODO: GEN_CODE(PUSHS, expr->val1.value.boolean, NULL, NULL)
+            sprintf(s,"bool@%s",expr->val1.value.boolean ? "true" : "false");
             gen_code(q, INS_PUSHS, expr->val1.value.boolean ? "true" : "false", NULL, NULL);
             break;
         case RULE_INT:
             ////printf("%d", expr->val1.value.integer);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.integer, NULL, NULL)
-            sprintf(s,"%d",expr->val1.value.integer);
+            sprintf(s,"int@%d",expr->val1.value.integer);
             gen_code(q, INS_PUSHS, s, NULL, NULL);
             break;
         case RULE_NIL:
             ////printf("nil");
             // TODO: GEN_CODE(PUSHS, nil, NULL, NULL)
-            gen_code(q, INS_PUSHS, "nil", NULL, NULL);
+            gen_code(q, INS_PUSHS, "nil@nil", NULL, NULL);
             break;
         case RULE_NUM:
             ////printf("%g", expr->val1.value.number);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.number, NULL, NULL)
-            sprintf(s,"%g",expr->val1.value.number);
+            sprintf(s,"number@%g",expr->val1.value.number);
             gen_code(q, INS_PUSHS, s, NULL, NULL);
             break;
         case RULE_STR:
             //printf("%s", expr->val1.value.string);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.string, NULL, NULL)
-            gen_code(q, INS_PUSHS, expr->val1.value.string, NULL, NULL);
+            sprintf(s,"string@%s",expr->val1.value.string);
+            gen_code(q, INS_PUSHS, s, NULL, NULL);
             break;
 
             // jeden operand a operator
