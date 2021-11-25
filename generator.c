@@ -11,24 +11,58 @@
  */
 
 #include "generator.h"
+#include "error.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 int gen_code(queue_t *q,enum ins_type type, char* dest, char* first_op, char* second_op)
 {
-    code_t* item = (code_t*)malloc(sizeof (struct code));
+    code_t* item = (code_t*)calloc(1, sizeof (struct code));
     if(item == NULL)
-        return 60;
+        return ERR_INTERNAL;
     item->instruction = type;
-    item->dest = dest;
-    item->first_op = first_op;
-    item->second_op = second_op;
+
+    if (dest != NULL)
+    {
+        item->dest = (char *)calloc(strlen(dest) + 1, 1);
+        if (item->dest == NULL)     goto dest_err;
+        strcpy(item->dest, dest);
+    }
+
+    if (first_op != NULL)
+    {
+        item->first_op = (char *) calloc(strlen(first_op) + 1, 1);
+        if (item->first_op == NULL) goto first_op_err;
+        strcpy(item->first_op, first_op);
+    }
+
+    if (second_op != NULL)
+    {
+        item->second_op = (char *) calloc(strlen(second_op) + 1, 1);
+        if (item->second_op == NULL) goto second_op_err;
+        strcpy(item->second_op, second_op);
+    }
+
     if(q != NULL)
         queue_add(q,item);
     else
+    {
         flush_item(item);
-
+        free(item->second_op);
+        free(item->first_op);
+        free(item->dest);
+        free(item);
+        item = NULL;
+    }
     return 0;
+second_op_err:
+    free(item->first_op);
+first_op_err:
+    free(item->dest);
+dest_err:
+    free(item);
+    return ERR_INTERNAL;
 }
 
 void queue_flush(queue_t *q)
@@ -52,7 +86,11 @@ void queue_destroy(queue_t *q)
     {
         code_t* tmp = q->first;
         q->first = q->first->next;
+        free(tmp->dest);
+        free(tmp->second_op);
+        free(tmp->first_op);
         free(tmp);
+        tmp = NULL;
     }
     queue_init(q);
 }
