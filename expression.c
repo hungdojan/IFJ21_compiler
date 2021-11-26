@@ -517,9 +517,14 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
         case RULE_ID:
             ////printf("%s", expr->val1.value.id);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.id, NULL, NULL) - bacha na LF/TF!
-            sprintf(s,"LF@%s",expr->val1.value.id);
+        {node_ptr var_node = NULL;
+            SEARCH_SYMBOL(expr->val1.value.id, VAR, var_node);
+            if (var_node->is_param_var)
+                sprintf(s,"LF@param_%s",var_node->key);
+            else
+                sprintf(s,"LF@%s",var_node->key);
             gen_code(q, INS_PUSHS,s, NULL, NULL);
-            break;
+            break;}
         case RULE_BOOL:
             ////printf("%s", expr->val1.value.boolean ? "true" : "false");
             // TODO: GEN_CODE(PUSHS, expr->val1.value.boolean, NULL, NULL)
