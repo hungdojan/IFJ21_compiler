@@ -575,9 +575,9 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             break;
         case RULE_CONCAT:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf("..");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf("..");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: def vars temp_var1, temp_var2, temp_var3 -- DONE
             // TODO: GEN_CODE(POPS, string@temp_var1, NULL, NULL);
@@ -591,63 +591,63 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             break;
         case RULE_PLUS:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf("+");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf("+");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(ADDS, NULL, NULL, NULL);
             gen_code(q,INS_ADDS,NULL,NULL,NULL);
             break;
         case RULE_MINUS:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf("-");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf("-");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(SUBS, NULL, NULL, NULL);
             gen_code(q,INS_SUBS,NULL,NULL,NULL);
             break;
         case RULE_MULTIPLY:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf("*");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf("*");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(MULS, NULL, NULL, NULL);
             gen_code(q, INS_MULS, NULL, NULL , NULL);
             break;
         case RULE_DIVIDE:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf("/");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf("/");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(DIVS, NULL, NULL, NULL);
             gen_code(q, INS_DIVS, NULL, NULL, NULL);
             break;
         case RULE_DIVIDE_WHOLE:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf("//");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf("//");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(IDIVS, NULL, NULL, NULL);
             gen_code(q, INS_IDIVS, NULL, NULL, NULL);
             break;
         case RULE_EQ:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf("==");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf("==");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
             gen_code(q, INS_EQS, NULL, NULL, NULL);
             break;
         case RULE_NE:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf("~=");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf("~=");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
             // TODO: GEN_CODE(NOTS, NULL, NULL, NULL);
@@ -656,18 +656,18 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             break;
         case RULE_GT:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf(">");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf(">");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(GTS, NULL, NULL, NULL);
             gen_code(q, INS_GTS, NULL, NULL, NULL);
             break;
         case RULE_GE:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf(">=");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf(">=");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: dostat nejak z funkci datove typy?? exp->val->type
             //
@@ -697,18 +697,18 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             break;
         case RULE_LT:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf("<");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf("<");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(LTS, NULL, NULL, NULL);
             gen_code(q, INS_LTS, NULL, NULL, NULL);
             break;
         case RULE_LE:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf("<=");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf("<=");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: dostat nejak z funkci datove typy?? exp->val->type
             //
@@ -740,18 +740,18 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             break;
         case RULE_AND:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf("and");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf("and");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(ANDS, NULL, NULL, NULL);
             gen_code(q, INS_ANDS, NULL, NULL, NULL);
             break;
         case RULE_OR:
             //printf("(");
-            push_to_gen_stack(q, expr->val2.value.sub_expr);
-            //printf("or");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
+            //printf("or");
+            push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(ORS, NULL, NULL, NULL);
             gen_code(q, INS_ORS, NULL, NULL, NULL);

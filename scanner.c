@@ -413,7 +413,7 @@ int get_token(FILE *f, token_t **ref)
             default:
                 break;
         }
-    } while (c != EOF && loading);
+    } while (loading);
     // if (c == EOF)
     // {
     //     string_Free(&str);

@@ -292,6 +292,7 @@ void filter_defvar(queue_t *q)
 {
     if (q != NULL)
     {
+        bool is_func_call = false;
         code_t *item = NULL;
         // pokud je to na zacatku instrukce definice
         while (q->first != NULL && q->first->instruction == INS_DEFVAR)
@@ -313,7 +314,11 @@ void filter_defvar(queue_t *q)
         item = q->first;
         while (item != NULL && item->next != NULL)
         {
-            if (item->next->instruction == INS_DEFVAR)
+            if (item->instruction == INS_CREATEFRAME)
+                is_func_call = true;
+            else if (item->instruction == INS_CALL)
+                is_func_call = false;
+            else if (item->next->instruction == INS_DEFVAR && !is_func_call)
             {
                 // vypis instrukce 
                 flush_item(item->next);
@@ -352,30 +357,30 @@ void import_builtin_functions()
     /// print reads
     fprintf(stdout,"LABEL reads\n"
             "PUSHFRAME\n"
-            "DEFVAR LF@%%retval\n"
-            "POPS LF@%%retval\n" // empty pop
-            "MOVE LF@%%retval nil@nil\n"
-            "READ LF@%%retval string\n"
+            "DEFVAR LF@%%retvar$1\n"
+            "POPS LF@%%retvar$1\n" // empty pop
+            "MOVE LF@%%retvar$1 nil@nil\n"
+            "READ LF@%%retvar$1 string\n"
             "POPFRAME\n"
             "RETURN\n\n");
 
     /// print readi
     fprintf(stdout,"LABEL readi\n"
             "PUSHFRAME\n"
-            "DEFVAR LF@%%retval\n"
-            "POPS LF@%%retval\n" // empty pop
-            "MOVE LF@%%retval nil@nil\n"
-            "READ LF@%%retval int\n"
+            "DEFVAR LF@%%retvar$1\n"
+            "POPS LF@%%retvar$1\n" // empty pop
+            "MOVE LF@%%retvar$1 nil@nil\n"
+            "READ LF@%%retvar$1 int\n"
             "POPFRAME\n"
             "RETURN\n\n");
 
     /// print readn
     fprintf(stdout,"LABEL readn\n"
             "PUSHFRAME\n"
-            "DEFVAR LF@%%retval\n"
-            "POPS LF@%%retval\n" // empty pop
-            "MOVE LF@%%retval nil@nil\n"
-            "READ LF@%%retval float\n"
+            "DEFVAR LF@%%retvar$1\n"
+            "POPS LF@%%retvar$1\n" // empty pop
+            "MOVE LF@%%retvar$1 nil@nil\n"
+            "READ LF@%%retvar$1 float\n"
             "POPFRAME\n"
             "RETURN\n\n");
 
@@ -401,15 +406,15 @@ void import_builtin_functions()
     /// print tointeger
     fprintf(stdout,"LABEL tointeger\n"
             "PUSHFRAME\n"
-            "DEFVAR LF@%%retval\n"
-            "MOVE LF@%%retval nil@nil\n"
+            "DEFVAR LF@%%retvar$1\n"
+            "MOVE LF@%%retvar$1 nil@nil\n"
             "DEFVAR LF@%%cond\n"
             "DEFVAR LF@%%param1\n"
             "POPS LF@%%param1\n" // empty pop
             "POPS LF@%%param1\n"
             "TYPE LF@%%cond LF@%%param1\n"
             "JUMPIFEQ tointeger&return LF@%%cond string@number\n"
-            "FLOAT2INT LF@%%retval LF@%%param1\n"
+            "FLOAT2INT LF@%%retvar$1 LF@%%param1\n"
             "LABEL tointeger&return\n"
             "POPFRAME\n"
             "RETURN\n\n");
@@ -431,8 +436,8 @@ void import_builtin_functions()
             "POPS LF@%%param3\n"
             "TYPE LF@%%cond LF@%%param3\n"
             "JUMPIFNEQ substr&exit LF@%%cond string@int\n"
-            "DEFVAR LF@%%retval\n"
-            "MOVE LF@%%retval string@\n"
+            "DEFVAR LF@%%retvar$1\n"
+            "MOVE LF@%%retvar$1 string@\n"
             "DEFVAR LF@%%cond_length\n"
             "STRLEN LF@%%cond_length LF@%%param1\n"
             "LT LF@%%cond LF@%%param2 int@1\n"
@@ -454,7 +459,7 @@ void import_builtin_functions()
             "GT LF@%%cond LF@%%i LF@%%j\n"
             "JUMPIFEQ substr&return LF@%%cond bool@true\n"
             "GETCHAR LF@%%item LF@%%param1 LF@%%i\n"
-            "CONCAT LF@%%retval LF@%%retval LF@%%item\n"
+            "CONCAT LF@%%retvar$1 LF@%%retvar$1 LF@%%item\n"
             "ADD LF@%%i LF@%%i int@1\n"
             "JUMP substr&for\n"
             "LABEL substr&return\n"
@@ -466,17 +471,17 @@ void import_builtin_functions()
     /// print ord
     fprintf(stdout,"LABEL ord\n"
             "PUSHFRAME\n"
-            "DEFVAR LF@%%retval\n"
+            "DEFVAR LF@%%retvar$1\n"
             "DEFVAR LF@%%param1\n"
             "POPS LF@%%param1\n" // empty pop
             "POPS LF@%%param1\n"
-            "TYPE LF@%%retval LF@%%param1\n"
-            "JUMPIFNEQ ord&exit LF@%%retval string@string\n"
+            "TYPE LF@%%retvar$1 LF@%%param1\n"
+            "JUMPIFNEQ ord&exit LF@%%retvar$1 string@string\n"
             "DEFVAR LF@%%param2\n"
             "POPS LF@%%param2\n"
-            "TYPE LF@%%retval LF@%%param2\n"
-            "JUMPIFNEQ ord&exit LF@%%retval string@int\n"
-            "MOVE LF@%%retval nil@nil\n"
+            "TYPE LF@%%retvar$1 LF@%%param2\n"
+            "JUMPIFNEQ ord&exit LF@%%retvar$1 string@int\n"
+            "MOVE LF@%%retvar$1 nil@nil\n"
             "DEFVAR LF@%%cond_length\n"
             "LT LF@%%cond_length LF@%%param2 int@0\n"
             "JUMPIFEQ ord&return LF@%%cond_length bool@true\n"
@@ -484,7 +489,7 @@ void import_builtin_functions()
             "SUB LF@%%cond_length LF@%%cond_length int@1\n"
             "GT LF@%%cond_length LF@%%param2 LF@%%cond_length\n"
             "JUMPIFEQ ord&return LF@%%cond_length bool@true\n"
-            "STRI2INT LF@%%retval LF@%%param1 LF@%%param2\n"
+            "STRI2INT LF@%%retvar$1 LF@%%param1 LF@%%param2\n"
             "LABEL ord&return\n"
             "POPFRAME\n"
             "RETURN\n"
@@ -500,13 +505,13 @@ void import_builtin_functions()
             "POPS LF@%%param1\n"
             "TYPE LF@%%cond LF@%%param1\n"
             "JUMPIFNEQ chr&exit LF@%%cond string@int\n"
-            "DEFVAR LF@%%retval\n"
-            "MOVE LF@%%retval nil@nil\n"
+            "DEFVAR LF@%%retvar$1\n"
+            "MOVE LF@%%retvar$1 nil@nil\n"
             "LT LF@%%cond LF@%%param1 int@0\n"
             "JUMPIFEQ chr&return LF@%%cond bool@true\n"
             "GT LF@%%cond LF@%%param1 int@255\n"
             "JUMPIFEQ chr&return LF@%%cond bool@true\n"
-            "INT2CHAR LF@%%retval LF@%%param1\n"
+            "INT2CHAR LF@%%retvar$1 LF@%%param1\n"
             "LABEL chr&return\n"
             "POPFRAME\n"
             "RETURN\n"
