@@ -533,6 +533,7 @@ int def_parm(token_t **token, Istring *lof_data)
     enum data_type data_t;
     node_ptr node;
     INIT_TOKEN(token, res);
+    char s[128]={0,};
 
     switch ((*token)->type)
     {
@@ -551,8 +552,9 @@ int def_parm(token_t **token, Istring *lof_data)
 
             // TODO: GEN_CODE(DEFVAR, id, NULL, NULL);
             // TODO: GEN_CODE(POPS, id, NULL, NULL);
-            gen_code(NULL, INS_DEFVAR,node->key, NULL, NULL);
-            gen_code(NULL, INS_POPS,  node->key,NULL,NULL);
+            sprintf(s,"LF@%s",node->key);
+            gen_code(NULL, INS_DEFVAR,s, NULL, NULL);
+            gen_code(NULL, INS_POPS, s,NULL,NULL);
 
             return def_parm_n(token, lof_data);
 
@@ -574,6 +576,7 @@ int def_parm_n(token_t **token, Istring *lof_data)
     enum data_type data_t;
     node_ptr node;
     INIT_TOKEN(token, res);
+    char s[128]={0,};
 
     switch ((*token)->type)
     {
@@ -598,8 +601,9 @@ int def_parm_n(token_t **token, Istring *lof_data)
 
             // TODO: GEN_CODE(DEFVAR, id, NULL, NULL);
             // TODO: GEN_CODE(POPS, id, NULL, NULL);
-            gen_code(NULL, INS_DEFVAR, node->key, NULL, NULL);
-            gen_code(NULL, INS_POPS,   node->key, NULL, NULL);
+            sprintf(s,"LF@%s",node->key);
+            gen_code(NULL, INS_DEFVAR, s, NULL, NULL);
+            gen_code(NULL, INS_POPS,   s, NULL, NULL);
 
             return def_parm_n(token, lof_data);
 
@@ -619,6 +623,7 @@ int code(token_t **token, node_ptr *func_node)
     node_ptr local_node = NULL;
     exp_nterm_t *final_exp = NULL;
     INIT_TOKEN(token, res);
+    char s[128]={0,};
 
     switch ((*token)->type)
     {
@@ -651,7 +656,8 @@ int code(token_t **token, node_ptr *func_node)
             INSERT_SYMBOL((*token)->value.str_val, VAR, local_node);
 
             // TODO: GEN_CODE(DEF_VAR, id, NULL, NULL)
-            gen_code(NULL, INS_DEFVAR,local_node->key,NULL,NULL);
+            sprintf(s,"LF@%s",local_node->key);
+            gen_code(NULL, INS_DEFVAR,s,NULL,NULL);
             LOAD_TOKEN(token);
 
             CHECK_AND_LOAD(token, TYPE_DECLARE);                // :
@@ -830,6 +836,7 @@ int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node)
     int res = NO_ERR;
     node_ptr local_node;
     INIT_TOKEN(token, res);
+    char s[128]={0,};
 
     switch((*token)->type)
     {
@@ -852,6 +859,8 @@ int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node)
                     return res;
 
                 // TODO: GEN_CODE(PUSHS, int@$index, NULL, NULL);
+                sprintf(s,"int@%d",index);
+                gen_code(NULL,INS_PUSHS,s,NULL,NULL);
                 if (index != local_node->lof_params.length - 1)
                     return ERR_SEM_FUNC;
 
@@ -980,6 +989,7 @@ int func_or_assign(token_t **token, node_ptr *node)
 {
     int res = NO_ERR;
     INIT_TOKEN(token, res);
+    char s[128]={0,};
 
     if (node == NULL)           return ERR_INTERNAL;
     if (*node == NULL)          return ERR_SEM_DEF;
@@ -1000,6 +1010,8 @@ int func_or_assign(token_t **token, node_ptr *node)
                 return res;
 
             // TODO: GEN_CODE(PUSHS, int@$index, NULL, NULL);
+            sprintf(s,"int@%d",index);
+            gen_code(NULL,INS_PUSHS,s,NULL,NULL);
 
             CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);      // )
 
