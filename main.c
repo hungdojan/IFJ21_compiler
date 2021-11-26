@@ -18,9 +18,9 @@ extern unsigned file_line;
 int main() {
     int res = syntax_analysis(stdin);
     // TODO:
-    printf("%d\n", res);
+    /*printf("%d\n", res);
     if (res)
-        printf("chyba je mezi radky %u a %u\n", file_line-1, file_line);
+        printf("chyba je mezi radky %u a %u\n", file_line-1, file_line);*/
     return res;
 }
 

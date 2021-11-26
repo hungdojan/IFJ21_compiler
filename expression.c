@@ -518,13 +518,13 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             ////printf("%s", expr->val1.value.id);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.id, NULL, NULL) - bacha na LF/TF!
             sprintf(s,"LF@%s",expr->val1.value.id);
-            gen_code(q, INS_PUSHS,expr->val1.value.id, NULL, NULL);
+            gen_code(q, INS_PUSHS,s, NULL, NULL);
             break;
         case RULE_BOOL:
             ////printf("%s", expr->val1.value.boolean ? "true" : "false");
             // TODO: GEN_CODE(PUSHS, expr->val1.value.boolean, NULL, NULL)
             sprintf(s,"bool@%s",expr->val1.value.boolean ? "true" : "false");
-            gen_code(q, INS_PUSHS, expr->val1.value.boolean ? "true" : "false", NULL, NULL);
+            gen_code(q, INS_PUSHS, s, NULL, NULL);
             break;
         case RULE_INT:
             ////printf("%d", expr->val1.value.integer);
