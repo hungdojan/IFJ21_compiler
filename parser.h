@@ -13,6 +13,7 @@
 #ifndef _PARSER_H_
 #define _PARSER_H_
 
+#include "generator.h"
 #include "scanner.h"
 #include "istring.h"
 #include "token.h"
@@ -129,15 +130,15 @@ extern FILE *global_file;
 int syntax_analysis(FILE *file);
 
 int prg(token_t **token);
-int lof_e(token_t **token, node_ptr node, int *index, bool is_parm);
-int lof_e_n(token_t **token, node_ptr node, int *index, bool is_parm);
+int lof_e(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q);
+int lof_e_n(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q);
 int parm(token_t **token, Istring *data);
 int parm_n(token_t **token, Istring *data);
 int ret(token_t **token, Istring *data, bool gen_code_print);
 int ret_n(token_t **token, Istring *data, bool gen_code_print, int index);
 int def_parm(token_t **token, Istring *data);
 int def_parm_n(token_t **token, Istring *data);
-int code(token_t **token, node_ptr *func_node);
+int code(token_t **token, node_ptr *func_node, queue_t *q);
 int var_init_assign(token_t **token, enum data_type *data_t, node_ptr *var_node);
 int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node);
 int elseif_block(token_t **token, node_ptr *func_node);

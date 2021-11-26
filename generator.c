@@ -343,10 +343,10 @@ void import_builtin_functions()
     /// %%cokoli - pomocné proměnné
 
     fprintf(stdout,".IFJcode21\n\n"
-                   "JUMP $$main\n"
             "DEFVAR GF@%%temp_var1\n"
             "DEFVAR GF@%%temp_var2\n"
-            "DEFVAR GF@%%temp_var3\n\n");
+            "DEFVAR GF@%%temp_var3\n"
+            "JUMP $$main\n\n");
 
 
     /// print reads
