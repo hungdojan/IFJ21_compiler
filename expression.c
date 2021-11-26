@@ -507,9 +507,9 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
 static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
 {
     char s[128] = {0,}; // omezeni poctu desetinych mist
-    char temp_var1[] = "GF@%%temp_var1";
-    char temp_var2[] = "GF@%%temp_var2";
-    char temp_var3[] = "GF@%%temp_var3";
+    char temp_var1[] = "GF@%temp_var1";
+    char temp_var2[] = "GF@%temp_var2";
+    char temp_var3[] = "GF@%temp_var3";
 
     switch(expr->rule)
     {
@@ -517,9 +517,14 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
         case RULE_ID:
             ////printf("%s", expr->val1.value.id);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.id, NULL, NULL) - bacha na LF/TF!
-            sprintf(s,"LF@%s",expr->val1.value.id);
+        {node_ptr var_node = NULL;
+            SEARCH_SYMBOL(expr->val1.value.id, VAR, var_node);
+            if (var_node->is_param_var)
+                sprintf(s,"LF@param_%s",var_node->key);
+            else
+                sprintf(s,"LF@%s",var_node->key);
             gen_code(q, INS_PUSHS,s, NULL, NULL);
-            break;
+            break;}
         case RULE_BOOL:
             ////printf("%s", expr->val1.value.boolean ? "true" : "false");
             // TODO: GEN_CODE(PUSHS, expr->val1.value.boolean, NULL, NULL)
