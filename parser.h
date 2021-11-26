@@ -40,11 +40,12 @@
 
 #define INSERT_SYMBOL(id_val, node_type, node_return)   \
     do\
-    {\
+    {                                                   \
         if (node_type == FUNC)\
             res = tree_insert(&global_tree, id_val, node_type, &node_return); \
         else\
         {\
+            stack_reset_index(&local_stack);       \
             node_ptr _node = stack_top(&local_stack);\
             res = tree_insert(&_node, id_val, node_type, &node_return);\
         }\
@@ -62,7 +63,7 @@
             while (!stack_isempty(&local_stack))   \
             {\
                 node_return = tree_search(stack_top(&local_stack), id_val);\
-                if (node_return != NULL)    \
+                if (node_return != NULL && node_return->is_defined)    \
                     break;\
                 else\
                     stack_dec_index(&local_stack);\
@@ -139,14 +140,14 @@ int ret_n(token_t **token, Istring *data, bool gen_code_print, int index);
 int def_parm(token_t **token, Istring *data);
 int def_parm_n(token_t **token, Istring *data);
 int code(token_t **token, node_ptr *func_node, queue_t *q);
-int var_init_assign(token_t **token, enum data_type *data_t, node_ptr *var_node);
-int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node);
-int elseif_block(token_t **token, node_ptr *func_node);
-int else_block(token_t **token, node_ptr *func_node);
-int func_or_assign(token_t **token, node_ptr *node);
-int multi_var_n(token_t **token, stack_var_t *lof_vars);
-int fun_or_multi_e(token_t **token, stack_var_t *lof_vars);
-int multi_e_n(token_t **token, stack_var_t *lof_vars);
+int var_init_assign(token_t **token, enum data_type *data_t, node_ptr *var_node, queue_t *q);
+int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node, queue_t *q);
+int elseif_block(token_t **token, node_ptr *func_node, queue_t *q);
+int else_block(token_t **token, node_ptr *func_node, queue_t *q);
+int func_or_assign(token_t **token, node_ptr *node, queue_t *q);
+int multi_var_n(token_t **token, stack_var_t *lof_vars, queue_t *q);
+int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q);
+int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q);
 int d_type(token_t **token, enum data_type *data_t);
 
 #endif // _PARSER_H_
