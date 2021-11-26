@@ -772,7 +772,6 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
             // jde hlavne o kontrolu, pokud se zavola return
             if ((res = code(token, func_node,q)) != NO_ERR)    return res;
             DESTROY_SCOPE();
-
             sprintf(s,"end_%s_%d",(*func_node)->key,my_index);
             gen_code(q,INS_JUMP,s,NULL,NULL);
             sprintf(s,"endif_%s_%d",(*func_node)->key,my_index);
