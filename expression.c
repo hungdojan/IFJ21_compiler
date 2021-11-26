@@ -507,9 +507,9 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
 static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
 {
     char s[128] = {0,}; // omezeni poctu desetinych mist
-    char temp_var1[] = "GF@%%temp_var1";
-    char temp_var2[] = "GF@%%temp_var2";
-    char temp_var3[] = "GF@%%temp_var3";
+    char temp_var1[] = "GF@%temp_var1";
+    char temp_var2[] = "GF@%temp_var2";
+    char temp_var3[] = "GF@%temp_var3";
 
     switch(expr->rule)
     {

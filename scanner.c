@@ -15,12 +15,23 @@
 #include "scanner.h"
 #include "istring.h"
 #include "error.h"
+#include <stdlib.h>
 
-static void fxxx(Istring *str, char c)
+static void fxxx(Istring *str, int c)
 {
     string_Add_Char(str, c / 100 % 10 + '0');
     string_Add_Char(str, c / 10 % 10 + '0');
     string_Add_Char(str, c / 1 % 10 + '0');
+}
+
+static void fxx(Istring *s, FILE *f)
+{
+    char c[3] = {0,};
+    c[0] = fgetc(f);
+    c[1] = fgetc(f);
+    c[2] = 0;
+    int number = strtol(c,NULL,16);
+    fxxx(s,number);
 }
 
 
@@ -39,9 +50,9 @@ static int esc_seq(Istring *s, FILE *f)
     else if (c == '\\') {c = '\\';fxxx(s,c);}
     else if (c == '\"') {c = '\"';fxxx(s,c);}
     else if (c == '\'') {c = '\'';fxxx(s,c);}
-
+    else if (c == 'x') fxx(s,f);
     else if (isdigit(c))
-    {
+    {/*
         int val = (c - '0') * 100;
 
         c = fgetc(f);
@@ -55,7 +66,12 @@ static int esc_seq(Istring *s, FILE *f)
         if (val >= 0 && val <= 255)
             string_Add_Char(s, val);
         else
-            return 1;
+            return 1;*/
+        string_Add_Char(s,c); // TODO: pokud neni 3x digit tak chyba
+        c = fgetc(f);
+        string_Add_Char(s,c);
+        c = fgetc(f);
+        string_Add_Char(s,c);
     }
     else                return 1;
 

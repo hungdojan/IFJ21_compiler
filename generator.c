@@ -448,7 +448,7 @@ void import_builtin_functions()
             "JUMPIFEQ substr&return LF@%%cond bool@true\n"
             "GT LF@%%cond LF@%%param3 LF@%%cond_length\n"
             "JUMPIFEQ substr&return LF@%%cond bool@true\n"
-            "GT LF@cond LF@%%param3 LF@%%param2\n"
+            "GT LF@%%cond LF@%%param3 LF@%%param2\n"
             "JUMPIFEQ substr&return LF@%%cond bool@true\n"
             "DEFVAR LF@%%item\n"
             "DEFVAR LF@%%i\n"
