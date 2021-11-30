@@ -43,4 +43,4 @@ enum err_codes
     ERR_INTERNAL = 99   ///< vnitrni chyba prekladace neovlivnena vstupnim programem (alloc err, ...) 
 };
 
-#endif
+#endif // _ERROR_H_

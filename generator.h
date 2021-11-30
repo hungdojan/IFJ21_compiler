@@ -77,31 +77,81 @@ enum ins_type
 /// Instruction structure
 typedef struct code
 {
-    enum ins_type instruction;
-    char *dest;
-    char *first_op;
-    char *second_op;
-    struct code *next;
+    enum ins_type instruction;  /// Typ instrukce
+    char *dest;                 ///
+    char *first_op;             ///
+    char *second_op;            ///
+    struct code *next;          ///
 } code_t;
 
 /// Queue of instructions
 typedef struct queue
 {
-    code_t *first;
-    code_t *last;
+    code_t *first;              /// Ukazatel na prvni prvek ve fronte
+    code_t *last;               /// Ukazatel na posledni prvek ve fronte
 } queue_t;
 
 extern queue_t q_identifier;
 
+/**
+ * @brief
+ *
+ * @param q Ukazatel na strukturu queue_t
+ * @param type
+ * @param dest
+ * @param first_op
+ * @param second_op
+ * @return Chybovy kod
+ */
 int gen_code(queue_t *q, enum ins_type type, char* dest, char* first_op, char* second_op);
+
+/**
+ * @brief
+ *
+ * @param q Ukazatel na strukturu queue_t
+ */
 void queue_flush(queue_t *q);
+
+/**
+ * @brief Inicializace fronty
+ *
+ * @param q Ukazatel na strukturu queue_t
+ */
 void queue_init(queue_t *q);
+
+/**
+ * @brief Zniceni fronty a dealokace clenu
+ *
+ * @param q Ukazatel na strukturu queue_t
+ */
 void queue_destroy(queue_t *q);
+
+/**
+ * @brief Pridani clena do fronty
+ *
+ * @param q Ukazatel na strukturu queue_t
+ * @param item Pridavany clen
+ */
 void queue_add(queue_t *q, code_t *item);
+
+/**
+ * @brief 
+ * 
+ * @param item 
+ */
 void flush_item(code_t *item);
 
+/**
+ * @brief 
+ * 
+ * @param q Ukazatel na strukturu queue_t
+ */
 void filter_defvar(queue_t *q);
 
+/**
+ * @brief Vlozeni vestavenych funkci
+ * 
+ */
 void import_builtin_functions();
 
 #endif // _GEN_CODE_H_

@@ -49,4 +49,5 @@ int string_compare(Istring *s1, Istring *s2);
  * @param s Ukazatel na strukturu Istring
  */
 void string_Free(Istring *s);
+
 #endif // _ISTRING_H_

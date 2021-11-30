@@ -82,4 +82,6 @@ int print_error(int err_code, Istring *str, token_t **token, const char *format,
 
     return err_code;
 
-} // print_error()
+}
+
+/* error.c */

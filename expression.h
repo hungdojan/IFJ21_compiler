@@ -122,15 +122,40 @@
 
 extern unsigned reduc_id;
 
-// reduce akce
+/**
+ * @brief 
+ *
+ * @param s Ukazatel na strukturu exp_stack_t
+ * @return Chybovy kod
+ */
 int exp_stack_reduce(exp_stack_t *s);
 
-// shift akce
+/**
+ * @brief 
+ *
+ * @param s Ukazatel na strukturu exp_stack_t
+ * @param token
+ * @return Chybovy kod
+ */
 int exp_stack_shift(exp_stack_t *s, token_t *token);
 
-// bude prejmenovano na expression
+/**
+ * @brief 
+ *
+ * @param token
+ * @param data_t
+ * @param final_exp
+ * @return 
+ */
 int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp);
 
+/**
+ * @brief 
+ *
+ * @param expr
+ * @param q
+ * @return 
+ */
 int generate_code_nterm(exp_nterm_t **expr, queue_t *q);
 
 #endif // _EXPRESSION_H_

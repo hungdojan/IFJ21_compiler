@@ -82,8 +82,8 @@ typedef union
 
 // struktura pro token
 typedef struct{
-    enum Token_type type;
-    token_value_t value;
+    enum Token_type type;   /// Typ tokenu
+    token_value_t value;    /// Datkovy typ atributu tokenu
 } token_t;
 
 
@@ -111,4 +111,4 @@ int check_key_words(char *identif);
  */
 void token_delete(token_t **token);
 
-#endif //_TOKEN_H_
+#endif // _TOKEN_H_
