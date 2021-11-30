@@ -105,5 +105,4 @@ void tree_destroy(node_ptr *tree);
 */
 node_ptr tree_search(node_ptr tree, char *key);
 
-#endif
-/* symtable.h */
+#endif // _SYMTABLE_H_

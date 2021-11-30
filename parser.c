@@ -15,12 +15,7 @@
             return ERR_SYNTAX;             \
     } while (0)
 
-/**
- * @brief Implementace <prg>
- *
- * @param Posledni nacteny token
- * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
- */
+
 int prg(token_t **token)
 {
     int res = NO_ERR;

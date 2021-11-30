@@ -77,25 +77,173 @@
     } while(0)
 extern FILE *global_file;
 
+/**
+ * @brief 
+ *
+ * @param file
+ * @return 
+ */
 int syntax_analysis(FILE *file);
 
+/**
+ * @brief Implementace <prg>
+ *
+ * @param token Posledni nacteny token
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int prg(token_t **token);
+
+/**
+ * @brief Implementace <lof_e>
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int lof_e(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <lof_e_n>
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int lof_e_n(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <parm> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int parm(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <parm_n> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int parm_n(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <ret> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int ret(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <def_parm> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int def_parm(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <def_parm_n> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int def_parm_n(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <expression> 
+ *
+ * @param token Posledni nacteny token
+ * @param data_t 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int expression(token_t **token, enum data_type *data_t);
+
+/**
+ * @brief Implementace <code> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int code(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <var_init_assign> 
+ *
+ * @param token Posledni nacteny token
+ * @param data_t
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int var_init_assign(token_t **token, enum data_type *data_t);
+
+/**
+ * @brief Implementace <else_block> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int else_block(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <func_or_assign> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int func_or_assign(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <multi_var> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int multi_var(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <multi_var_n> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int multi_var_n(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <multi_e> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int multi_e(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <multi_e_n> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int multi_e_n(token_t **token, list_t *lof_data);
+
+/**
+ * @brief Implementace <d_type> 
+ *
+ * @param token Posledni nacteny token
+ * @param data_t
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int d_type(token_t **token, enum data_type *data_t);
 
 #endif // _PARSER_H_

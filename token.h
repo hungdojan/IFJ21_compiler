@@ -82,8 +82,8 @@ typedef union
 
 // struktura pro token
 typedef struct{
-    enum Token_type type;
-    token_value_t value;
+    enum Token_type type; /// Typ tokenu
+    token_value_t value;  /// Datovy typ atributu tokenu
 } token_t;
 
 
