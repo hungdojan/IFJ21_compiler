@@ -518,3 +518,5 @@ void import_builtin_functions()
             "LABEL char&exit\n"
             "EXIT int@8\n\n");
 }
+
+/* generator.c */

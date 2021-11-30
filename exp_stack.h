@@ -101,18 +101,18 @@ typedef struct exp_stack_item
 {
     enum exp_stack_symb  type;
     union {
-        enum Token_type  oper;    /// operator
-        exp_nterm_t     *nterm;   /// neterm; slozeny podvyraz
-        exp_data_t      term;    /// vyraz
+        enum Token_type  oper;     /// operator
+        exp_nterm_t      *nterm;   /// neterm; slozeny podvyraz
+        exp_data_t       term;     /// vyraz
     } data;
 } exp_item_t;
 
 // zasobnik samotny
 typedef struct exp_stack
 {
-    exp_item_t *array;
-    int alloc_size;
-    int len;
+    exp_item_t *array; ///
+    int alloc_size;    ///
+    int len;           ///
 } exp_stack_t;
 
 enum prec_type
@@ -123,38 +123,127 @@ enum prec_type
     U, // UNDEF _
 };
 
+/**
+ * @brief 
+ *
+ * @param n Ukazatel na strukturu exp_nterm_t
+ * @return Chybovy kod
+ */
 int exp_nterm_init(exp_nterm_t **n);
+
+/**
+ * @brief 
+ *
+ * @param n Ukazatel na strukturu exp_nterm_t
+ * @return Chybovy kod
+ */
 void exp_nterm_destroy(exp_nterm_t **n);
 
+/**
+ * @brief 
+ *
+ * @param data Ukazatel na strukturu exp_data_t
+ * @param token Ukazatel na strukturu token_t
+ * @return Chybovy kod
+ */
 int exp_data_init(exp_data_t *data, token_t *token);
+
+/**
+ * @brief 
+ *
+ * @param dst 
+ * @param src 
+ */
 void exp_data_copy(exp_data_t *dst, exp_data_t *src);
+
+/**
+ * @brief 
+ *
+ * @param data Ukazatel na strukturu exp_data_t
+ */
 void exp_data_destroy(exp_data_t *data);
 
-// inicializace zasobniku
+/**
+ * @brief Inicializace zasobniku
+ *
+ * @param s Ukazatel na strukturu exp_stack_t
+ * @return Chybovy kod
+ */
 int exp_stack_init(exp_stack_t *s);
 
-// pridani prvku do zasobniku
+/**
+ * @brief Pridani prvku do zasobniku
+ *
+ * @param s Ukazatel na strukturu exp_stack_t
+ * @param sym
+ * @param token
+ * @param data
+ * @param nterm
+ * @return Chybovy kod
+ */
 int exp_stack_push(exp_stack_t *s, enum exp_stack_symb sym, token_t *token, exp_data_t *data, struct exp_nterm *nterm);
 
-// pridani rovnou itemu do zasobniku
+/**
+ * @brief Pridani itemu do zasobniku
+ *
+ * @param s Ukazatel na strukturu exp_stack_t
+ * @param item Pridavany item
+ * @return Chybovy kod
+ */
 int exp_stack_push_item(exp_stack_t *s, struct exp_stack_item * item);
 
-// vraci prvni polozku zpatky
+/**
+ * @brief
+ *
+ * @param s Ukazatel na strukturu exp_stack_t
+ * @return 
+ */
 struct exp_stack_item *exp_stack_top(const exp_stack_t *s);
 
-// vraci prvni term zpatky
+/**
+ * @brief Vraci zpet prvni token na zasobniku
+ *
+ * @param s Ukazatel na strukturu exp_stack_t
+ * @return 
+ */
 struct exp_stack_item *exp_stack_top_term(const exp_stack_t *s);
 
-// vrati prvni vec na zasobniku
+/**
+ * @brief
+ *
+ * @param s Ukazatel na strukturu exp_stack_t
+ * @return 
+ */
 struct exp_stack_item *exp_stack_pop(exp_stack_t *s);
 
+/**
+ * @brief Zjisti, jestli je zasobnik prazdny
+ *
+ * @param s Ukazatel na strukturu exp_stack_t
+ * @return 
+ */
 int exp_stack_isempty(const exp_stack_t *s);
 
+/**
+ * @brief 
+ *
+ * @param s Ukazatel na strukturu exp_stack_t
+ * @return 
+ */
 int exp_stack_contains_shift(const exp_stack_t s);
 
+/**
+ * @brief Odstrani prvek ze zasobniku
+ *
+ * @param item Odstranovany prvek
+ */
 void exp_stack_destroy_item(exp_item_t *item);
 
-// odstraneni zasobniku a uvolneni alokovane pameti
+/**
+ * @brief Odstrani zasobnik a uvolni alokovanou pamet
+ *
+ * @param s Ukazatel na strukturu exp_stack_t
+ */
 void exp_stack_destroy(exp_stack_t *s);
 
-#endif // _EXP_STACK_H
+#endif // _EXP_STACK_H_

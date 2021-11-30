@@ -122,32 +122,202 @@
 
 extern FILE *global_file;
 
-// typedef struct data_parser
-// {
-//     token_t **token;
-//     node_ptr node;
-// } data_parse_t;
-
+/**
+ * @brief 
+ *
+ * @param file
+ * @return 
+ */
 int syntax_analysis(FILE *file);
 
+/**
+ * @brief Implementace <prg>
+ *
+ * @param token Posledni nacteny token
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int prg(token_t **token);
+
+/**
+ * @brief Implementace <lof_e>
+ *
+ * @param token Posledni nacteny token
+ * @param node
+ * @param index
+ * @param is_parm
+ * @param q
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int lof_e(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q);
+
+/**
+ * @brief Implementace <lof_e_n>
+ *
+ * @param token Posledni nacteny token
+ * @param node
+ * @param index
+ * @param is_parm
+ * @param q
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int lof_e_n(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q);
+
+/**
+ * @brief Implementace <parm> 
+ *
+ * @param token Posledni nacteny token
+ * @param data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int parm(token_t **token, Istring *data);
+
+/**
+ * @brief Implementace <parm_n> 
+ *
+ * @param token Posledni nacteny token
+ * @param data
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int parm_n(token_t **token, Istring *data);
+
+/**
+ * @brief Implementace <ret> 
+ *
+ * @param token Posledni nacteny token
+ * @param data
+ * @param gen_code_print
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int ret(token_t **token, Istring *data, bool gen_code_print);
+
+/**
+ * @brief Implementace <ret_n> 
+ *
+ * @param token Posledni nacteny token
+ * @param data
+ * @param gen_code_print
+ * @param index
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int ret_n(token_t **token, Istring *data, bool gen_code_print, int index);
+
+/**
+ * @brief Implementace <def_parm> 
+ *
+ * @param token Posledni nacteny token
+ * @param data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int def_parm(token_t **token, Istring *data);
+
+/**
+ * @brief Implementace <def_parm> 
+ *
+ * @param token Posledni nacteny token
+ * @param data 
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int def_parm_n(token_t **token, Istring *data);
+
+/**
+ * @brief Implementace <code> 
+ *
+ * @param token Posledni nacteny token
+ * @param func_node
+ * @param q
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int code(token_t **token, node_ptr *func_node, queue_t *q);
+
+/**
+ * @brief Implementace <var_init_assign> 
+ *
+ * @param token Posledni nacteny token
+ * @param data_t
+ * @param var_node
+ * @param q
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int var_init_assign(token_t **token, enum data_type *data_t, node_ptr *var_node, queue_t *q);
+
+/**
+ * @brief Implementace <fun_or_exp> 
+ *
+ * @param token Posledni nacteny token
+ * @param data_t
+ * @param var_node
+ * @param q
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node, queue_t *q);
+
+/**
+ * @brief Implementace <elseif_block> 
+ *
+ * @param token Posledni nacteny token
+ * @param func_node
+ * @param q
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int elseif_block(token_t **token, node_ptr *func_node, queue_t *q);
+
+/**
+ * @brief Implementace <else_block> 
+ *
+ * @param token Posledni nacteny token
+ * @param func_node
+ * @param q
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int else_block(token_t **token, node_ptr *func_node, queue_t *q);
+
+/**
+ * @brief Implementace <func_or_assign> 
+ *
+ * @param token Posledni nacteny token
+ * @param node
+ * @param q
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int func_or_assign(token_t **token, node_ptr *node, queue_t *q);
+
+/**
+ * @brief Implementace <multi_var_n> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_vars
+ * @param q
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int multi_var_n(token_t **token, stack_var_t *lof_vars, queue_t *q);
+
+/**
+ * @brief Implementace <fun_or_multi_e> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_vars
+ * @param q
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q);
+
+/**
+ * @brief Implementace <multi_e_n> 
+ *
+ * @param token Posledni nacteny token
+ * @param lof_vars
+ * @param q
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q);
+
+/**
+ * @brief Implementace <d_type> 
+ *
+ * @param token Posledni nacteny token
+ * @param data_t
+ * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
+ */
 int d_type(token_t **token, enum data_type *data_t);
 
 #endif // _PARSER_H_

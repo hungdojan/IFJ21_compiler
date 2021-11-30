@@ -141,3 +141,5 @@ int check_key_words(char *identif)
     else if(!strcmp(identif, "while"))      return TYPE_KW_WHILE;
     else                                    return TYPE_IDENTIFIER;
 }
+
+/* token.c */
