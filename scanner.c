@@ -68,6 +68,8 @@ static int convert_to_hex(Istring *s, FILE *f)
     }
     c[2] = 0;
     int number = strtol(c,NULL,16);
+    if (number < 1 || number > 255)
+        return ERR_INTERNAL;
     return convert_to_ascii(s,number);
 }
 
