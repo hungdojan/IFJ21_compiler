@@ -17,66 +17,89 @@
 #include "error.h"
 #include <stdlib.h>
 
-static void fxxx(Istring *str, int c)
+#define IS_HEX(x)  (isdigit(x) || \
+                   ((x) >= 'a' && (x) <= 'f') || \
+                   ((x) >= 'A' && (x) <= 'F'))
+#define GET_DIGIT(x) (x) - '0'
+
+static int load_ascii(int *c, FILE *f)
 {
-    string_Add_Char(str, c / 100 % 10 + '0');
-    string_Add_Char(str, c / 10 % 10 + '0');
-    string_Add_Char(str, c / 1 % 10 + '0');
+    if (f == NULL || c == NULL)
+        return ERR_INTERNAL;
+
+    int input;      // precteny znak
+    // resetovani hodnoty
+    *c = 0;
+    for (int i = 0; i < 3; i++)
+    {
+        input = fgetc(f);
+        if (!isdigit(input))
+            return ERR_INTERNAL;
+        *c += GET_DIGIT(input);
+        *c *= 10;
+    }
+    // hodnota v *c je momentalne ctyrmistna
+    *c /= 10;
+
+    // kontrola, zda *c spada do intervalu <1, 255>
+    if (*c < 1 || *c > 255)
+        return ERR_INTERNAL;
+    return NO_ERR;
+}
+static int convert_to_ascii(Istring *str, int c)
+{
+    int res = NO_ERR;
+    if ((res = string_Add_Char(str, c / 100 % 10 + '0')) != NO_ERR) return res;
+    if ((res = string_Add_Char(str, c / 10 % 10 + '0')) != NO_ERR) return res;
+    if ((res = string_Add_Char(str, c / 1 % 10 + '0')) != NO_ERR) return res;
+    return res;
 }
 
-static void fxx(Istring *s, FILE *f)
+static int convert_to_hex(Istring *s, FILE *f)
 {
     char c[3] = {0,};
-    c[0] = fgetc(f);
-    c[1] = fgetc(f);
+    int input;
+    for (int i = 0; i < 2; i++)
+    {
+        input = fgetc(f);
+        if (!IS_HEX(input))
+            return ERR_LEX;
+        c[i] = input;
+    }
     c[2] = 0;
     int number = strtol(c,NULL,16);
-    fxxx(s,number);
+    return convert_to_ascii(s,number);
 }
 
 
 static int esc_seq(Istring *s, FILE *f)
 {
     if (f == NULL)
-        return 99;
+        return ERR_INTERNAL;
+    int res = NO_ERR;
     int c = fgetc(f);
-    if (c == 'n')       {c = '\n';fxxx(s,c);}
-    else if (c == 't')  {c = '\t';fxxx(s,c);}
-    else if (c == 'a')  {c = '\a';fxxx(s,c);}
-    else if (c == 'b')  {c = '\b';fxxx(s,c);}
-    else if (c == 'f')  {c = '\f';fxxx(s,c);}
-    else if (c == 'r')  {c = '\r';fxxx(s,c);}
-    else if (c == 'v')  {c = '\v';fxxx(s,c);}
-    else if (c == '\\') {c = '\\';fxxx(s,c);}
-    else if (c == '\"') {c = '\"';fxxx(s,c);}
-    else if (c == '\'') {c = '\'';fxxx(s,c);}
-    else if (c == 'x') fxx(s,f);
+
+    if (c == 'a')                       { c = '\a'; res = convert_to_ascii(s,c); }
+    else if (c == 'b')                  { c = '\b'; res = convert_to_ascii(s,c); }
+    else if (c == 'f')                  { c = '\f'; res = convert_to_ascii(s,c); }
+    else if (c == 'n')                  { c = '\n'; res = convert_to_ascii(s,c); }
+    else if (c == 'r')                  { c = '\r'; res = convert_to_ascii(s,c); }
+    else if (c == 't')                  { c = '\t'; res = convert_to_ascii(s,c); }
+    else if (c == 'v')                  { c = '\v'; res = convert_to_ascii(s,c); }
+    else if (c == '\\')                 { c = '\\'; res = convert_to_ascii(s,c); }
+    else if (c == '\"')                 { c = '\"'; res = convert_to_ascii(s,c); }
+    else if (c == '\'')                 { c = '\''; res = convert_to_ascii(s,c); }
+    else if (c == 'x' || c == 'X')      res = convert_to_hex(s,f);
     else if (isdigit(c))
-    {/*
-        int val = (c - '0') * 100;
-
-        c = fgetc(f);
-        if (!isdigit(c))  return 1;
-        else              val += (c - '0') * 10;
-
-        c = fgetc(f);
-        if (!isdigit(c))  return 1;
-        else              val += (c - '0');
-
-        if (val >= 0 && val <= 255)
-            string_Add_Char(s, val);
-        else
-            return 1;*/
-        string_Add_Char(s,c); // TODO: pokud neni 3x digit tak chyba
-        c = fgetc(f);
-        string_Add_Char(s,c);
-        c = fgetc(f);
-        string_Add_Char(s,c);
+    {
+        ungetc(c, f);
+        int res, val;
+        if ((res = load_ascii(&val, f)) != NO_ERR)  return res;
+        res = convert_to_ascii(s, val);
     }
-    else                return 1;
-
-
-    return 0;
+    else
+        return ERR_LEX;
+    return res;
 }
 
 int get_token(FILE *f, token_t **ref)
@@ -399,7 +422,7 @@ int get_token(FILE *f, token_t **ref)
                 else if (c == '\\')
                 {
                     string_Add_Char(&str,'\\');
-                    if (esc_seq(&str, f) != 0)
+                    if (esc_seq(&str, f) != NO_ERR)
                         return print_error(ERR_LEX, &str, NULL, "chybna escape sekvence stringu");
                         //goto error;
                 }
@@ -407,10 +430,12 @@ int get_token(FILE *f, token_t **ref)
                 {
                     if(c <= 32)
                     {
-                        string_Add_Char(&str,'\\');
-                        string_Add_Char(&str, c / 100 % 10 + '0');
-                        string_Add_Char(&str, c / 10 % 10 + '0');
-                        string_Add_Char(&str, c / 1 % 10 + '0');
+                        return print_error(ERR_LEX, &str, NULL, "nepovoleny znak v retezcovem literalu");
+                        // string_Add_Char(&str,'\\');
+                        // string_Add_Char(&str, c / 100 % 10 + '0');
+                        // string_Add_Char(&str, c / 10 % 10 + '0');
+                        // string_Add_Char(&str, c / 1 % 10 + '0');
+
                     }
                     else
                         string_Add_Char(&str,c);
