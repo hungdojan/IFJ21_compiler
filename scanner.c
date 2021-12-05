@@ -430,7 +430,7 @@ int get_token(FILE *f, token_t **ref)
                 }
                 else
                 {
-                    if(c <= 32)
+                    if(c <= 31)
                     {
                         return print_error(ERR_LEX, &str, NULL, "nepovoleny znak v retezcovem literalu");
                         // string_Add_Char(&str,'\\');
