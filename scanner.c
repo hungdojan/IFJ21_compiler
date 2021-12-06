@@ -433,11 +433,13 @@ int get_token(FILE *f, token_t **ref)
                     if(c <= 31)
                     {
                         return print_error(ERR_LEX, &str, NULL, "nepovoleny znak v retezcovem literalu");
-                        // string_Add_Char(&str,'\\');
-                        // string_Add_Char(&str, c / 100 % 10 + '0');
-                        // string_Add_Char(&str, c / 10 % 10 + '0');
-                        // string_Add_Char(&str, c / 1 % 10 + '0');
-
+                    }
+                    else if (c == ' ')
+                    {
+                        string_Add_Char(&str, '\\');
+                        int res;
+                        if ((res = convert_to_ascii(&str, c)) != NO_ERR)
+                            return print_error(res, &str, NULL, "chyba pri nacitani retezcoveho literalu");
                     }
                     else
                         string_Add_Char(&str,c);
