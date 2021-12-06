@@ -494,8 +494,8 @@ int get_rid_of_comments(FILE *f)
                     {
                         while ((c = fgetc(f)) != '\n' && c != EOF)
                             ; // preskakuje znak
-                        is_comment = 0;
                     }
+                    is_comment = 0;
                     file_line++;
                 }
                 break;
@@ -518,7 +518,7 @@ int get_rid_of_comments(FILE *f)
                 break;
             case END_MULTI:
                 if (c == ']')        is_comment = 0;
-                else if (c == ']')   { file_line++; state = MULTI_LINE_COMM; }
+                else if (c == '\n')   { file_line++; state = MULTI_LINE_COMM; }
                 else                 state = MULTI_LINE_COMM;
                 break;
         }
