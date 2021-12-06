@@ -1,0 +1,186 @@
+.IFJcode21
+
+DEFVAR GF@%temp_var1
+DEFVAR GF@%temp_var2
+DEFVAR GF@%temp_var3
+JUMP $$main
+
+LABEL reads
+PUSHFRAME
+DEFVAR LF@%retvar$1
+POPS LF@%retvar$1
+MOVE LF@%retvar$1 nil@nil
+READ LF@%retvar$1 string
+POPFRAME
+RETURN
+
+LABEL readi
+PUSHFRAME
+DEFVAR LF@%retvar$1
+POPS LF@%retvar$1
+MOVE LF@%retvar$1 nil@nil
+READ LF@%retvar$1 int
+POPFRAME
+RETURN
+
+LABEL readn
+PUSHFRAME
+DEFVAR LF@%retvar$1
+POPS LF@%retvar$1
+MOVE LF@%retvar$1 nil@nil
+READ LF@%retvar$1 float
+POPFRAME
+RETURN
+
+LABEL write
+PUSHFRAME
+DEFVAR LF@%param1
+DEFVAR LF@%cond
+DEFVAR LF@%i
+POPS LF@%i
+SUB LF@%i LF@%i int@0
+LABEL write&cycle
+LT LF@%cond LF@%i int@1
+JUMPIFEQ write&return LF@%cond bool@true
+POPS LF@%param1
+WRITE LF@%param1
+SUB LF@%i LF@%i int@1
+JUMP write&cycle
+LABEL write&return
+POPFRAME
+RETURN
+
+LABEL tointeger
+PUSHFRAME
+DEFVAR LF@%retvar$1
+MOVE LF@%retvar$1 nil@nil
+DEFVAR LF@%cond
+DEFVAR LF@%param1
+POPS LF@%param1
+POPS LF@%param1
+TYPE LF@%cond LF@%param1
+JUMPIFEQ tointeger&return LF@%cond string@number
+FLOAT2INT LF@%retvar$1 LF@%param1
+LABEL tointeger&return
+POPFRAME
+RETURN
+
+LABEL substr
+PUSHFRAME
+DEFVAR LF@%cond
+DEFVAR LF@%param1
+POPS LF@%param1
+POPS LF@%param1
+TYPE LF@%cond LF@%param1
+JUMPIFNEQ substr&exit LF@%cond string@string
+DEFVAR LF@%param2
+POPS LF@%param2
+TYPE LF@%cond LF@%param2
+JUMPIFNEQ substr&exit LF@%cond string@int
+DEFVAR LF@%param3
+POPS LF@%param3
+TYPE LF@%cond LF@%param3
+JUMPIFNEQ substr&exit LF@%cond string@int
+DEFVAR LF@%retvar$1
+MOVE LF@%retvar$1 string@
+DEFVAR LF@%cond_length
+STRLEN LF@%cond_length LF@%param1
+LT LF@%cond LF@%param2 int@1
+JUMPIFEQ substr&return LF@%cond bool@true
+GT LF@%cond LF@%param2 LF@%cond_length
+JUMPIFEQ substr&return LF@%cond bool@true
+LT LF@%cond LF@%param3 int@1
+JUMPIFEQ substr&return LF@%cond bool@true
+GT LF@%cond LF@%param3 LF@%cond_length
+JUMPIFEQ substr&return LF@%cond bool@true
+GT LF@%cond LF@%param3 LF@%param2
+JUMPIFEQ substr&return LF@%cond bool@true
+DEFVAR LF@%item
+DEFVAR LF@%i
+SUB LF@%i LF@%param2 int@1
+DEFVAR LF@%j
+SUB LF@%j LF@%param3 int@1
+LABEL substr&for
+GT LF@%cond LF@%i LF@%j
+JUMPIFEQ substr&return LF@%cond bool@true
+GETCHAR LF@%item LF@%param1 LF@%i
+CONCAT LF@%retvar$1 LF@%retvar$1 LF@%item
+ADD LF@%i LF@%i int@1
+JUMP substr&for
+LABEL substr&return
+POPFRAME
+RETURN
+LABEL substr&exit
+EXIT int@8
+
+LABEL ord
+PUSHFRAME
+DEFVAR LF@%retvar$1
+DEFVAR LF@%param1
+POPS LF@%param1
+POPS LF@%param1
+TYPE LF@%retvar$1 LF@%param1
+JUMPIFNEQ ord&exit LF@%retvar$1 string@string
+DEFVAR LF@%param2
+POPS LF@%param2
+TYPE LF@%retvar$1 LF@%param2
+JUMPIFNEQ ord&exit LF@%retvar$1 string@int
+MOVE LF@%retvar$1 nil@nil
+DEFVAR LF@%cond_length
+LT LF@%cond_length LF@%param2 int@0
+JUMPIFEQ ord&return LF@%cond_length bool@true
+STRLEN LF@%cond_length LF@%param1
+SUB LF@%cond_length LF@%cond_length int@1
+GT LF@%cond_length LF@%param2 LF@%cond_length
+JUMPIFEQ ord&return LF@%cond_length bool@true
+STRI2INT LF@%retvar$1 LF@%param1 LF@%param2
+LABEL ord&return
+POPFRAME
+RETURN
+LABEL ord&exit
+EXIT int@8
+
+LABEL chr
+PUSHFRAME
+DEFVAR LF@%cond
+DEFVAR LF@%param1
+POPS LF@%param1
+POPS LF@%param1
+TYPE LF@%cond LF@%param1
+JUMPIFNEQ chr&exit LF@%cond string@int
+DEFVAR LF@%retvar$1
+MOVE LF@%retvar$1 nil@nil
+LT LF@%cond LF@%param1 int@0
+JUMPIFEQ chr&return LF@%cond bool@true
+GT LF@%cond LF@%param1 int@255
+JUMPIFEQ chr&return LF@%cond bool@true
+INT2CHAR LF@%retvar$1 LF@%param1
+LABEL chr&return
+POPFRAME
+RETURN
+LABEL char&exit
+EXIT int@8
+
+LABEL main
+PUSHFRAME
+CREATEFRAME
+POPS GF@%temp_var1
+CREATEFRAME
+CLEARS
+PUSHS string@Hello\032world!
+DEFVAR TF@%tmp$1
+POPS TF@%tmp$1
+CLEARS
+PUSHS string@\010
+DEFVAR TF@%tmp$2
+POPS TF@%tmp$2
+PUSHS TF@%tmp$2
+PUSHS TF@%tmp$1
+PUSHS int@2
+CALL write
+POPFRAME
+RETURN
+LABEL $$main
+CREATEFRAME
+PUSHS int@0
+CALL main
