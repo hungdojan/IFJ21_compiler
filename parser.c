@@ -948,16 +948,16 @@ int fun_or_exp(token_t **token, node_ptr *var_node, queue_t *q)
                 if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)
                     return res;
 
-                // push(exp)
-                generate_code_nterm(&final_exp, q, &data_t);
-                exp_nterm_destroy(&final_exp);
-
                 // typova kontrola a konveerze
                 if (type_control(data_t, (*var_node)->var_type))
                 {
                     exp_nterm_destroy(&final_exp);
                     return ERR_SEM_ASSIGN;
                 }
+                // push(exp)
+                generate_code_nterm(&final_exp, q, &data_t);
+                exp_nterm_destroy(&final_exp);
+
                 CONVERT_TO_FLOAT(data_t, (*var_node)->var_type);
 
                 // tmp1 = pop(); id = tmp1;
@@ -979,16 +979,16 @@ int fun_or_exp(token_t **token, node_ptr *var_node, queue_t *q)
                 if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)
                     return res;
 
-                // push(exp)
-                generate_code_nterm(&final_exp, q, &data_t);
-                exp_nterm_destroy(&final_exp);
-
                 // typova kontrola a konveerze
                 if (type_control(data_t, (*var_node)->var_type))
                 {
                     exp_nterm_destroy(&final_exp);
                     return ERR_SEM_ASSIGN;
                 }
+                // push(exp)
+                generate_code_nterm(&final_exp, q, &data_t);
+                exp_nterm_destroy(&final_exp);
+
                 CONVERT_TO_FLOAT(data_t, (*var_node)->var_type);
 
                 // tmp1 = pop(); id = tmp1;
