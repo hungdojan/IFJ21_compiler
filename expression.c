@@ -474,7 +474,8 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
                 break;
         }
     } while (loading);
-    if (res == ERR_INTERNAL || res == ERR_SEM_DEF || res == ERR_SEM_TYPE)
+    if (res == ERR_INTERNAL || res == ERR_SEM_DEF || 
+            res == ERR_SEM_TYPE || res == ERR_UNEXP_VAL)
     {
         exp_stack_destroy(&s);
         *final_exp = NULL;
