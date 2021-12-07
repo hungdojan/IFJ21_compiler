@@ -223,7 +223,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
                 TYPE_CHECK_AND_CONVERT_NTERM(data_t, exp, *index, final_exp, ERR_SEM_FUNC);
 
                 // push(exp)
-                generate_code_nterm(&final_exp,q);
+                generate_code_nterm(&final_exp,q,&data_t);
                 exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
 
                 // konverze
@@ -249,7 +249,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
                     if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
 
                     // push(exp)
-                    generate_code_nterm(&final_exp,q);
+                    generate_code_nterm(&final_exp,q,&data_t);
                     exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
                 }
                 else
@@ -264,7 +264,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
                     if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
 
                     // push(exp)
-                    generate_code_nterm(&final_exp,q);
+                    generate_code_nterm(&final_exp,q,&data_t);
                     exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
 
                     // konverze
@@ -336,7 +336,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index,
                 TYPE_CHECK_AND_CONVERT_NTERM(data_t, exp, *index, final_exp, ERR_SEM_FUNC);
 
                 // push(exp)
-                generate_code_nterm(&final_exp,q);
+                generate_code_nterm(&final_exp,q,&data_t);
                 exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
 
                 // konverze
@@ -362,7 +362,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index,
                     if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
 
                     // push(exp)
-                    generate_code_nterm(&final_exp,q);
+                    generate_code_nterm(&final_exp,q,&data_t);
                     exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
                 }
                 else
@@ -377,7 +377,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index,
                     if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
 
                     // push(exp)
-                    generate_code_nterm(&final_exp,q);
+                    generate_code_nterm(&final_exp,q,&data_t);
                     exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
 
                     // konverze
@@ -712,7 +712,7 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
             gen_code(q, INS_LABEL, _dest,NULL,NULL);
 
             // push(exp)
-            generate_code_nterm(&final_exp, q);
+            generate_code_nterm(&final_exp, q, &data_t);
             exp_nterm_destroy(&final_exp);
 
             // tmp1 = pop()
@@ -776,7 +776,7 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
                 define_label(OPERAND_DEST, LABEL_WHILE);
                 gen_code(q, INS_LABEL, _dest, NULL, NULL);
 
-                generate_code_nterm(&final_exp,q);
+                generate_code_nterm(&final_exp,q,&data_t);
 
                 // tmp1 = pop()
                 POP_TO_TMP(OPERAND_FIRST, _first, q);
@@ -957,7 +957,7 @@ int fun_or_exp(token_t **token, node_ptr *var_node, queue_t *q)
 
 
                 // push(exp)
-                generate_code_nterm(&final_exp, q);
+                generate_code_nterm(&final_exp, q, &data_t);
                 exp_nterm_destroy(&final_exp);
 
                 // tmp1 = pop(); id = tmp1;
@@ -988,7 +988,7 @@ int fun_or_exp(token_t **token, node_ptr *var_node, queue_t *q)
 
 
                 // push(exp)
-                generate_code_nterm(&final_exp, q);
+                generate_code_nterm(&final_exp, q, &data_t);
                 exp_nterm_destroy(&final_exp);
 
                 // tmp1 = pop(); id = tmp1;
@@ -1021,7 +1021,7 @@ int elseif_block(token_t **token, node_ptr *func_node, queue_t *q, int end_index
             gen_code(q, INS_LABEL, _dest, NULL, NULL);
 
             if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
-            generate_code_nterm(&final_exp, NULL);
+            generate_code_nterm(&final_exp, NULL, &data_t);
             exp_nterm_destroy(&final_exp);
 
             POP_TO_TMP(OPERAND_FIRST, _first, q);
@@ -1333,7 +1333,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
                 // popnuti a prirazeni
 
                 // push(exp)
-                generate_code_nterm(&final_exp, q);
+                generate_code_nterm(&final_exp, q, &data_t);
                 exp_nterm_destroy(&final_exp);
 
                 // typova kontrola
@@ -1368,7 +1368,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
             // popnuti a prirazeni
 
             // push(exp)
-            generate_code_nterm(&final_exp, q);
+            generate_code_nterm(&final_exp, q, &data_t);
             exp_nterm_destroy(&final_exp);
 
             // typova kontrola
@@ -1413,7 +1413,7 @@ int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q)
             // TODO: generovani kodu prirazeni -- pass
            
             // push(exp)
-            generate_code_nterm(&final_exp, q);
+            generate_code_nterm(&final_exp, q, &data_t);
             exp_nterm_destroy(&final_exp);
 
 

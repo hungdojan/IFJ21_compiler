@@ -144,10 +144,10 @@
         gen_code(queue, INS_JUMPIFEQ, _dest, _first, "float@0x0p+0");\
     } while (0)
 
-#define FLOAT_IF_NEEDED()\
+#define FLOAT_IF_NEEDED(op1, op2)\
     do\
     {\
-        if (expr->val1.type == DATA_NIL && expr->val2.type == DATA_INT)\
+        if (op1 == DATA_NUM && op2 == DATA_INT)\
         {\
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
@@ -157,19 +157,19 @@
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             gen_code(q, INS_INT2FLOATS, NULL, NULL, NULL);\
-            expr->data_t = DATA_NUM;\
+            *data_t = DATA_NUM;\
         }\
-        else if (expr->val2.type == DATA_NIL && expr->val1.type == DATA_INT)\
+        else if (op2 == DATA_NUM && op1 == DATA_INT)\
         {\
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             gen_code(q, INS_INT2FLOATS, NULL, NULL, NULL);\
+            *data_t = DATA_NUM;\
             \
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
-            expr->data_t = DATA_NUM;\
         }\
         else\
         {\
@@ -180,13 +180,14 @@
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            *data_t = op1;\
         }\
     } while (0)
 
-#define INT_IF_NEEDED()\
+#define INT_IF_NEEDED(op1, op2)\
     do\
     {\
-        if (expr->val1.type == DATA_NIL && expr->val2.type == DATA_INT)\
+        if (op1 == DATA_NUM && op2 == DATA_INT)\
         {\
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
@@ -196,9 +197,9 @@
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
-            expr->data_t = DATA_INT;\
+            *data_t = DATA_INT;\
         }\
-        else if (expr->val2.type == DATA_NIL && expr->val1.type == DATA_INT)\
+        else if (op2 == DATA_NUM && op1 == DATA_INT)\
         {\
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
@@ -208,7 +209,7 @@
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             gen_code(q, INS_FLOAT2INTS, NULL, NULL, NULL);\
-            expr->data_t = DATA_INT;\
+            *data_t = DATA_INT;\
         }\
         else\
         {\
@@ -219,6 +220,7 @@
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            *data_t = DATA_INT;\
         }\
     } while (0)
 
@@ -258,6 +260,6 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
  * @param q
  * @return 
  */
-int generate_code_nterm(exp_nterm_t **expr, queue_t *q);
+int generate_code_nterm(exp_nterm_t **expr, queue_t *q, enum data_type *data_t);
 
 #endif // _EXPRESSION_H_
