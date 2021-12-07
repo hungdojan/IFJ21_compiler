@@ -9,8 +9,6 @@
  * @param Posledni nacteny token
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
-
-
 int prg(token_t **token)
 {
     if (token == NULL || *token == NULL)    return ERR_INTERNAL;
@@ -841,6 +839,8 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
                 snprintf(_dest, MAX_STR_LEN, "LF@%%retvar$%d", ++index);
                 gen_code(q, INS_MOVE, _dest, "nil@nil", NULL);
             }
+            gen_code(q, INS_POPFRAME, NULL, NULL, NULL);
+            gen_code(q, INS_RETURN, NULL, NULL, NULL);
             break;
 
             // <code> -> eps
@@ -1073,6 +1073,7 @@ int else_block(token_t **token, node_ptr *func_node, queue_t *q)
             LOAD_TOKEN(token);
 
             INIT_SCOPE();
+            glob_cnt.else_i++;
             define_label(OPERAND_DEST, LABEL_ELSE);
             gen_code(q, INS_LABEL, _dest, NULL, NULL);
 

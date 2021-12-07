@@ -65,7 +65,7 @@
         else if (nterm1->data_t == DATA_STR && nterm2->data_t == DATA_STR)  \
             new_nterm->data_t = DATA_STR;                                   \
         else                                                                \
-            CLEAR_UP_IN_REDUCE(ERR_SYNTAX);                                 \
+            CLEAR_UP_IN_REDUCE(ERR_SEM_TYPE);                                 \
     } while (0)
 
 #define SEMANTIC_CHECK_INT_AND_NUM(new_nterm, nterm1, nterm2, left_convert, right_convert)  \

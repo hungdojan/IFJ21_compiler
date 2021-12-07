@@ -470,7 +470,6 @@ void import_builtin_functions()
     fprintf(stdout,"LABEL reads\n"
             "PUSHFRAME\n"
             "DEFVAR LF@%%retvar$1\n"
-            "POPS LF@%%retvar$1\n" // empty pop
             "MOVE LF@%%retvar$1 nil@nil\n"
             "READ LF@%%retvar$1 string\n"
             "POPFRAME\n"
@@ -480,7 +479,6 @@ void import_builtin_functions()
     fprintf(stdout,"LABEL readi\n"
             "PUSHFRAME\n"
             "DEFVAR LF@%%retvar$1\n"
-            "POPS LF@%%retvar$1\n" // empty pop
             "MOVE LF@%%retvar$1 nil@nil\n"
             "READ LF@%%retvar$1 int\n"
             "POPFRAME\n"
@@ -490,7 +488,6 @@ void import_builtin_functions()
     fprintf(stdout,"LABEL readn\n"
             "PUSHFRAME\n"
             "DEFVAR LF@%%retvar$1\n"
-            "POPS LF@%%retvar$1\n" // empty pop
             "MOVE LF@%%retvar$1 nil@nil\n"
             "READ LF@%%retvar$1 float\n"
             "POPFRAME\n"
