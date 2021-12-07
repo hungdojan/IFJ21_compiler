@@ -230,7 +230,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
                 CONVERT_TO_FLOAT(data_t, (exp->value)[*index - 1]);
 
                 CLEAR_OPERAND(OPERAND_DEST);
-                snprintf(_dest, MAX_STR_LEN, "LF@%%retval$%d", *index);
+                snprintf(_dest, MAX_STR_LEN, "LF@%%retvar$%d", *index);
 
                 // tmp1 = pop()
                 POP_TO_TMP(OPERAND_FIRST, _first, q);
@@ -343,7 +343,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index,
                 CONVERT_TO_FLOAT(data_t, (exp->value)[*index - 1]);
 
                 CLEAR_OPERAND(OPERAND_DEST);
-                snprintf(_dest, MAX_STR_LEN, "LF@%%retval$%d", *index);
+                snprintf(_dest, MAX_STR_LEN, "LF@%%retvar$%d", *index);
 
                 // tmp1 = pop()
                 POP_TO_TMP(OPERAND_FIRST, _first, q);
@@ -433,7 +433,7 @@ int parm(token_t **token, Istring *lof_data)
     return res;
 }
 
-int parm_n(token_t **token, Istring *lof_data, bool def_retval)
+int parm_n(token_t **token, Istring *lof_data, bool def_retvar)
 {
     int res = NO_ERR;
     enum data_type data_t;
@@ -449,18 +449,18 @@ int parm_n(token_t **token, Istring *lof_data, bool def_retval)
             if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
 
             // vytvoreni navratove hodnoty
-            if (def_retval)
+            if (def_retvar)
             {
-                // define retval_$i
+                // define retvar_$i
                 CLEAR_OPERAND(OPERAND_DEST);
-                snprintf(_dest, MAX_STR_LEN, "LF@%%retval$%d", lof_data->length);
+                snprintf(_dest, MAX_STR_LEN, "LF@%%retvar$%d", lof_data->length);
                 gen_code(NULL, INS_DEFVAR, _dest, NULL, NULL);
 
-                // retval_$i = nil
+                // retvar_$i = nil
                 gen_code(NULL, INS_MOVE, _dest, "nil@nil", NULL);
             }
 
-            return parm_n(token, lof_data, def_retval);
+            return parm_n(token, lof_data, def_retvar);
 
             // <parm_n> -> eps
         case TYPE_RIGHT_PARENTHESES:
@@ -841,7 +841,7 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
             while (index <= (*func_node)->lof_rets.length)
             {
                 CLEAR_OPERAND(OPERAND_DEST);
-                snprintf(_dest, MAX_STR_LEN, "LF@%%retval$%d", ++index);
+                snprintf(_dest, MAX_STR_LEN, "LF@%%retvar$%d", ++index);
                 gen_code(q, INS_MOVE, _dest, "nil@nil", NULL);
             }
             break;
@@ -938,7 +938,7 @@ int fun_or_exp(token_t **token, node_ptr *var_node, queue_t *q)
 
                 // typova kontrola a konverze
                 TYPE_CHECK_AND_CONVERT_TERM(data_t, (*var_node)->var_type, ERR_SEM_ASSIGN);
-                gen_code(q, INS_PUSHS, "TF@%%retval$1", NULL, NULL);
+                gen_code(q, INS_PUSHS, "TF@%retvar$1", NULL, NULL);
 
                 CONVERT_TO_FLOAT(data_t, (*var_node)->var_type);
 
@@ -1267,7 +1267,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
                             item->var_node->var_type, ERR_SEM_ASSIGN);
 
                     CLEAR_OPERAND(OPERAND_FIRST);
-                    snprintf(_first, MAX_STR_LEN, "TF@%%retval$%d", i);
+                    snprintf(_first, MAX_STR_LEN, "TF@%%retvar$%d", i);
                     gen_code(q, INS_PUSHS, _first, NULL, NULL);
 
                     // pretypovani
@@ -1306,7 +1306,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
                 //             item_var_destroy(&item);
                 //             return ERR_SEM_FUNC;
                 //         }
-                //         // TODO: GEN_CODE(MOVE, item->var_node->key, retval$nof_ret_vals, NULL);
+                //         // TODO: GEN_CODE(MOVE, item->var_node->key, retvar$nof_ret_vals, NULL);
                 //         char s[14] = {0,};
                 //         sprintf(s,"TF@%%retvar$%d",nof_ret_vals);
                 //         if(item->var_node->is_param_var)
@@ -1620,9 +1620,9 @@ int syntax_analysis(FILE *file)
     gen_code(&q_identifier,INS_LABEL,"$$main",NULL,NULL);
     gen_code(&q_identifier,INS_CREATEFRAME,NULL,NULL,NULL);
     gen_code(&q_identifier,INS_PUSHFRAME,NULL,NULL,NULL);
-    gen_code(&q_identifier, INS_DEFVAR, "LF@main_tmp1", NULL, NULL);
-    gen_code(&q_identifier, INS_DEFVAR, "LF@main_tmp2", NULL, NULL);
-    gen_code(&q_identifier, INS_DEFVAR, "LF@main_tmp3", NULL, NULL);
+    gen_code(&q_identifier, INS_DEFVAR, "LF@$main_tmp1", NULL, NULL);
+    gen_code(&q_identifier, INS_DEFVAR, "LF@$main_tmp2", NULL, NULL);
+    gen_code(&q_identifier, INS_DEFVAR, "LF@$main_tmp3", NULL, NULL);
 
     // TODO: vlozeni vnitrnich funkci do TS
     import_builtin_functions();

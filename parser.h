@@ -149,7 +149,7 @@
     do\
     {\
         CLEAR_OPERAND(oper_type);\
-        snprintf(oper, MAX_STR_LEN, "LF@%s_tmp1", glob_cnt.func_name);\
+        snprintf(oper, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
         gen_code(queue, INS_POPS, oper, NULL, NULL);\
     } while (0)
 
