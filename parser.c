@@ -758,12 +758,12 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
         case TYPE_KW_WHILE:
             {
                 LOAD_TOKEN(token);
+                queue_t iq;
                 bool is_first_cycle = q == NULL;
 
                 // vytvoreni fronty pokud jeste neexistuje
                 if (q == NULL)
                 {
-                    queue_t iq;
                     queue_init(&iq);
                     q = &iq;
                 }
