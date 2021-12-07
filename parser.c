@@ -509,7 +509,7 @@ int ret(token_t **token, Istring *lof_data, bool gen_code_print)
                 gen_code(NULL, INS_MOVE,   "LF@%retvar_1", "nil@nil",NULL);
             }
 
-            return ret_n(token, lof_data, gen_code_print);
+            return ret_n(token, lof_data, gen_code_print, 2);
 
         default:
             res = ERR_SYNTAX;
@@ -547,11 +547,13 @@ int ret_n(token_t **token, Istring *lof_data, bool gen_code_print, int index)
 
             if (gen_code_print)
             {
-                gen_code(NULL, INS_DEFVAR, "LF@%retvar_1", NULL, NULL);
-                gen_code(NULL, INS_MOVE,   "LF@%retvar_1", "nil@nil",NULL);
+                CLEAR_OPERAND(OPERAND_DEST);
+                snprintf(_dest, MAX_STR_LEN, "LF@%%retvar_%d", index);
+                gen_code(NULL, INS_DEFVAR, _dest, NULL, NULL);
+                gen_code(NULL, INS_MOVE,   _dest, "nil@nil",NULL);
             }
 
-            return ret_n(token, lof_data, gen_code_print);
+            return ret_n(token, lof_data, gen_code_print, index+1);
         default:
             res = ERR_SYNTAX;
             break;
