@@ -414,6 +414,16 @@ int exp_stack_shift(exp_stack_t *s, token_t *token)
 unsigned reduc_id = 0;
 int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
 {
+    if (token == NULL || *token == NULL)    return ERR_INTERNAL;
+    if (!((*token)->type == TYPE_LEFT_PARENTHESES ||
+          (*token)->type == TYPE_IDENTIFIER       ||
+          (*token)->type == TYPE_STRLEN       ||
+          (*token)->type == TYPE_BOOLEAN       ||
+          (*token)->type == TYPE_KW_NIL       ||
+          (*token)->type == TYPE_NUMBER       ||
+          (*token)->type == TYPE_KW_NOT       ||
+          (*token)->type == TYPE_STRLEN))
+            return ERR_SYNTAX;
     reduc_id = 0;
     int res = NO_ERR;
     if (data_t == NULL || final_exp == NULL)    return ERR_INTERNAL;
