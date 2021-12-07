@@ -587,13 +587,13 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             // TODO: GEN_CODE(STRLEN, string@temp_var1, NULL, int@temp_var2);
             // TODO: GEN_CODE(PUSHS, int@temp_var2, NULL, NULL);
             IS_NOT_NIL(1, q);
-            CLEAR_OPERAND(OPERAND_FIRST);
+            CLEAR_OPERAND(OPERAND_DEST);
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
 
-            CLEAR_OPERAND(OPERAND_SECOND);
+            CLEAR_OPERAND(OPERAND_FIRST);
             snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
-            gen_code(q,INS_STRLEN,_second,_first,NULL);
-            gen_code(q,INS_PUSHS,_first,NULL,NULL);
+            gen_code(q,INS_STRLEN,_dest,_first,NULL);
+            gen_code(q,INS_PUSHS,_dest,NULL,NULL);
             break;
         case RULE_NOT:
             //printf("(not");
@@ -624,7 +624,7 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             CLEAR_OPERAND(OPERAND_SECOND);
             snprintf(_second, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
 
-            gen_code(q, INS_CONCAT, _dest, _first, _second);
+            gen_code(q, INS_CONCAT, _dest, _second, _first);
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);
             break;
             // TODO: pretypovani
