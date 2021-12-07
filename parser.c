@@ -259,6 +259,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
 
                     CLEAR_OPERAND(OPERAND_DEST);
                     snprintf(_dest, MAX_STR_LEN, "TF@%%%d", *index);
+                    gen_code(q, INS_DEFVAR, _dest, NULL, NULL);
                     int temp = *index;
                     if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
 
@@ -371,6 +372,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index,
 
                     CLEAR_OPERAND(OPERAND_DEST);
                     snprintf(_dest, MAX_STR_LEN, "TF@%%%d", *index);
+                    gen_code(q, INS_DEFVAR, _dest, NULL, NULL);
                     int temp = *index;
                     if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
 
@@ -813,7 +815,7 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
                 define_label(OPERAND_DEST, LABEL_ENDWHILE);
                 gen_code(q, INS_LABEL, _dest, NULL, NULL);
 
-                // XXX: filter_defvar(q);
+                filter_defvar(q);
                 if (is_first_cycle)
                 {
                     queue_flush(q);
@@ -1616,6 +1618,11 @@ int syntax_analysis(FILE *file)
     // TODO: generate code init
     queue_init(&q_identifier);
     gen_code(&q_identifier,INS_LABEL,"$$main",NULL,NULL);
+    gen_code(&q_identifier,INS_CREATEFRAME,NULL,NULL,NULL);
+    gen_code(&q_identifier,INS_PUSHFRAME,NULL,NULL,NULL);
+    gen_code(&q_identifier, INS_DEFVAR, "LF@main_tmp1", NULL, NULL);
+    gen_code(&q_identifier, INS_DEFVAR, "LF@main_tmp2", NULL, NULL);
+    gen_code(&q_identifier, INS_DEFVAR, "LF@main_tmp3", NULL, NULL);
 
     // TODO: vlozeni vnitrnich funkci do TS
     import_builtin_functions();
@@ -1631,6 +1638,8 @@ int syntax_analysis(FILE *file)
 
     // print instruction queue
     queue_flush(&q_identifier);
+    gen_code(NULL ,INS_POPFRAME,NULL,NULL,NULL);
+
 
     // TODO: destroy generate code
 post_local_stack_error:
