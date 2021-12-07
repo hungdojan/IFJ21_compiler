@@ -222,13 +222,13 @@ int exp_stack_reduce(exp_stack_t *s)
         // zbyle pravidla E op E
         switch (oper->data.oper)
         {
-            case TYPE_POWER:
-                new_nterm->rule = RULE_POWER;
-                SEMANTIC_CHECK_INT_AND_NUM(new_nterm, operand1->data.nterm, operand2->data.nterm, 
-                        new_nterm->val1_to_num, new_nterm->val2_to_num);
-                // TODO: converting to real ??
-                // TODO: generating code??
-                break;
+            //case TYPE_POWER:
+            //    new_nterm->rule = RULE_POWER;
+            //    SEMANTIC_CHECK_INT_AND_NUM(new_nterm, operand1->data.nterm, operand2->data.nterm, 
+            //            new_nterm->val1_to_num, new_nterm->val2_to_num);
+            //    // TODO: converting to real ??
+            //    // TODO: generating code??
+            //    break;
             case TYPE_CONCAT:
                 new_nterm->rule = RULE_CONCAT;
                 SEMANTIC_CHECK_STR(new_nterm, operand1->data.nterm, operand2->data.nterm);
@@ -274,58 +274,70 @@ int exp_stack_reduce(exp_stack_t *s)
                 // check for div 0
                 if (operand2->data.nterm->rule == RULE_INT ||
                         operand2->data.nterm->rule == RULE_NUM)
-                    CHECK_DIV_ZERO(operand2->data.nterm->val1);
+                    CHECK_DIV_ZERO(operand2->data.nterm->val1); 
                 // TODO: converting to real ??
                 // TODO: generating code??
                 break;
-            case TYPE_DIVIDE_MODULO:
-                new_nterm->rule = RULE_MODULO;
-                SEMANTIC_CHECK_INT_AND_NUM(new_nterm, operand1->data.nterm, operand2->data.nterm, 
-                        new_nterm->val1_to_num, new_nterm->val2_to_num);
-                // check for div 0
-                if (operand2->data.nterm->rule == RULE_INT)
-                    CHECK_DIV_ZERO(operand2->data.nterm->val1);
-                // TODO: converting to real ??
-                // TODO: generating code??
-                break;
+            // case TYPE_DIVIDE_MODULO:
+            //     new_nterm->rule = RULE_MODULO;
+            //     SEMANTIC_CHECK_INT_AND_NUM(new_nterm, operand1->data.nterm, operand2->data.nterm, 
+            //             new_nterm->val1_to_num, new_nterm->val2_to_num);
+            //     // check for div 0
+            //     if (operand2->data.nterm->rule == RULE_INT)
+            //         CHECK_DIV_ZERO(operand2->data.nterm->val1);
+            //     // TODO: converting to real ??
+            //     // TODO: generating code??
+            //     break;
             case TYPE_EQ:
                 new_nterm->rule = RULE_EQ;
-                SEMANTIC_CHECK_BOOL_NIL(new_nterm, operand1->data.nterm, operand2->data.nterm);
+                SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
+                new_nterm->data_t = DATA_BOOL;
                 // TODO: generating code ??
                 break;
             case TYPE_NOT_EQ:
                 new_nterm->rule = RULE_NE;
-                SEMANTIC_CHECK_BOOL_NIL(new_nterm, operand1->data.nterm, operand2->data.nterm);
+                SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
+                new_nterm->data_t = DATA_BOOL;
                 // TODO: generating code ??
                 break;
             case TYPE_GREATER_OR_EQ:
                 new_nterm->rule = RULE_GE;
+                SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
                 SEMANTIC_CHECK_BOOL_NON_NIL(new_nterm, operand1->data.nterm, operand2->data.nterm);
+                new_nterm->data_t = DATA_BOOL;
                 // TODO: generating code ??
                 break;
             case TYPE_GREATER:
                 new_nterm->rule = RULE_GT;
+                SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
                 SEMANTIC_CHECK_BOOL_NON_NIL(new_nterm, operand1->data.nterm, operand2->data.nterm);
+                new_nterm->data_t = DATA_BOOL;
                 // TODO: generating code ??
                 break;
             case TYPE_LESSER_OR_EQ:
                 new_nterm->rule = RULE_LE;
+                SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
                 SEMANTIC_CHECK_BOOL_NON_NIL(new_nterm, operand1->data.nterm, operand2->data.nterm);
+                new_nterm->data_t = DATA_BOOL;
                 // TODO: generating code ??
                 break;
             case TYPE_LESSER:
                 new_nterm->rule = RULE_LT;
+                SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
                 SEMANTIC_CHECK_BOOL_NON_NIL(new_nterm, operand1->data.nterm, operand2->data.nterm);
+                new_nterm->data_t = DATA_BOOL;
                 // TODO: generating code ??
                 break;
             case TYPE_KW_AND:
                 new_nterm->rule = RULE_AND;
-                SEMANTIC_CHECK_BOOL_NON_NIL(new_nterm, operand1->data.nterm, operand2->data.nterm);
+                SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
+                new_nterm->data_t = DATA_BOOL;
                 // TODO: generating code ??
                 break;
             case TYPE_KW_OR:
                 new_nterm->rule = RULE_OR;
-                SEMANTIC_CHECK_BOOL_NON_NIL(new_nterm, operand1->data.nterm, operand2->data.nterm);
+                SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
+                new_nterm->data_t = DATA_BOOL;
                 // TODO: generating code ??
                 break;
 
@@ -697,48 +709,54 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             break;
         case RULE_EQ:
             //printf("(");
-            push_to_gen_stack(q, expr->val1.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val1.value.sub_expr, &op1);
             //printf("==");
-            push_to_gen_stack(q, expr->val2.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val2.value.sub_expr, &op2);
             //printf(")");
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
+            if (op1 == DATA_NUM || op2 == DATA_NUM)
+                FLOAT_IF_NEEDED(op1, op2);
             gen_code(q, INS_EQS, NULL, NULL, NULL);
             break;
         case RULE_NE:
             //printf("(");
-            push_to_gen_stack(q, expr->val1.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val1.value.sub_expr, &op1);
             //printf("~=");
-            push_to_gen_stack(q, expr->val2.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val2.value.sub_expr, &op2);
             //printf(")");
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
             // TODO: GEN_CODE(NOTS, NULL, NULL, NULL);
+            if (op1 == DATA_NUM || op2 == DATA_NUM)
+                FLOAT_IF_NEEDED(op1, op2);
             gen_code(q, INS_EQS, NULL, NULL, NULL);
             gen_code(q, INS_NOTS, NULL, NULL, NULL);
             break;
         case RULE_GT:
             //printf("(");
-            push_to_gen_stack(q, expr->val1.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val1.value.sub_expr, &op1);
             //printf(">");
-            push_to_gen_stack(q, expr->val2.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val2.value.sub_expr, &op2);
             //printf(")");
             // TODO: GEN_CODE(GTS, NULL, NULL, NULL);
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
+            if (op1 == DATA_NUM || op2 == DATA_NUM)
+                FLOAT_IF_NEEDED(op1, op2);
 
-            CLEAR_OPERAND(OPERAND_DEST);
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
-            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            // CLEAR_OPERAND(OPERAND_DEST);
+            // snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+            // gen_code(q, INS_PUSHS, _dest, NULL, NULL);
 
-            CLEAR_OPERAND(OPERAND_DEST);
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
-            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            // CLEAR_OPERAND(OPERAND_DEST);
+            // snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+            // gen_code(q, INS_PUSHS, _dest, NULL, NULL);
             gen_code(q, INS_GTS, NULL, NULL, NULL);
             break;
         case RULE_GE:
             //printf("(");
-            push_to_gen_stack(q, expr->val1.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val1.value.sub_expr, &op1);
             //printf(">=");
-            push_to_gen_stack(q, expr->val2.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val2.value.sub_expr, &op2);
             //printf(")");
             // TODO: dostat nejak z funkci datove typy?? exp->val->type
             //
@@ -748,14 +766,16 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             // nil kontrola
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
+            if (op1 == DATA_NUM || op2 == DATA_NUM)
+                FLOAT_IF_NEEDED(op1, op2);
 
-            CLEAR_OPERAND(OPERAND_DEST);
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
-            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            // CLEAR_OPERAND(OPERAND_DEST);
+            // snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+            // gen_code(q, INS_PUSHS, _dest, NULL, NULL);
 
-            CLEAR_OPERAND(OPERAND_DEST);
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
-            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            // CLEAR_OPERAND(OPERAND_DEST);
+            // snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+            // gen_code(q, INS_PUSHS, _dest, NULL, NULL);
 
             // =============
             CLEAR_OPERAND(OPERAND_FIRST);
@@ -787,28 +807,30 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             break;
         case RULE_LT:
             //printf("(");
-            push_to_gen_stack(q, expr->val1.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val1.value.sub_expr, &op1);
             //printf("<");
-            push_to_gen_stack(q, expr->val2.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val2.value.sub_expr, &op2);
             //printf(")");
             // TODO: GEN_CODE(LTS, NULL, NULL, NULL);
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
+            if (op1 == DATA_NUM || op2 == DATA_NUM)
+                FLOAT_IF_NEEDED(op1, op2);
 
-            CLEAR_OPERAND(OPERAND_DEST);
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
-            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            // CLEAR_OPERAND(OPERAND_DEST);
+            // snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+            // gen_code(q, INS_PUSHS, _dest, NULL, NULL);
 
-            CLEAR_OPERAND(OPERAND_DEST);
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
-            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            // CLEAR_OPERAND(OPERAND_DEST);
+            // snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+            // gen_code(q, INS_PUSHS, _dest, NULL, NULL);
             gen_code(q, INS_LTS, NULL, NULL, NULL);
             break;
         case RULE_LE:
             //printf("(");
-            push_to_gen_stack(q, expr->val1.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val1.value.sub_expr, &op1);
             //printf("<=");
-            push_to_gen_stack(q, expr->val2.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val2.value.sub_expr, &op2);
             //printf(")");
             // TODO: dostat nejak z funkci datove typy?? exp->val->type
             //
@@ -818,14 +840,16 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             // nil kontrola
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
+            if (op1 == DATA_NUM || op2 == DATA_NUM)
+                FLOAT_IF_NEEDED(op1, op2);
 
-            CLEAR_OPERAND(OPERAND_DEST);
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
-            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            // CLEAR_OPERAND(OPERAND_DEST);
+            // snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+            // gen_code(q, INS_PUSHS, _dest, NULL, NULL);
 
-            CLEAR_OPERAND(OPERAND_DEST);
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
-            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            // CLEAR_OPERAND(OPERAND_DEST);
+            // snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+            // gen_code(q, INS_PUSHS, _dest, NULL, NULL);
 
             // ==========
             CLEAR_OPERAND(OPERAND_FIRST);
@@ -859,20 +883,24 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             break;
         case RULE_AND:
             //printf("(");
-            push_to_gen_stack(q, expr->val1.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val1.value.sub_expr, &op1);
             //printf("and");
-            push_to_gen_stack(q, expr->val2.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val2.value.sub_expr, &op2);
             //printf(")");
             // TODO: GEN_CODE(ANDS, NULL, NULL, NULL);
+            if (op1 == DATA_NUM || op2 == DATA_NUM)
+                FLOAT_IF_NEEDED(op1, op2);
             gen_code(q, INS_ANDS, NULL, NULL, NULL);
             break;
         case RULE_OR:
             //printf("(");
-            push_to_gen_stack(q, expr->val1.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val1.value.sub_expr, &op1);
             //printf("or");
-            push_to_gen_stack(q, expr->val2.value.sub_expr, NULL);
+            push_to_gen_stack(q, expr->val2.value.sub_expr, &op2);
             //printf(")");
             // TODO: GEN_CODE(ORS, NULL, NULL, NULL);
+            if (op1 == DATA_NUM || op2 == DATA_NUM)
+                FLOAT_IF_NEEDED(op1, op2);
             gen_code(q, INS_ORS, NULL, NULL, NULL);
             break;
             // RULE_POWER,             // E -> E ^ E

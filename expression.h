@@ -75,17 +75,9 @@
             CLEAR_UP_IN_REDUCE(ERR_UNEXP_VAL);                              \
         else if (nterm1->data_t == DATA_INT && nterm2->data_t == DATA_INT)  \
             new_nterm->data_t = DATA_INT;                                   \
-        else if (nterm1->data_t == DATA_NUM && nterm2->data_t == DATA_INT)  \
-        {\
-            right_convert = true;                                           \
-            new_nterm->data_t = DATA_NUM;                                   \
-        }\
-        else if (nterm1->data_t == DATA_INT && nterm2->data_t == DATA_NUM)  \
-        {\
-            left_convert = true;                                            \
-            new_nterm->data_t = DATA_NUM;                                   \
-        }\
-        else if (nterm1->data_t == DATA_NUM && nterm2->data_t == DATA_NUM)  \
+        else if ((nterm1->data_t == DATA_NUM && nterm2->data_t == DATA_INT) ||\
+                 (nterm1->data_t == DATA_INT && nterm2->data_t == DATA_NUM) ||\
+                 (nterm1->data_t == DATA_NUM && nterm2->data_t == DATA_NUM))  \
             new_nterm->data_t = DATA_NUM;                                   \
         else    \
             CLEAR_UP_IN_REDUCE(ERR_SEM_TYPE);\
@@ -94,12 +86,8 @@
 #define SEMANTIC_CHECK_BOOL_NON_NIL(new_nterm, nterm1, nterm2) \
     do\
     {\
-        if (nterm1->data_t == nterm2->data_t)     \
-            new_nterm->data_t = DATA_BOOL;      \
-        else if (nterm1->data_t == DATA_NIL || nterm2->data_t == DATA_NIL)  \
+        if (nterm1->data_t == DATA_NIL || nterm2->data_t == DATA_NIL)  \
             CLEAR_UP_IN_REDUCE(ERR_UNEXP_VAL);  \
-        else    \
-            CLEAR_UP_IN_REDUCE(ERR_SEM_TYPE);\
     } while (0)
 
 #define SEMANTIC_CHECK_BOOL_NIL(new_nterm, nterm1, nterm2) \
@@ -111,6 +99,21 @@
         else    \
             CLEAR_UP_IN_REDUCE(ERR_SEM_TYPE);\
     } while (0)
+
+#define SEMANTIC_GENERAL_TYPE_CHECK(nterm1, nterm2)\
+    do\
+    {\
+        if ((nterm1->data_t == DATA_INT &&  nterm2->data_t == DATA_INT) || \
+            (nterm1->data_t == DATA_NUM &&  nterm2->data_t == DATA_INT) ||\
+            (nterm1->data_t == DATA_INT &&  nterm2->data_t == DATA_NUM) ||\
+            (nterm1->data_t == DATA_NUM &&  nterm2->data_t == DATA_NUM) || \
+            (nterm1->data_t == DATA_STR &&  nterm2->data_t == DATA_STR) || \
+             nterm1->data_t == DATA_NIL ||  nterm2->data_t == DATA_NIL  || \
+            (nterm1->data_t == DATA_BOOL && nterm2->data_t == DATA_BOOL))  \
+        { }\
+        else\
+            CLEAR_UP_IN_REDUCE(ERR_SEM_TYPE);\
+    } while(0)
 
 #define CHECK_DIV_ZERO(data)   \
     do\
