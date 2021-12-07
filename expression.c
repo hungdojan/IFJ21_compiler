@@ -774,7 +774,6 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
                 FLOAT_IF_NEEDED(op1, op2);
             else
             {
-
                 CLEAR_OPERAND(OPERAND_DEST);
                 snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
                 gen_code(q, INS_PUSHS, _dest, NULL, NULL);
@@ -806,7 +805,7 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
             gen_code(q,INS_PUSHS,_second,NULL,NULL);
             gen_code(q,INS_PUSHS,_first,NULL,NULL);
-            gen_code(q,INS_GTS,NULL,NULL,NULL);
+            gen_code(q,INS_EQS,NULL,NULL,NULL);
 
             //
             // TODO: GEN_CODE(ORS, NULL, NULL, NULL);
