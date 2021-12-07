@@ -509,7 +509,7 @@ int ret(token_t **token, Istring *lof_data, bool gen_code_print)
                 gen_code(NULL, INS_MOVE,   "LF@%retvar_1", "nil@nil",NULL);
             }
 
-            return parm_n(token, lof_data, gen_code_print);
+            return ret_n(token, lof_data, gen_code_print);
 
         default:
             res = ERR_SYNTAX;
@@ -518,50 +518,46 @@ int ret(token_t **token, Istring *lof_data, bool gen_code_print)
     return res;
 }
 
-// int ret_n(token_t **token, Istring *lof_data, bool gen_code_print, int index)
-// {
-//     int res = NO_ERR;
-//     enum data_type data_t = DATA_NIL;
-//     INIT_TOKEN(token, res);
-// 
-//     switch((*token)->type)
-//     {
-//         // <ret_n> -> eps
-//         case TYPE_EOF:
-//         case TYPE_KW_REQUIRE:
-//         case TYPE_KW_GLOBAL:
-//         case TYPE_IDENTIFIER:
-//         case TYPE_KW_FUNCTION:
-//         case TYPE_KW_END:
-//         case TYPE_KW_LOCAL:
-//         case TYPE_KW_IF:
-//         case TYPE_KW_WHILE:
-//         case TYPE_KW_RETURN:
-//             if ((res = string_Add_Char(lof_data, DATA_NIL)) != NO_ERR)  return res;
-//             break;
-//             // <ret_n> -> , <d_type> <ret_n>
-//         case TYPE_COMMA:
-//             LOAD_TOKEN(token);
-//             if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
-//             if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
-// 
-//             if (gen_code_print)
-//             {
-//                 // TODO: GEN_CODE(DEFVAR, retvar$i1, NULL, NULL)
-//                 // TODO: GEN_CODE(MOVE, retvar$1, nil@nil, NULL)
-//                 char s[128] = {0,};
-//                 sprintf(s,"LF@%%retvar$%d",index);
-//                 gen_code(NULL,INS_DEFVAR,s,NULL, NULL);
-//                 gen_code(NULL, INS_MOVE,s,"nil@nil",NULL);
-//             }
-// 
-//             return ret_n(token, lof_data, gen_code_print, index + 1);
-//         default:
-//             res = ERR_SYNTAX;
-//             break;
-//     }
-//     return res;
-// }
+int ret_n(token_t **token, Istring *lof_data, bool gen_code_print, int index)
+{
+    int res = NO_ERR;
+    enum data_type data_t = DATA_NIL;
+    INIT_TOKEN(token, res);
+
+    switch((*token)->type)
+    {
+        // <ret_n> -> eps
+        case TYPE_EOF:
+        case TYPE_KW_REQUIRE:
+        case TYPE_KW_GLOBAL:
+        case TYPE_IDENTIFIER:
+        case TYPE_KW_FUNCTION:
+        case TYPE_KW_END:
+        case TYPE_KW_LOCAL:
+        case TYPE_KW_IF:
+        case TYPE_KW_WHILE:
+        case TYPE_KW_RETURN:
+            if ((res = string_Add_Char(lof_data, DATA_NIL)) != NO_ERR)  return res;
+            break;
+            // <ret_n> -> , <d_type> <ret_n>
+        case TYPE_COMMA:
+            LOAD_TOKEN(token);
+            if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
+            if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
+
+            if (gen_code_print)
+            {
+                gen_code(NULL, INS_DEFVAR, "LF@%retvar_1", NULL, NULL);
+                gen_code(NULL, INS_MOVE,   "LF@%retvar_1", "nil@nil",NULL);
+            }
+
+            return ret_n(token, lof_data, gen_code_print);
+        default:
+            res = ERR_SYNTAX;
+            break;
+    }
+    return res;
+}
 
 int def_parm(token_t **token, Istring *lof_data)
 {

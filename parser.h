@@ -234,7 +234,7 @@ int ret(token_t **token, Istring *data, bool gen_code_print);
  * @param index
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
-// int ret_n(token_t **token, Istring *data, bool gen_code_print, int index);
+int ret_n(token_t **token, Istring *data, bool gen_code_print, int index);
 
 /**
  * @brief Implementace <def_parm> 
