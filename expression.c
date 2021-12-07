@@ -417,7 +417,7 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
     if (token == NULL || *token == NULL)    return ERR_INTERNAL;
     if (!((*token)->type == TYPE_LEFT_PARENTHESES ||
           (*token)->type == TYPE_IDENTIFIER       ||
-          (*token)->type == TYPE_STRLEN       ||
+          (*token)->type == TYPE_STRING       ||
           (*token)->type == TYPE_BOOLEAN       ||
           (*token)->type == TYPE_KW_NIL       ||
           (*token)->type == TYPE_NUMBER       ||
