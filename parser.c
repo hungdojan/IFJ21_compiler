@@ -505,8 +505,8 @@ int ret(token_t **token, Istring *lof_data, bool gen_code_print)
 
             if (gen_code_print)
             {
-                gen_code(NULL, INS_DEFVAR, "LF@%retvar_1", NULL, NULL);
-                gen_code(NULL, INS_MOVE,   "LF@%retvar_1", "nil@nil",NULL);
+                gen_code(NULL, INS_DEFVAR, "LF@%retvar$1", NULL, NULL);
+                gen_code(NULL, INS_MOVE,   "LF@%retvar$1", "nil@nil",NULL);
             }
 
             return ret_n(token, lof_data, gen_code_print, 2);
@@ -548,7 +548,7 @@ int ret_n(token_t **token, Istring *lof_data, bool gen_code_print, int index)
             if (gen_code_print)
             {
                 CLEAR_OPERAND(OPERAND_DEST);
-                snprintf(_dest, MAX_STR_LEN, "LF@%%retvar_%d", index);
+                snprintf(_dest, MAX_STR_LEN, "LF@%%retvar$%d", index);
                 gen_code(NULL, INS_DEFVAR, _dest, NULL, NULL);
                 gen_code(NULL, INS_MOVE,   _dest, "nil@nil",NULL);
             }
@@ -836,7 +836,7 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
             if (index > (*func_node)->lof_rets.length)
                 return ERR_SEM_FUNC;
 
-            while (index <= (*func_node)->lof_rets.length)
+            while (index < (*func_node)->lof_rets.length-1)
             {
                 CLEAR_OPERAND(OPERAND_DEST);
                 snprintf(_dest, MAX_STR_LEN, "LF@%%retvar$%d", ++index);
