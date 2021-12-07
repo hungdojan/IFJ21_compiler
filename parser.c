@@ -1326,12 +1326,12 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
                 if (stack_var_isempty(*lof_vars))
                     return ERR_SEM_ASSIGN;
 
-                item_var_t *item = stack_var_pop(lof_vars);
                 // nacte datovy typ do data
                 if ((res =  multi_e_n(token, lof_vars, q)) != NO_ERR)  return res;
                 // TODO: generovani kodu prirazeni -- pass
                 // popnuti a prirazeni
 
+                item_var_t *item = stack_var_pop(lof_vars);
                 // push(exp)
                 generate_code_nterm(&final_exp, q, &data_t);
                 exp_nterm_destroy(&final_exp);
@@ -1361,11 +1361,11 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
             if (stack_var_isempty(*lof_vars))
                 return ERR_SEM_ASSIGN;
 
-            item_var_t *item = stack_var_pop(lof_vars);
             // nacte datovy typ do data
             if ((res =  multi_e_n(token, lof_vars, q)) != NO_ERR)  return res;
             // TODO: generovani kodu prirazeni -- pass
             // popnuti a prirazeni
+            item_var_t *item = stack_var_pop(lof_vars);
 
             // push(exp)
             generate_code_nterm(&final_exp, q, &data_t);
@@ -1407,10 +1407,10 @@ int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q)
             if (stack_var_isempty(*lof_vars))
                 return ERR_SEM_ASSIGN;
 
-            item_var_t *item = stack_var_pop(lof_vars);
             // nacte datovy typ do data
             if ((res =  multi_e_n(token, lof_vars, q)) != NO_ERR)  return res;
             // TODO: generovani kodu prirazeni -- pass
+            item_var_t *item = stack_var_pop(lof_vars);
            
             // push(exp)
             generate_code_nterm(&final_exp, q, &data_t);
@@ -1438,8 +1438,6 @@ int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q)
         case TYPE_KW_END:
         case TYPE_KW_RETURN:    // TODO: ZKONTROLOVAT GRAMATIKU?!
         case TYPE_IDENTIFIER:
-            if (!stack_var_isempty(*lof_vars))
-                return ERR_SEM_ASSIGN;
             break;
 
         default:
