@@ -415,15 +415,6 @@ unsigned reduc_id = 0;
 int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
 {
     if (token == NULL || *token == NULL)    return ERR_INTERNAL;
-    if (!((*token)->type == TYPE_LEFT_PARENTHESES ||
-          (*token)->type == TYPE_IDENTIFIER       ||
-          (*token)->type == TYPE_STRING       ||
-          (*token)->type == TYPE_BOOLEAN       ||
-          (*token)->type == TYPE_KW_NIL       ||
-          (*token)->type == TYPE_NUMBER       ||
-          (*token)->type == TYPE_KW_NOT       ||
-          (*token)->type == TYPE_STRLEN))
-            return ERR_SYNTAX;
     reduc_id = 0;
     int res = NO_ERR;
     if (data_t == NULL || final_exp == NULL)    return ERR_INTERNAL;
@@ -499,11 +490,17 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
     // TODO: dalsi veci
     exp_item_t *final_item = exp_stack_pop(&s);
     if (final_item == NULL)
-    {   /* TODO: goto cleaning and error handling */ }
+    {   
+        exp_stack_destroy(&s);
+        return ERR_SYNTAX;
+    }
     else        // zisk nejakych dat 
     {
         if (final_item->type != SYM_EXPR)
-        {   /* TODO: goto cleaning and error handling */ }
+        {
+            exp_stack_destroy(&s);
+            return ERR_SYNTAX;
+        }
 
         if (data_t == NULL || final_exp == NULL)
         {   /* TODO: goto cleaning and error handling */ }
