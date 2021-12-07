@@ -65,7 +65,7 @@ int token_create(Istring *s, enum Token_type type, token_t **ref_token)
             if ((bool_val = !strcmp(s->value, "false")) || !strcmp(s->value, "true"))
             {
                 token->type = TYPE_BOOLEAN;
-                token->value.bool_val = bool_val;
+                token->value.bool_val = strcmp(s->value, "false");
             }
             else
             {
@@ -139,6 +139,8 @@ int check_key_words(char *identif)
     else if(!strcmp(identif, "nil"))        return TYPE_KW_NIL;
     else if(!strcmp(identif, "then"))       return TYPE_KW_THEN;
     else if(!strcmp(identif, "while"))      return TYPE_KW_WHILE;
+    else if(!strcmp(identif, "and"))        return TYPE_KW_AND;
+    else if(!strcmp(identif, "or"))         return TYPE_KW_OR;
     else                                    return TYPE_IDENTIFIER;
 }
 
