@@ -50,6 +50,7 @@
             res = tree_insert(&_node, id_val, node_type, &node_return);\
         }\
         if (res != NO_ERR)  return res;     \
+        else                node_return->tof_index = glob_cnt;\
     } while (0)
 
 #define SEARCH_SYMBOL(id_val, node_type, node_return) \
@@ -120,6 +121,38 @@
             return ERR_SYNTAX;             \
     } while (0)
 
+#define TYPE_CHECK_AND_CONVERT_NTERM(data_t, exp_str, index, final_exp, err)\
+    do\
+    {\
+        if (type_control(data_t, (exp_str->value)[index - 1]))\
+        {\
+            exp_nterm_destroy(&final_exp);\
+            return err;\
+        }\
+    } while(0)
+
+#define TYPE_CHECK_AND_CONVERT_TERM(data_t, exp_type, err)\
+    do\
+    {\
+        if (type_control(data_t, exp_type))\
+            return err;\
+    } while(0)
+
+#define CONVERT_TO_FLOAT(data_t, exp_type)\
+    do\
+    {\
+        if (data_t == DATA_INT && exp_type == DATA_NUM)\
+            gen_code(q, INS_INT2FLOATS, NULL, NULL, NULL);\
+    } while (0)
+
+#define POP_TO_TMP(oper_type, oper, queue)\
+    do\
+    {\
+        CLEAR_OPERAND(oper_type);\
+        snprintf(oper, MAX_STR_LEN, "LF@%s_tmp1", glob_cnt.func_name);\
+        gen_code(queue, INS_POPS, oper, NULL, NULL);\
+    } while (0)
+
 extern FILE *global_file;
 
 /**
@@ -148,7 +181,8 @@ int prg(token_t **token);
  * @param q
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
-int lof_e(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q);
+int lof_e(token_t **token, node_ptr node, int *index, 
+        bool is_parm, queue_t *q);
 
 /**
  * @brief Implementace <lof_e_n>
@@ -160,7 +194,8 @@ int lof_e(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q);
  * @param q
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
-int lof_e_n(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q);
+int lof_e_n(token_t **token, node_ptr node, int *index, 
+        bool is_parm, queue_t *q);
 
 /**
  * @brief Implementace <parm> 
@@ -178,7 +213,7 @@ int parm(token_t **token, Istring *data);
  * @param data
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
-int parm_n(token_t **token, Istring *data);
+int parm_n(token_t **token, Istring *data, bool def_retval);
 
 /**
  * @brief Implementace <ret> 
@@ -199,7 +234,7 @@ int ret(token_t **token, Istring *data, bool gen_code_print);
  * @param index
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
-int ret_n(token_t **token, Istring *data, bool gen_code_print, int index);
+// int ret_n(token_t **token, Istring *data, bool gen_code_print, int index);
 
 /**
  * @brief Implementace <def_parm> 
@@ -238,7 +273,7 @@ int code(token_t **token, node_ptr *func_node, queue_t *q);
  * @param q
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
-int var_init_assign(token_t **token, enum data_type *data_t, node_ptr *var_node, queue_t *q);
+int var_init_assign(token_t **token, node_ptr *var_node, queue_t *q);
 
 /**
  * @brief Implementace <fun_or_exp> 
@@ -249,7 +284,7 @@ int var_init_assign(token_t **token, enum data_type *data_t, node_ptr *var_node,
  * @param q
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
-int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node, queue_t *q);
+int fun_or_exp(token_t **token, node_ptr *var_node, queue_t *q);
 
 /**
  * @brief Implementace <elseif_block> 
@@ -259,7 +294,7 @@ int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node, queu
  * @param q
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
-int elseif_block(token_t **token, node_ptr *func_node, queue_t *q);
+int elseif_block(token_t **token, node_ptr *func_node, queue_t *q, int end_index);
 
 /**
  * @brief Implementace <else_block> 
