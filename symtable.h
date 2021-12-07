@@ -14,6 +14,18 @@
 
 #include "istring.h"
 
+typedef struct gen_info
+{
+    char *func_name;      /// Jmeno funkce
+    int tmp_var_i;        /// Index docasne promenne
+
+    int if_i;             /// Index if pocitadla
+    int elseif_i;         /// Index elseif pocitadla
+    int else_i;           /// Index else pocitadla
+
+    int while_i;          /// Index while pocitadla
+} gen_info_t;
+
 enum data_type
 {
     DATA_NIL=0,
@@ -49,6 +61,7 @@ typedef struct tree_node
 
     struct tree_node *left;         /// Ukazatel na levy podstrom (klice mensi)
     struct tree_node *right;        /// Ukazatel na pravy podstrom (klice vetsi)
+    struct gen_info  tof_index;     /// Informace o dodatecnych indexech
 } *node_ptr;
 
 typedef struct item_var

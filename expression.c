@@ -5,6 +5,7 @@
 #include "parser.h"
 #include "generator.h"
 #include <stdlib.h>
+#include <string.h>
 
 
 static int get_index_from_token(enum Token_type type)
@@ -61,7 +62,7 @@ static int get_index_from_item(const exp_item_t item)
 static enum prec_type table[PREC_TABLE_SIZE][PREC_TABLE_SIZE] = {
 //   (  )  ^  #  !  *  +  .. >  &  |  ,  c  $
     {S, E, S, S, S, S, S, S, S, S, S, E, S, U}, // (
-    {U, R, R, U, U, R, R, R, R, R, R, R, U, U}, // )
+    {U, R, R, U, U, R, R, R, R, R, R, R, U, R}, // )
     {S, R, S, S, S, R, R, R, R, R, R, R, S, R}, // ^
     {S, R, S, U, S, R, R, R, R, R, R, R, S, R}, // #
     {S, R, S, S, S, R, R, R, R, R, R, R, S, R}, // not
@@ -260,7 +261,8 @@ int exp_stack_reduce(exp_stack_t *s)
                 SEMANTIC_CHECK_INT_AND_NUM(new_nterm, operand1->data.nterm, operand2->data.nterm, 
                         new_nterm->val1_to_num, new_nterm->val2_to_num);
                 // check for div 0
-                if (operand2->data.nterm->rule == RULE_INT)
+                if (operand2->data.nterm->rule == RULE_INT || 
+                        operand2->data.nterm->rule == RULE_NUM)
                     CHECK_DIV_ZERO(operand2->data.nterm->val1);
                 // TODO: converting to real ??
                 // TODO: generating code??
@@ -270,7 +272,8 @@ int exp_stack_reduce(exp_stack_t *s)
                 SEMANTIC_CHECK_INT_AND_NUM(new_nterm, operand1->data.nterm, operand2->data.nterm, 
                         new_nterm->val1_to_num, new_nterm->val2_to_num);
                 // check for div 0
-                if (operand2->data.nterm->rule == RULE_INT)
+                if (operand2->data.nterm->rule == RULE_INT ||
+                        operand2->data.nterm->rule == RULE_NUM)
                     CHECK_DIV_ZERO(operand2->data.nterm->val1);
                 // TODO: converting to real ??
                 // TODO: generating code??
@@ -506,10 +509,8 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
 
 static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
 {
-    char s[128] = {0,}; // omezeni poctu desetinych mist
-    char temp_var1[] = "GF@%temp_var1";
-    char temp_var2[] = "GF@%temp_var2";
-    char temp_var3[] = "GF@%temp_var3";
+    // char s[128] = {0,}; // omezeni poctu desetinych mist
+    // char temp_var3[] = "GF@%temp_var3";
 
     switch(expr->rule)
     {
@@ -517,42 +518,53 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
         case RULE_ID:
             ////printf("%s", expr->val1.value.id);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.id, NULL, NULL) - bacha na LF/TF!
-        {node_ptr var_node = NULL;
-            SEARCH_SYMBOL(expr->val1.value.id, VAR, var_node);
-            if (var_node->is_param_var)
-                sprintf(s,"LF@param_%s",var_node->key);
-            else
-                sprintf(s,"LF@%s",var_node->key);
-            gen_code(q, INS_PUSHS,s, NULL, NULL);
-            break;}
+            {
+                node_ptr var_node = NULL;
+                SEARCH_SYMBOL(expr->val1.value.id, VAR, var_node);
+
+                if (var_node == NULL)   return ERR_INTERNAL;
+                define_variable(FRAME_LF, OPERAND_DEST, var_node);
+                gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+                expr->data_t = expr->val1.type = var_node->var_type;
+                break;
+            }
         case RULE_BOOL:
             ////printf("%s", expr->val1.value.boolean ? "true" : "false");
             // TODO: GEN_CODE(PUSHS, expr->val1.value.boolean, NULL, NULL)
-            sprintf(s,"bool@%s",expr->val1.value.boolean ? "true" : "false");
-            gen_code(q, INS_PUSHS, s, NULL, NULL);
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "bool@%s", expr->val1.value.boolean ? "true" : "false");
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            expr->data_t = expr->val1.type = DATA_BOOL;
             break;
         case RULE_INT:
             ////printf("%d", expr->val1.value.integer);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.integer, NULL, NULL)
-            sprintf(s,"int@%d",expr->val1.value.integer);
-            gen_code(q, INS_PUSHS, s, NULL, NULL);
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "int@%d", expr->val1.value.integer);
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            expr->data_t = expr->val1.type = DATA_INT;
             break;
         case RULE_NIL:
             ////printf("nil");
             // TODO: GEN_CODE(PUSHS, nil, NULL, NULL)
             gen_code(q, INS_PUSHS, "nil@nil", NULL, NULL);
+            expr->data_t = expr->val1.type = DATA_NIL;
             break;
         case RULE_NUM:
             ////printf("%g", expr->val1.value.number);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.number, NULL, NULL)
-            sprintf(s,"number@%g",expr->val1.value.number);
-            gen_code(q, INS_PUSHS, s, NULL, NULL);
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "float@%a", expr->val1.value.number);
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            expr->data_t = expr->val1.type = DATA_NUM;
             break;
         case RULE_STR:
             //printf("%s", expr->val1.value.string);
             // TODO: GEN_CODE(PUSHS, expr->val1.value.string, NULL, NULL)
-            sprintf(s,"string@%s",expr->val1.value.string);
-            gen_code(q, INS_PUSHS, s, NULL, NULL);
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "string@%s", expr->val1.value.string);
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            expr->data_t = expr->val1.type = DATA_STR;
             break;
 
             // jeden operand a operator
@@ -566,10 +578,14 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             // TODO: GEN_CODE(POPS, string@temp_var1, NULL, NULL);
             // TODO: GEN_CODE(STRLEN, string@temp_var1, NULL, int@temp_var2);
             // TODO: GEN_CODE(PUSHS, int@temp_var2, NULL, NULL);
-            gen_code(q,INS_POPS,temp_var1,NULL,NULL);
-            gen_code(q,INS_STRLEN,temp_var2,temp_var1,NULL);
-            gen_code(q,INS_PUSHS,temp_var2,NULL,NULL);
+            IS_NOT_NIL(1, q);
+            CLEAR_OPERAND(OPERAND_FIRST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
 
+            CLEAR_OPERAND(OPERAND_SECOND);
+            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+            gen_code(q,INS_STRLEN,_second,_first,NULL);
+            gen_code(q,INS_PUSHS,_first,NULL,NULL);
             break;
         case RULE_NOT:
             //printf("(not");
@@ -589,16 +605,30 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             // TODO: GEN_CODE(POPS, string@temp_var2, NULL, NULL);
             // TODO: GEN_CODE(CONCAT, string@temp_var1, string@temp_var2, string@temp_var3);
             // TODO: GEN_CODE(PUSHS, string@temp_var3, NULL, NULL);
-            gen_code(q,INS_POPS,temp_var1,NULL,NULL);
-            gen_code(q,INS_POPS,temp_var2,NULL,NULL);
-            gen_code(q,INS_CONCAT,temp_var3,temp_var1,temp_var2);
-            gen_code(q,INS_PUSHS,temp_var3,NULL,NULL);
+            IS_NOT_NIL(2, q);
+            IS_NOT_NIL(1, q);
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp3", glob_cnt.func_name);
+
+            CLEAR_OPERAND(OPERAND_FIRST);
+            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+
+            CLEAR_OPERAND(OPERAND_SECOND);
+            snprintf(_second, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+
+            gen_code(q, INS_CONCAT, _dest, _first, _second);
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
             break;
+            // TODO: pretypovani
         case RULE_PLUS:
             //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr);
             //printf("+");
             push_to_gen_stack(q, expr->val2.value.sub_expr);
+            IS_NOT_NIL(2, q);
+            IS_NOT_NIL(1, q);
+
+            FLOAT_IF_NEEDED();
             //printf(")");
             // TODO: GEN_CODE(ADDS, NULL, NULL, NULL);
             gen_code(q,INS_ADDS,NULL,NULL,NULL);
@@ -610,6 +640,10 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(SUBS, NULL, NULL, NULL);
+            IS_NOT_NIL(2, q);
+            IS_NOT_NIL(1, q);
+
+            FLOAT_IF_NEEDED();
             gen_code(q,INS_SUBS,NULL,NULL,NULL);
             break;
         case RULE_MULTIPLY:
@@ -619,6 +653,10 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(MULS, NULL, NULL, NULL);
+            IS_NOT_NIL(2, q);
+            IS_NOT_NIL(1, q);
+
+            FLOAT_IF_NEEDED();
             gen_code(q, INS_MULS, NULL, NULL , NULL);
             break;
         case RULE_DIVIDE:
@@ -628,6 +666,11 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(DIVS, NULL, NULL, NULL);
+            IS_NOT_NIL(2, q);
+            IS_NOT_NIL(1, q);
+            IS_NOT_ZERO(2, q);
+
+            INT_IF_NEEDED();
             gen_code(q, INS_DIVS, NULL, NULL, NULL);
             break;
         case RULE_DIVIDE_WHOLE:
@@ -637,6 +680,11 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(IDIVS, NULL, NULL, NULL);
+            IS_NOT_NIL(2, q);
+            IS_NOT_NIL(1, q);
+            IS_NOT_ZERO(2, q);
+
+            FLOAT_IF_NEEDED();
             gen_code(q, INS_IDIVS, NULL, NULL, NULL);
             break;
         case RULE_EQ:
@@ -666,6 +714,16 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(GTS, NULL, NULL, NULL);
+            IS_NOT_NIL(2, q);
+            IS_NOT_NIL(1, q);
+
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
             gen_code(q, INS_GTS, NULL, NULL, NULL);
             break;
         case RULE_GE:
@@ -679,21 +737,40 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             // TODO: def vars temp_var1, temp_var2, temp_var3 -- DONE
             // TODO: GEN_CODE(POPS, temp_var1, NULL, NULL);
             // TODO: GEN_CODE(POPS, temp_var2, NULL, NULL);
-            gen_code(q,INS_POPS,temp_var1,NULL,NULL);
-            gen_code(q,INS_POPS,temp_var2,NULL,NULL);
+            // nil kontrola
+            IS_NOT_NIL(2, q);
+            IS_NOT_NIL(1, q);
+
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+
+            // =============
+            CLEAR_OPERAND(OPERAND_FIRST);
+            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+
+            CLEAR_OPERAND(OPERAND_SECOND);
+            snprintf(_second, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+
+            gen_code(q,INS_POPS,_first,NULL,NULL);
+            gen_code(q,INS_POPS,_second,NULL,NULL);
             //
             // TODO: GEN_CODE(PUSHS, temp_var2, NULL, NULL);
             // TODO: GEN_CODE(PUSHS, temp_var1, NULL, NULL);
             // TODO: GEN_CODE(GTS, NULL, NULL, NULL);
-            gen_code(q,INS_PUSHS,temp_var2,NULL,NULL);
-            gen_code(q,INS_PUSHS,temp_var1,NULL,NULL);
+            gen_code(q,INS_PUSHS,_second,NULL,NULL);
+            gen_code(q,INS_PUSHS,_first,NULL,NULL);
             gen_code(q,INS_GTS,NULL,NULL,NULL);
             //
             // TODO: GEN_CODE(PUSHS, temp_var2, NULL, NULL);
             // TODO: GEN_CODE(PUSHS, temp_var1, NULL, NULL);
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
-            gen_code(q,INS_PUSHS,temp_var2,NULL,NULL);
-            gen_code(q,INS_PUSHS,temp_var1,NULL,NULL);
+            gen_code(q,INS_PUSHS,_second,NULL,NULL);
+            gen_code(q,INS_PUSHS,_first,NULL,NULL);
             gen_code(q,INS_GTS,NULL,NULL,NULL);
 
             //
@@ -707,6 +784,16 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             push_to_gen_stack(q, expr->val2.value.sub_expr);
             //printf(")");
             // TODO: GEN_CODE(LTS, NULL, NULL, NULL);
+            IS_NOT_NIL(2, q);
+            IS_NOT_NIL(1, q);
+
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
             gen_code(q, INS_LTS, NULL, NULL, NULL);
             break;
         case RULE_LE:
@@ -720,22 +807,41 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
             // TODO: def vars temp_var1, temp_var2, temp_var3 -- DONE
             // TODO: GEN_CODE(POPS, temp_var1, NULL, NULL);
             // TODO: GEN_CODE(POPS, temp_var2, NULL, NULL);
-            gen_code(q, INS_POPS, temp_var1, NULL, NULL);
-            gen_code(q, INS_POPS, temp_var2, NULL, NULL);
+            // nil kontrola
+            IS_NOT_NIL(2, q);
+            IS_NOT_NIL(1, q);
+
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+
+            // ==========
+            CLEAR_OPERAND(OPERAND_FIRST);
+            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+
+            CLEAR_OPERAND(OPERAND_SECOND);
+            snprintf(_second, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+
+            gen_code(q, INS_POPS, _first, NULL, NULL);
+            gen_code(q, INS_POPS, _second, NULL, NULL);
             //
             // TODO: GEN_CODE(PUSHS, temp_var2, NULL, NULL);
             // TODO: GEN_CODE(PUSHS, temp_var1, NULL, NULL);
             // TODO: GEN_CODE(LTS, NULL, NULL, NULL);
-            gen_code(q,INS_PUSHS,temp_var2,NULL,NULL);
-            gen_code(q,INS_PUSHS,temp_var1,NULL,NULL);
+            gen_code(q,INS_PUSHS,_second,NULL,NULL);
+            gen_code(q,INS_PUSHS,_first,NULL,NULL);
             gen_code(q,INS_LTS,NULL,NULL,NULL);
 
             //
             // TODO: GEN_CODE(PUSHS, temp_var2, NULL, NULL);
             // TODO: GEN_CODE(PUSHS, temp_var1, NULL, NULL);
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
-            gen_code(q,INS_PUSHS,temp_var2,NULL,NULL);
-            gen_code(q,INS_PUSHS,temp_var1,NULL,NULL);
+            gen_code(q,INS_PUSHS,_second,NULL,NULL);
+            gen_code(q,INS_PUSHS,_first,NULL,NULL);
             gen_code(q,INS_EQS,NULL,NULL,NULL);
 
             //
@@ -772,7 +878,7 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr)
 int generate_code_nterm(exp_nterm_t **expr, queue_t *q)
 {
     // TODO: GEN_CODE(CLEARS)
-    gen_code(q, INS_CLEARS, NULL, NULL, NULL);
+    //gen_code(q, INS_CLEARS, NULL, NULL, NULL);
     if (expr != NULL && *expr != NULL)
     {
         //printf("(");

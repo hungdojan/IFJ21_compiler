@@ -176,18 +176,18 @@ int get_token(FILE *f, token_t **ref)
                         state = STATE_END_LOAD;
                     }
                 }
-                else if (c == '%')
-                {
-                    string_Add_Char(&str, c);
-                    type = TYPE_DIVIDE_MODULO;
-                    state = STATE_END_LOAD;
-                }
-                else if (c == '^')
-                {
-                    string_Add_Char(&str, c);
-                    type = TYPE_POWER;
-                    state = STATE_END_LOAD;
-                }
+                // else if (c == '%')
+                // {
+                //     string_Add_Char(&str, c);
+                //     type = TYPE_DIVIDE_MODULO;
+                //     state = STATE_END_LOAD;
+                // }
+                // else if (c == '^')
+                // {
+                //     string_Add_Char(&str, c);
+                //     type = TYPE_POWER;
+                //     state = STATE_END_LOAD;
+                // }
                 else if (c == '>')
                 {
                     tmp = fgetc(f);

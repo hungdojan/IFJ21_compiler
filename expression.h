@@ -120,6 +120,108 @@
             CLEAR_UP_IN_REDUCE(ERR_ZERO_DIV);   \
     } while (0)
 
+#define IS_NOT_NIL(tmp_index, queue)\
+    do\
+    {\
+        CLEAR_OPERAND(OPERAND_FIRST);\
+        snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp%d", glob_cnt.func_name, tmp_index);\
+        gen_code(queue, INS_POPS, _first, NULL, NULL);\
+        \
+        CLEAR_OPERAND(OPERAND_DEST);\
+        snprintf(_dest, MAX_STR_LEN, "%s&error_nil", glob_cnt.func_name);\
+        gen_code(queue, INS_JUMPIFEQ, _dest, _first, "nil@nil");\
+    } while (0)
+
+#define IS_NOT_ZERO(tmp_index, queue)\
+    do\
+    {\
+        CLEAR_OPERAND(OPERAND_FIRST);\
+        snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp%d", glob_cnt.func_name, tmp_index);\
+        \
+        CLEAR_OPERAND(OPERAND_DEST);\
+        snprintf(_dest, MAX_STR_LEN, "%s&error_zero", glob_cnt.func_name);\
+        gen_code(queue, INS_JUMPIFEQ, _dest, _first, "int@0");\
+        gen_code(queue, INS_JUMPIFEQ, _dest, _first, "float@0x0p+0");\
+    } while (0)
+
+#define FLOAT_IF_NEEDED()\
+    do\
+    {\
+        if (expr->val1.type == DATA_NIL && expr->val2.type == DATA_INT)\
+        {\
+            CLEAR_OPERAND(OPERAND_DEST);\
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            \
+            CLEAR_OPERAND(OPERAND_DEST);\
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            gen_code(q, INS_INT2FLOATS, NULL, NULL, NULL);\
+            expr->data_t = DATA_NUM;\
+        }\
+        else if (expr->val2.type == DATA_NIL && expr->val1.type == DATA_INT)\
+        {\
+            CLEAR_OPERAND(OPERAND_DEST);\
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            gen_code(q, INS_INT2FLOATS, NULL, NULL, NULL);\
+            \
+            CLEAR_OPERAND(OPERAND_DEST);\
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            expr->data_t = DATA_NUM;\
+        }\
+        else\
+        {\
+            CLEAR_OPERAND(OPERAND_DEST);\
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            \
+            CLEAR_OPERAND(OPERAND_DEST);\
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+        }\
+    } while (0)
+
+#define INT_IF_NEEDED()\
+    do\
+    {\
+        if (expr->val1.type == DATA_NIL && expr->val2.type == DATA_INT)\
+        {\
+            CLEAR_OPERAND(OPERAND_DEST);\
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            gen_code(q, INS_FLOAT2INTS, NULL, NULL, NULL);\
+            \
+            CLEAR_OPERAND(OPERAND_DEST);\
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            expr->data_t = DATA_INT;\
+        }\
+        else if (expr->val2.type == DATA_NIL && expr->val1.type == DATA_INT)\
+        {\
+            CLEAR_OPERAND(OPERAND_DEST);\
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            \
+            CLEAR_OPERAND(OPERAND_DEST);\
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            gen_code(q, INS_FLOAT2INTS, NULL, NULL, NULL);\
+            expr->data_t = DATA_INT;\
+        }\
+        else\
+        {\
+            CLEAR_OPERAND(OPERAND_DEST);\
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            \
+            CLEAR_OPERAND(OPERAND_DEST);\
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+        }\
+    } while (0)
+
 extern unsigned reduc_id;
 
 /**

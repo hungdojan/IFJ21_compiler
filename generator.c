@@ -1,11 +1,11 @@
 /**
  * @file generator.c
- * @brief Definice retezcovych funkci
+ * @brief Definice funkci ze souboru generator.h
  *
- * @authors Hung Do            (xdohun00) -
+ * @authors Jaroslav Kvasnicka (xkvasn14)
+ *          Hung Do            (xdohun00)
  *          David Kedra        (xkedra00)
  *          Petr Kolarik       (xkolar79)
- *          Jaroslav Kvasnicka (xkvasn14) -
  *
  * Reseni projektu IFJ a IAL, FIT VUT 21/22
  */
@@ -15,6 +15,116 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+char _dest[MAX_STR_LEN] = { 0, };
+char _first[MAX_STR_LEN] = { 0, };
+char _second[MAX_STR_LEN] = { 0, };
+
+gen_info_t glob_cnt = { 0, };
+
+void init_gen_info()
+{
+    glob_cnt.if_i = glob_cnt.elseif_i = glob_cnt.else_i = glob_cnt.tmp_var_i = glob_cnt.while_i = 0;
+    glob_cnt.func_name = NULL;
+}
+
+void reset_gen_info(node_ptr func_node)
+{
+    glob_cnt.if_i = glob_cnt.elseif_i = glob_cnt.else_i = glob_cnt.tmp_var_i = glob_cnt.while_i = 0;
+    if (func_node != NULL)
+        glob_cnt.func_name = func_node->key;
+    else
+        glob_cnt.func_name = NULL;
+}
+
+int define_variable(enum frame_type ft, enum operand_type ot, node_ptr var_node)
+{
+    char _temp[MAX_STR_LEN] = { 0, };
+    CLEAR_OPERAND(ot);
+    snprintf(_temp, MAX_STR_LEN, "%s@", GET_FRAME(ft));
+    // vybrany ramec
+    CONCAT_TO_OPERAND(ot);
+    if (glob_cnt.func_name != NULL)
+    {
+        snprintf(_temp, MAX_STR_LEN, "%s_", glob_cnt.func_name);
+        CONCAT_TO_OPERAND(ot);
+    }
+    if (var_node->is_param_var)
+    {
+        snprintf(_temp, MAX_STR_LEN, "param_");
+        CONCAT_TO_OPERAND(ot);
+    }
+    if (glob_cnt.if_i > 0)
+    {
+        sprintf(_temp, "if%d_", glob_cnt.if_i);
+        CONCAT_TO_OPERAND(ot);
+    }
+    if (glob_cnt.elseif_i > 0)
+    {
+        sprintf(_temp, "elseif%d_", glob_cnt.elseif_i);
+        CONCAT_TO_OPERAND(ot);
+    }
+    if (glob_cnt.else_i > 0)
+    {
+        sprintf(_temp, "else%d_", glob_cnt.else_i);
+        CONCAT_TO_OPERAND(ot);
+    }
+    if (glob_cnt.while_i > 0)
+    {
+        sprintf(_temp, "while%d_", glob_cnt.while_i);
+        CONCAT_TO_OPERAND(ot);
+    }
+    sprintf(_temp, "%s", var_node->key);
+    CONCAT_TO_OPERAND(ot);
+    // TODO: kontrola
+    return _temp[MAX_STR_LEN-1] != '\0' ? ERR_INTERNAL : NO_ERR;
+}
+
+int define_constant(enum operand_type ot, exp_data_t term)
+{
+    char _temp[MAX_STR_LEN] = { 0, };
+    CLEAR_OPERAND(ot);
+    snprintf(_temp, MAX_STR_LEN, "%s@", GET_TYPE(term.type));
+    CONCAT_TO_OPERAND(ot);
+
+    if (term.type == DATA_STR)
+        sprintf(_temp, "%s", term.value.string);
+    else if (term.type == DATA_NUM)
+        sprintf(_temp, "%a", term.value.number);
+    else if (term.type == DATA_INT)
+        sprintf(_temp, "%d", term.value.integer);
+    else if (term.type == DATA_BOOL)
+        sprintf(_temp, "%s", term.value.boolean ? "true" : "false");
+    else
+        sprintf(_temp, "nil");
+
+    // presun do spravneho operandu
+    CONCAT_TO_OPERAND(ot);
+
+    return _temp[MAX_STR_LEN-1] != '\0' ? ERR_INTERNAL : NO_ERR;
+}
+
+int define_label(enum operand_type ot, enum label_type lt)
+{
+    char _temp[MAX_STR_LEN] = { 0, };
+    CLEAR_OPERAND(ot);
+    sprintf(_temp, "%s_", glob_cnt.func_name);
+    CONCAT_TO_OPERAND(ot);
+    if (lt != LABEL_FUNC)
+    {
+        if (lt == LABEL_IF)             sprintf(_temp, "if%d", glob_cnt.if_i); 
+        else if (lt == LABEL_ENDIF)     sprintf(_temp, "endif%d", glob_cnt.if_i);
+        else if (lt == LABEL_ELSEIF)    sprintf(_temp, "elseif%d", glob_cnt.elseif_i);
+        else if (lt == LABEL_ENDELSEIF) sprintf(_temp, "endelsif%d", glob_cnt.elseif_i);
+        else if (lt == LABEL_ELSE)      sprintf(_temp, "else%d", glob_cnt.else_i);
+        else if (lt == LABEL_WHILE)     sprintf(_temp, "while%d", glob_cnt.while_i);
+        else if (lt == LABEL_ENDWHILE)  sprintf(_temp, "endwhile%d", glob_cnt.while_i);
+        else if (lt == LABEL_END)       sprintf(_temp, "end%d", glob_cnt.if_i);
+        else                            return ERR_INTERNAL;
+        CONCAT_TO_OPERAND(ot);
+    }
+    return NO_ERR;
+}
 
 int gen_code(queue_t *q,enum ins_type type, char* dest, char* first_op, char* second_op)
 {

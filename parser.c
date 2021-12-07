@@ -1,5 +1,7 @@
 #include "expression.h"
 #include "parser.h"
+#include <stdbool.h>
+#include <string.h>
 
 /**
  * @brief Implementace <prg>
@@ -8,11 +10,6 @@
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
 
-queue_t q_identifier;
-int index_while;
-int current_index = 0;
-int index_if = 0;
-int index_elseif = 0;
 
 int prg(token_t **token)
 {
@@ -69,22 +66,28 @@ int prg(token_t **token)
         case TYPE_IDENTIFIER:
             SEARCH_SYMBOL((*token)->value.str_val, FUNC, node);
             if (node == NULL)   return ERR_SEM_DEF;
+            // vytvoreni ramce
+            gen_code(&q_identifier, INS_CREATEFRAME, NULL, NULL, NULL);
+
             LOAD_TOKEN(token);
             CHECK_AND_LOAD(token, TYPE_LEFT_PARENTHESES);       // (
+            gen_code(&q_identifier, INS_CLEARS, NULL, NULL, NULL);
             int index = 0;
 
-            // TODO: GEN_CODE(CREATEFRAME, NULL, NULL, NULL)
-            gen_code(&q_identifier,INS_CREATEFRAME,NULL,NULL,NULL);
             // inicializace a pridani datovych typu
-            if ((res = lof_e(token, node, &index, 1, &q_identifier)) != NO_ERR)        goto error;
-            current_index += index;
+            if ((res = lof_e(token, node, &index, 
+                            true, &q_identifier)) != NO_ERR)        goto error;
 
-            // TODO: GEN_CODE(PUSHS, "int@$index", NULL, NULL)
-            char s[128] = {0,};
-            sprintf(s,"int@%d",index);
-            gen_code(&q_identifier,INS_PUSHS,s,NULL,NULL);
+            // pro write je potreba definovat pocet parametru
+            if (node->unlim_parms)
+            {
+                CLEAR_OPERAND(OPERAND_DEST);
+                snprintf(_dest, MAX_STR_LEN, "int@%d", index);
+                gen_code(&q_identifier, INS_PUSHS, _dest, NULL, NULL);
+            }
+
+            // volani funkce node->key
             CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);      // )
-            // TODO: GEN_CODE(call, function_name, NULL, NULL)
             gen_code(&q_identifier,INS_CALL,node->key,NULL,NULL);
 
             return prg(token);
@@ -95,18 +98,26 @@ int prg(token_t **token)
             LOAD_AND_CHECK(token, TYPE_IDENTIFIER);             // id
             SEARCH_SYMBOL((*token)->value.str_val, FUNC, node);
 
-            // TODO: GEN_CODE(label, function_name, NULL, NULL)
-            // TODO: GEN_CODE(PUSHFRAME, NULL, NULL, NULL)
-            gen_code(NULL,INS_LABEL,(*token)->value.str_val, NULL, NULL);
-            gen_code(NULL, INS_PUSHFRAME, NULL, NULL, NULL);
-            gen_code(NULL,INS_CREATEFRAME,NULL,NULL,NULL);
-            gen_code(NULL,INS_POPS,"GF@%temp_var1",NULL,NULL);
-
-            // funkce jeste neexistuje
+            // semanticka kontrola funkce
             if (node == NULL)
                 INSERT_SYMBOL((*token)->value.str_val, FUNC, node);
             else
                 if (node->is_defined)   return ERR_SEM_DEF;
+
+            // inicializace funkce
+            reset_gen_info(node);
+            gen_code(NULL, INS_LABEL, (*token)->value.str_val, NULL, NULL);
+            gen_code(NULL, INS_PUSHFRAME, NULL, NULL, NULL);
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+            gen_code(NULL, INS_DEFVAR, _dest, NULL, NULL);
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+            gen_code(NULL, INS_DEFVAR, _dest, NULL, NULL);
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp3", glob_cnt.func_name);
+            gen_code(NULL, INS_DEFVAR, _dest, NULL, NULL);
+
             LOAD_TOKEN(token);
 
             CHECK_AND_LOAD(token, TYPE_LEFT_PARENTHESES);       // (
@@ -146,20 +157,25 @@ int prg(token_t **token)
                 string_Free(&lof_data);
             }
 
-            // TODO: pripravit navratove promenne??
+            if ((res = code(token, &node, NULL)) != NO_ERR)   goto error;
 
-
-            if ((res = code(token, &node,NULL)) != NO_ERR)   goto error;
-
+            // ukonceni funkce
+            CHECK_AND_LOAD(token, TYPE_KW_END);                 // end
             DESTROY_SCOPE();
-            // TODO: GEN_CODE(POPFRAME, NULL, NULL, NULL);
-            // TODO: GEN_CODE(RETURN, NULL, NULL, NULL);
             gen_code(NULL, INS_POPFRAME, NULL, NULL, NULL);
             gen_code(NULL, INS_RETURN, NULL, NULL, NULL);
 
-            // TODO: check whether ret types match
+            // error nil
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "%s&error_nil", glob_cnt.func_name);
+            gen_code(NULL, INS_LABEL, _dest, NULL, NULL);
+            gen_code(NULL, INS_EXIT, "int@8", NULL, NULL);
 
-            CHECK_AND_LOAD(token, TYPE_KW_END);                 // end
+            // XXX: error div zero -> je to chyba?
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "%s&error_zero", glob_cnt.func_name);
+            gen_code(NULL, INS_LABEL, _dest, NULL, NULL);
+            gen_code(NULL, INS_EXIT, "int@9", NULL, NULL);
             node->is_defined = 1;
 
             return prg(token);
@@ -176,17 +192,15 @@ error:
 
 // TODO: predavat list ocekavanych parametru + index -> pro parsovani pri volani funkce
 // id se bude prirazovat na ramec, semantika bude probihat na teto urovni (nebude se nic vracet)
-int lof_e(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q)
+int lof_e(token_t **token, node_ptr node, int *index, 
+        bool is_parm, queue_t *q)
 {
     if (node == NULL)   return ERR_INTERNAL;
     int res = NO_ERR;
     exp_nterm_t *final_exp = NULL;
     enum data_type data_t = DATA_NIL;
-    Istring *exp = is_parm ? &node->lof_params         : &node->lof_rets;
+    Istring *exp = is_parm ? &node->lof_params : &node->lof_rets;
     INIT_TOKEN(token, res);
-    char s[128] = {0,};
-    char r[128] ={0,};
-    int temp_index = 0;
 
     switch ((*token)->type)
     {
@@ -201,95 +215,67 @@ int lof_e(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q)
         case TYPE_STRLEN:
         case TYPE_IDENTIFIER:
 
-            if (node->unlim_parms)
+            *index += 1;
+            if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)           return res;
+            if (!is_parm)
             {
-                if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)           return res;
-                *index += 1;
-                temp_index = current_index + *index;
-                // TODO: add to passing argumets ???
+                // typova kontrola
+                TYPE_CHECK_AND_CONVERT_NTERM(data_t, exp, *index, final_exp, ERR_SEM_FUNC);
 
-                if (!is_parm)
-                {
-                    // TODO: GEN_CODE(MOVE, "_tmp$temp_index", NULL, "retval$index");
-                    sprintf(s, "TF@%%tmp$%d", temp_index);
-                    sprintf(r, "LF@%%retvar$%d", *index);
-                    gen_code(q,INS_MOVE,s,r,NULL);
-
-                }
-                // TODO: pokud chybi -> doplnim nil
+                // push(exp)
                 generate_code_nterm(&final_exp,q);
-                sprintf(s, "TF@%%tmp$%d", temp_index);
-                gen_code(q,INS_DEFVAR,s,NULL,NULL);
-                gen_code(q,INS_POPS,s,NULL,NULL);
-
                 exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
-                if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)
-                    return res;
 
-                // XXX: bude prace se zasobnikem
-                // int temp_index = gener_code_exp(final_exp)
-                if (is_parm)
-                {
-                    // TODO: GEN_CODE(PUSHS, NULL, NULL, "_tmp$temp_index")
-                    sprintf(s, "TF@%%tmp$%d", temp_index);
-                    gen_code(q,INS_PUSHS,s,NULL,NULL);
-                }
+                // konverze
+                CONVERT_TO_FLOAT(data_t, (exp->value)[*index - 1]);
+
+                CLEAR_OPERAND(OPERAND_DEST);
+                snprintf(_dest, MAX_STR_LEN, "LF@%%retval$%d", *index);
+
+                // tmp1 = pop()
+                POP_TO_TMP(OPERAND_FIRST, _first, q);
+
+                // retvar_$i = tmp1
+                gen_code(q, INS_MOVE, _dest, _first, NULL);
+                return lof_e_n(token, node, index, is_parm, q);
             }
             else
             {
                 // predava se moc argumentu
                 if (is_parm && exp->length == 0) return ERR_SEM_FUNC;
-                // if (*index >= exp->length - 1)                              return ERR_SEM_FUNC;
 
-                // ziska datovy typ vyrazu a porovna to s ocekavanym
-                if ((res = expression(token, &data_t, &final_exp)) != NO_ERR) return res;
-
-                // TODO: jeste zkontrolovat!!!
-                if (type_control(data_t, (exp->value)[*index]))
+                if (node->unlim_parms)
                 {
-                    exp_nterm_destroy(&final_exp);
-                    return ERR_SEM_FUNC;
+                    if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
+
+                    // push(exp)
+                    generate_code_nterm(&final_exp,q);
+                    exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
                 }
-
-                if (data_t == DATA_INT && (exp->value)[*index] == DATA_NUM)
+                else
                 {
-                    // TODO: pretypovani
-                    gen_code(q,INS_INT2FLOATS,NULL,NULL,NULL);
-                }
+                    // typova kontrola a konverze
+                    TYPE_CHECK_AND_CONVERT_NTERM(data_t, exp, *index, final_exp, ERR_SEM_FUNC);
 
-                // TODO: MOVE TMP_EXP TO PARM$index+1 -- pass
-                *index += 1;
-                temp_index = current_index + *index;
-                // TODO: add to passing argumets ???
+                    CLEAR_OPERAND(OPERAND_DEST);
+                    snprintf(_dest, MAX_STR_LEN, "TF@%%%d", *index);
+                    int temp = *index;
+                    if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
 
-                generate_code_nterm(&final_exp, q);
-                sprintf(s, "TF@%%tmp$%d", temp_index);
-                gen_code(q,INS_DEFVAR,s,NULL,NULL);
-                gen_code(q,INS_POPS,s,NULL,NULL);
-                if (!is_parm)
-                {
-                    // TODO: GEN_CODE(MOVE, "retvar$index", "_tmp$temp_index", NULL); -- POPS
-                    // TODO: pokud chybi -> doplnim nil -- PASS
-                    sprintf(r, "LF@%%retvar$%d", *index);
-                    gen_code(q, INS_MOVE, r, s, NULL);
-                }
-                exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
-                // TODO: move to tmp
-                // TODO: GENCODE POP
-//                sprintf(s, "TF@%%tmp$%d", temp_index);
-//                gen_code(q, INS_POPS, s, NULL, NULL);
+                    // push(exp)
+                    generate_code_nterm(&final_exp,q);
+                    exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
 
-                if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)
-                    return res;
+                    // konverze
+                    CONVERT_TO_FLOAT(data_t, (exp->value)[*index - 1]);
+                    CLEAR_OPERAND(OPERAND_DEST);
+                    snprintf(_dest, MAX_STR_LEN, "TF@%%%d", temp);
 
+                    // tmp1 = pop()
+                    POP_TO_TMP(OPERAND_FIRST, _first, q);
 
-                // XXX: bude prace se zasobnikem
-                // int temp_index = gener_code_exp(final_exp)
-                if (is_parm)
-                {
-                    // TODO: GEN_CODE(PUSHS, "_tmp$temp_index", NULL, NULL)
-                    sprintf(s, "TF@%%tmp$%d", temp_index);
-                    gen_code(q, INS_PUSHS, s, NULL, NULL);
+                    // retvar_$i = tmp1
+                    gen_code(q, INS_MOVE, _dest, _first, NULL);
                 }
             }
             break;
@@ -304,7 +290,6 @@ int lof_e(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q)
         case TYPE_KW_ELSE:
             // predalo male argumentu
             if (!node->unlim_parms && is_parm && exp->length-1 != 0)       return ERR_SEM_FUNC; 
-            // TODO: pro !is_parm je potreba donastavit nil hodnoty pri generovani -> mozno udelat az venku
             break;
 
         default:
@@ -314,7 +299,8 @@ int lof_e(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q)
     return res;
 }
 
-int lof_e_n(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q)
+int lof_e_n(token_t **token, node_ptr node, int *index, 
+        bool is_parm, queue_t *q)
 {
     if (node == NULL)   return ERR_INTERNAL;
     int res = NO_ERR;
@@ -322,9 +308,6 @@ int lof_e_n(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q
     exp_nterm_t *final_exp = NULL;
     Istring *exp = is_parm ? &node->lof_params         : &node->lof_rets;
     INIT_TOKEN(token, res);
-    char s[128]={0,};
-    char r[128]={0,};
-    int temp_index = 0;
 
     switch ((*token)->type)
     {
@@ -339,94 +322,77 @@ int lof_e_n(token_t **token, node_ptr node, int *index, bool is_parm, queue_t *q
         case TYPE_KW_ELSE:
             // pokud se ocekava vic parametru
             if (!node->unlim_parms && is_parm && *index != exp->length - 1)       return ERR_SEM_FUNC; 
-            // TODO: pro !is_parm je potreba donastavit nil hodnoty pri generovani -> mozno udelat az venku
-            // if ((res = string_Add_Char(lof_data, DATA_NIL)) != NO_ERR)  return res;
             break;
 
             // <lof_e_n> -> , <expression> <lof_e_n>
         case TYPE_COMMA:
             LOAD_TOKEN(token);
-            if (node->unlim_parms)
+            *index += 1;
+            if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)           return res;
+            if (!is_parm)
             {
-                if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)           return res;
-                *index += 1;
-                temp_index = current_index + *index;
-                // TODO: add to passing argumets ???
+                // typova kontrola a konverze
+                TYPE_CHECK_AND_CONVERT_NTERM(data_t, exp, *index, final_exp, ERR_SEM_FUNC);
 
-                if (!is_parm)
-                {
-                    // TODO: GEN_CODE(MOVE, "_tmp$temp_index", NULL, "retval$index");
-                    sprintf(s, "TF@%%tmp$%d", temp_index);
-                    sprintf(r, "LF@%%retvar$%d", *index);
-                    gen_code(q,INS_MOVE,s,r,NULL);
-                }
-
+                // push(exp)
                 generate_code_nterm(&final_exp,q);
-                sprintf(s, "TF@%%tmp$%d", temp_index);
-                gen_code(q,INS_DEFVAR,s,NULL,NULL);
-                gen_code(q,INS_POPS,s,NULL,NULL);
                 exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
-                if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)
-                    return res;
 
-                // int temp_index = gener_code_exp(final_exp)
-                if (is_parm)
-                {
-                    // TODO: GEN_CODE(PUSHS, NULL, NULL, "_tmp$temp_index")
-                    sprintf(s, "TF@%%tmp$%d", temp_index);
-                    gen_code(q,INS_PUSHS,s,NULL,NULL);
-                }
+                // konverze
+                CONVERT_TO_FLOAT(data_t, (exp->value)[*index - 1]);
+
+                CLEAR_OPERAND(OPERAND_DEST);
+                snprintf(_dest, MAX_STR_LEN, "LF@%%retval$%d", *index);
+
+                // tmp1 = pop()
+                POP_TO_TMP(OPERAND_FIRST, _first, q);
+
+                // retvar_$i = tmp1
+                gen_code(q, INS_MOVE, _dest, _first, NULL);
+                return lof_e_n(token, node, index, is_parm, q);
             }
             else
             {
-                // pokud se ocekava mene parametru
-                if (!node->unlim_parms && *index > exp->length - 1)       return ERR_SEM_FUNC;
+                // predava se moc argumentu
+                if (is_parm && exp->length == 0) return ERR_SEM_FUNC;
 
-                if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)           return res;
-
-                // TODO: GEN_CODE
-
-                if (type_control(data_t, (exp->value)[*index]))
+                if (node->unlim_parms)
                 {
-                    exp_nterm_destroy(&final_exp);
-                    return ERR_SEM_FUNC;
+                    if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
+
+                    // push(exp)
+                    generate_code_nterm(&final_exp,q);
+                    exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
                 }
-                if (data_t == DATA_INT && (exp->value)[*index] == DATA_NUM)
+                else
                 {
-                    // TODO: pretypovani
-                    gen_code(q,INS_INT2FLOATS,NULL,NULL,NULL);
-                }
+                    // typova kontrola a konverze
+                    TYPE_CHECK_AND_CONVERT_NTERM(data_t, exp, *index, final_exp, ERR_SEM_FUNC);
 
+                    CLEAR_OPERAND(OPERAND_DEST);
+                    snprintf(_dest, MAX_STR_LEN, "TF@%%%d", *index);
+                    int temp = *index;
+                    if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
 
-                // TODO: MOVE TMP_EXP TO PARM$index+1
-                *index += 1;
-                temp_index = current_index + *index;
-                // TODO: add to passing argumets ???
+                    // push(exp)
+                    generate_code_nterm(&final_exp,q);
+                    exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
 
-                if (!is_parm)
-                {
-                    // TODO: GEN_CODE(MOVE, "_tmp$temp_index", "retval$index", NULL); -- nope
-                    // TODO: GENCODE POPS RETVAL
-                    sprintf(r,"LF@%%retvar$%d",*index);
-                    gen_code(q, INS_POPS, r,NULL,NULL);
-                }
-                generate_code_nterm(&final_exp, q);
-                sprintf(s, "TF@%%tmp$%d", temp_index);
-                gen_code(q,INS_DEFVAR,s,NULL,NULL);
-                gen_code(q,INS_POPS,s,NULL,NULL);
-                exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
-                if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)
-                    return res;
+                    // konverze
+                    CONVERT_TO_FLOAT(data_t, (exp->value)[*index - 1]);
 
-                // int temp_index = gener_code_exp(final_exp)
-                if (is_parm)
-                {
-                    // TODO: GEN_CODE(PUSHS, "_tmp$temp_index", NULL, NULL)
-                    sprintf(s, "TF@%%tmp$%d", temp_index);
-                    gen_code(q,INS_PUSHS,s,NULL,NULL);
+                    CLEAR_OPERAND(OPERAND_DEST);
+                    snprintf(_dest, MAX_STR_LEN, "TF@%%%d", temp);
+
+                    // tmp1 = pop()
+                    POP_TO_TMP(OPERAND_FIRST, _first, q);
+
+                    // retvar_$i = tmp1
+                    gen_code(q, INS_MOVE, _dest, _first, NULL);
                 }
             }
             break;
+
         default:
             res = ERR_SYNTAX;
             break;
@@ -456,7 +422,7 @@ int parm(token_t **token, Istring *lof_data)
             if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
             if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
 
-            return parm_n(token, lof_data);
+            return parm_n(token, lof_data, false);
 
         default:
             res = ERR_SYNTAX;
@@ -465,7 +431,7 @@ int parm(token_t **token, Istring *lof_data)
     return res;
 }
 
-int parm_n(token_t **token, Istring *lof_data)
+int parm_n(token_t **token, Istring *lof_data, bool def_retval)
 {
     int res = NO_ERR;
     enum data_type data_t;
@@ -480,7 +446,19 @@ int parm_n(token_t **token, Istring *lof_data)
             if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
             if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
 
-            return parm_n(token, lof_data);
+            // vytvoreni navratove hodnoty
+            if (def_retval)
+            {
+                // define retval_$i
+                CLEAR_OPERAND(OPERAND_DEST);
+                snprintf(_dest, MAX_STR_LEN, "LF@%%retval$%d", lof_data->length);
+                gen_code(NULL, INS_DEFVAR, _dest, NULL, NULL);
+
+                // retval_$i = nil
+                gen_code(NULL, INS_MOVE, _dest, "nil@nil", NULL);
+            }
+
+            return parm_n(token, lof_data, def_retval);
 
             // <parm_n> -> eps
         case TYPE_RIGHT_PARENTHESES:
@@ -525,13 +503,11 @@ int ret(token_t **token, Istring *lof_data, bool gen_code_print)
 
             if (gen_code_print)
             {
-                // TODO: GEN_CODE(DEFVAR, retvar$i1, NULL, NULL)
-                // TODO: GEN_CODE(MOVE, retvar$1, nil@nil, NULL)
-                gen_code(NULL, INS_DEFVAR, "LF@%retvar$1", NULL, NULL);
-                gen_code(NULL,INS_MOVE,"LF@%retvar$1","nil@nil",NULL);
+                gen_code(NULL, INS_DEFVAR, "LF@%retvar_1", NULL, NULL);
+                gen_code(NULL, INS_MOVE,   "LF@%retvar_1", "nil@nil",NULL);
             }
 
-            return ret_n(token, lof_data, gen_code_print, 2);
+            return parm_n(token, lof_data, gen_code_print);
 
         default:
             res = ERR_SYNTAX;
@@ -540,58 +516,57 @@ int ret(token_t **token, Istring *lof_data, bool gen_code_print)
     return res;
 }
 
-int ret_n(token_t **token, Istring *lof_data, bool gen_code_print, int index)
-{
-    int res = NO_ERR;
-    enum data_type data_t = DATA_NIL;
-    INIT_TOKEN(token, res);
-
-    switch((*token)->type)
-    {
-        // <ret_n> -> eps
-        case TYPE_EOF:
-        case TYPE_KW_REQUIRE:
-        case TYPE_KW_GLOBAL:
-        case TYPE_IDENTIFIER:
-        case TYPE_KW_FUNCTION:
-        case TYPE_KW_END:
-        case TYPE_KW_LOCAL:
-        case TYPE_KW_IF:
-        case TYPE_KW_WHILE:
-        case TYPE_KW_RETURN:
-            if ((res = string_Add_Char(lof_data, DATA_NIL)) != NO_ERR)  return res;
-            break;
-            // <ret_n> -> , <d_type> <ret_n>
-        case TYPE_COMMA:
-            LOAD_TOKEN(token);
-            if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
-            if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
-
-            if (gen_code_print)
-            {
-                // TODO: GEN_CODE(DEFVAR, retvar$i1, NULL, NULL)
-                // TODO: GEN_CODE(MOVE, retvar$1, nil@nil, NULL)
-                char s[128] = {0,};
-                sprintf(s,"LF@%%retvar$%d",index);
-                gen_code(NULL,INS_DEFVAR,s,NULL, NULL);
-                gen_code(NULL, INS_MOVE,s,"nil@nil",NULL);
-            }
-
-            return ret_n(token, lof_data, gen_code_print, index + 1);
-        default:
-            res = ERR_SYNTAX;
-            break;
-    }
-    return res;
-}
+// int ret_n(token_t **token, Istring *lof_data, bool gen_code_print, int index)
+// {
+//     int res = NO_ERR;
+//     enum data_type data_t = DATA_NIL;
+//     INIT_TOKEN(token, res);
+// 
+//     switch((*token)->type)
+//     {
+//         // <ret_n> -> eps
+//         case TYPE_EOF:
+//         case TYPE_KW_REQUIRE:
+//         case TYPE_KW_GLOBAL:
+//         case TYPE_IDENTIFIER:
+//         case TYPE_KW_FUNCTION:
+//         case TYPE_KW_END:
+//         case TYPE_KW_LOCAL:
+//         case TYPE_KW_IF:
+//         case TYPE_KW_WHILE:
+//         case TYPE_KW_RETURN:
+//             if ((res = string_Add_Char(lof_data, DATA_NIL)) != NO_ERR)  return res;
+//             break;
+//             // <ret_n> -> , <d_type> <ret_n>
+//         case TYPE_COMMA:
+//             LOAD_TOKEN(token);
+//             if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
+//             if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
+// 
+//             if (gen_code_print)
+//             {
+//                 // TODO: GEN_CODE(DEFVAR, retvar$i1, NULL, NULL)
+//                 // TODO: GEN_CODE(MOVE, retvar$1, nil@nil, NULL)
+//                 char s[128] = {0,};
+//                 sprintf(s,"LF@%%retvar$%d",index);
+//                 gen_code(NULL,INS_DEFVAR,s,NULL, NULL);
+//                 gen_code(NULL, INS_MOVE,s,"nil@nil",NULL);
+//             }
+// 
+//             return ret_n(token, lof_data, gen_code_print, index + 1);
+//         default:
+//             res = ERR_SYNTAX;
+//             break;
+//     }
+//     return res;
+// }
 
 int def_parm(token_t **token, Istring *lof_data)
 {
     int res = NO_ERR;
     enum data_type data_t;
-    node_ptr node;
+    node_ptr node = NULL;
     INIT_TOKEN(token, res);
-    char s[128]={0,};
 
     switch ((*token)->type)
     {
@@ -607,16 +582,13 @@ int def_parm(token_t **token, Istring *lof_data)
             node->var_type = data_t;
             node->is_defined = 1;
             node->is_param_var = 1;
+
             if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
 
-            // TODO: GEN_CODE(DEFVAR, id, NULL, NULL);
-            // TODO: GEN_CODE(POPS, id, NULL, NULL);
-            if(node->is_param_var)
-                sprintf(s,"LF@param_%s",node->key);
-            else
-                sprintf(s,"LF@%s",node->key);
-            gen_code(NULL, INS_DEFVAR,s, NULL, NULL);
-            gen_code(NULL, INS_POPS, s,NULL,NULL);
+            // param1 = %1
+            if ((res = define_variable(FRAME_LF, OPERAND_DEST, node)) != NO_ERR) return res;
+            gen_code(NULL, INS_DEFVAR, _dest, NULL, NULL);
+            gen_code(NULL, INS_MOVE, _dest, "LF@%1", NULL);
 
             return def_parm_n(token, lof_data);
 
@@ -638,7 +610,6 @@ int def_parm_n(token_t **token, Istring *lof_data)
     enum data_type data_t;
     node_ptr node;
     INIT_TOKEN(token, res);
-    char s[128]={0,};
 
     switch ((*token)->type)
     {
@@ -662,14 +633,12 @@ int def_parm_n(token_t **token, Istring *lof_data)
             node->is_param_var = 1;
             if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
 
-            // TODO: GEN_CODE(DEFVAR, id, NULL, NULL);
-            // TODO: GEN_CODE(POPS, id, NULL, NULL);
-            if(node->is_param_var)
-                sprintf(s,"LF@param_%s",node->key);
-            else
-                sprintf(s,"LF@%s",node->key);
-            gen_code(NULL, INS_DEFVAR, s, NULL, NULL);
-            gen_code(NULL, INS_POPS,   s, NULL, NULL);
+            // param$i = %$i
+            if ((res = define_variable(FRAME_LF, OPERAND_DEST, node)) != NO_ERR) return res;
+            CLEAR_OPERAND(OPERAND_FIRST);
+            snprintf(_first, MAX_STR_LEN, "LF@%%%d", lof_data->length);
+            gen_code(NULL, INS_DEFVAR, _dest, NULL, NULL);
+            gen_code(NULL, INS_MOVE, _dest, _first, NULL);
 
             return def_parm_n(token, lof_data);
 
@@ -689,7 +658,6 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
     node_ptr local_node = NULL;
     exp_nterm_t *final_exp = NULL;
     INIT_TOKEN(token, res);
-    char s[128]={0,};
 
     switch ((*token)->type)
     {
@@ -698,18 +666,8 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
             // hleda zaznam v TS
             SEARCH_SYMBOL((*token)->value.str_val, FUNC, local_node);
             if (local_node == NULL)
-            {
-                // stack_reset_index(&local_stack);
-                // while (stack_isempty(&local_stack))   
-                // {
-                //     local_node = tree_search(stack_top(&local_stack), (*token)->value.str_val);
-                //     if (local_node != NULL)    
-                //         break;
-                //     else
-                //         stack_dec_index(&local_stack);
-                // }
                 SEARCH_SYMBOL((*token)->value.str_val, VAR, local_node);
-            }
+
             LOAD_TOKEN(token);
 
             if ((res = func_or_assign(token, &local_node, q)) != NO_ERR)   return res;
@@ -721,12 +679,9 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
             LOAD_AND_CHECK(token, TYPE_IDENTIFIER);             // id
             INSERT_SYMBOL((*token)->value.str_val, VAR, local_node);
 
-            // TODO: GEN_CODE(DEF_VAR, id, NULL, NULL)
-            if(local_node->is_param_var)
-                sprintf(s,"LF@param_%s",local_node->key);
-            else
-                sprintf(s,"LF@%s",local_node->key);
-            gen_code(q, INS_DEFVAR,s,NULL,NULL);
+            // define id
+            define_variable(FRAME_LF, OPERAND_DEST, local_node);
+            gen_code(NULL, INS_DEFVAR, _dest, NULL, NULL);
             LOAD_TOKEN(token);
 
             CHECK_AND_LOAD(token, TYPE_DECLARE);                // :
@@ -735,10 +690,7 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
 
             local_node->var_type = data_t;
 
-            if ((res = var_init_assign(token, &data_t, &local_node, q)) != NO_ERR)    return res;
-            // kontrola prirazeni; pokud neprobehne prirazeni, bude se ocekavat v data_t NIL
-            if (type_control(data_t, local_node->var_type))
-                return ERR_SEM_ASSIGN;
+            if ((res = var_init_assign(token, &local_node, q)) != NO_ERR)    return res;
 
             local_node->is_defined = 1;
 
@@ -753,112 +705,123 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
             // expression muze byt jakykoliv vyraz -> pokud to neni false nebo NIL
             // pak je to vzdy true; toto je ale reseno az pri generovani kodu
             if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
+
+            // if label
+            int temp = ++glob_cnt.if_i;
+            define_label(OPERAND_DEST, LABEL_IF);
+            gen_code(q, INS_LABEL, _dest,NULL,NULL);
+
+            // push(exp)
             generate_code_nterm(&final_exp, q);
             exp_nterm_destroy(&final_exp);
-            // TODO: gen_code
-            sprintf(s,"if_%s_%d",(*func_node)->key,index_if);
-            gen_code(q,INS_LABEL,s,NULL,NULL);
-            gen_code(q,INS_POPS,"GF@%temp_var1",NULL,NULL);
 
-            sprintf(s,"endif_%s_%d",(*func_node)->key,index_if);
-            gen_code(q,INS_JUMPIFEQ,s,"GF@%temp_var1","nil@nil");
-            gen_code(q,INS_JUMPIFEQ,s,"GF@%temp_var1","bool@false");
+            // tmp1 = pop()
+            POP_TO_TMP(OPERAND_FIRST, _first, q);
 
-            // TODO: jump to label ELSE if false
+            // sprintf(s,"endif_%s_%d",(*func_node)->key,index_if);
+            define_label(OPERAND_DEST, LABEL_ENDIF);
+            gen_code(q, INS_JUMPIFEQ, _dest, _first, "nil@nil");
+            gen_code(q, INS_JUMPIFEQ, _dest, _first, "bool@false");
 
             CHECK_AND_LOAD(token, TYPE_KW_THEN);                // then
-            int my_index = index_if++;
             INIT_SCOPE();
             // jde hlavne o kontrolu, pokud se zavola return
             if ((res = code(token, func_node,q)) != NO_ERR)    return res;
             DESTROY_SCOPE();
 
-            sprintf(s,"end_%s_%d",(*func_node)->key,my_index);
-            gen_code(q,INS_JUMP,s,NULL,NULL);
-            sprintf(s,"endif_%s_%d",(*func_node)->key,my_index);
-            gen_code(q,INS_LABEL,s,NULL,NULL);
+            // jmp func_end$i
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "%s_end%d", glob_cnt.func_name, temp);
+            gen_code(q, INS_JUMP, _dest, NULL, NULL);
 
-            if ((res = elseif_block(token, func_node, q)) != NO_ERR)   return res;
+            // label func_endif$i
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "%s_endif%d", glob_cnt.func_name, temp);
+            gen_code(q, INS_LABEL, _dest, NULL, NULL);
 
-            // TODO: jump to lable END_IF
+            // elseif
+            if ((res = elseif_block(token, func_node, q, temp)) != NO_ERR)   return res;
 
-
+            // else
             if ((res = else_block(token, func_node, q)) != NO_ERR)    return res;
 
             CHECK_AND_LOAD(token, TYPE_KW_END);                 // end
 
-            // TODO: label END
-            sprintf(s,"end_%s_%d",(*func_node)->key,my_index);
-            gen_code(q,INS_LABEL,s,NULL,NULL);
-
-            index_if += 1;
+            // label func_endif$i
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "%s_end%d", glob_cnt.func_name, temp);
+            gen_code(q, INS_LABEL, _dest, NULL, NULL);
 
             return code(token, func_node,q);
 
             // <code> -> while <expression> do <code> end <code>
         case TYPE_KW_WHILE:
-            LOAD_TOKEN(token);
-            queue_t iq;
-            queue_init(&iq);
-            if(q == NULL)
             {
-                q = &iq;
+                LOAD_TOKEN(token);
+                bool is_first_cycle = q == NULL;
+
+                // vytvoreni fronty pokud jeste neexistuje
+                if (q == NULL)
+                {
+                    queue_t iq;
+                    queue_init(&iq);
+                    q = &iq;
+                }
+
+                int temp = ++glob_cnt.while_i;
+                // expression muze byt jakykoliv vyraz -> pokud to neni false nebo NIL
+                // pak je to vzdy true; toto je ale reseno az pri generovani kodu
+                if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
+
+                define_label(OPERAND_DEST, LABEL_WHILE);
+                gen_code(q, INS_LABEL, _dest, NULL, NULL);
+
+                generate_code_nterm(&final_exp,q);
+
+                // tmp1 = pop()
+                POP_TO_TMP(OPERAND_FIRST, _first, q);
+
+                // skok pri nepravde
+                define_label(OPERAND_DEST, LABEL_ENDWHILE);
+                gen_code(q, INS_JUMPIFEQ, _dest, _first, "nil@nil");
+                gen_code(q, INS_JUMPIFEQ, _dest, _first, "bool@false");
+
+                exp_nterm_destroy(&final_exp);
+
+                CHECK_AND_LOAD(token, TYPE_KW_DO);
+
+                INIT_SCOPE();
+                // jde hlavne o kontrolu navratovych hodnot returnu ve scopu
+                if ((res = code(token, func_node, q)) != NO_ERR)    return res;
+
+                // TODO: go thru SYMTABLE and define vars
+                // TODO: go thru queue_t and change delete init
+                // TODO: flush code
+                // TODO: jump to while label
+
+                // skok na zacatek cyklu
+                CLEAR_OPERAND(OPERAND_DEST);
+                snprintf(_dest, MAX_STR_LEN, "%s_while%d", glob_cnt.func_name, temp);
+                gen_code(q, INS_JUMP, _dest, NULL, NULL);
+                DESTROY_SCOPE();
+
+                CHECK_AND_LOAD(token, TYPE_KW_END);
+
+                // label endwhile
+                CLEAR_OPERAND(OPERAND_DEST);
+                snprintf(_dest, MAX_STR_LEN, "%s_endwhile%d", glob_cnt.func_name, temp);
+                define_label(OPERAND_DEST, LABEL_ENDWHILE);
+                gen_code(q, INS_LABEL, _dest, NULL, NULL);
+
+                // XXX: filter_defvar(q);
+                if (is_first_cycle)
+                {
+                    queue_flush(q);
+                    q = NULL;
+                }
+
+                return code(token, func_node,q);
             }
-
-            // expression muze byt jakykoliv vyraz -> pokud to neni false nebo NIL
-            // pak je to vzdy true; toto je ale reseno az pri generovani kodu
-            if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
-
-            char w[128] = { 0, };
-            char w_end[128] = { 0, };
-            sprintf(w,"while_%d",index_while);
-
-            // TODO: GENCODE LABEL WHILE_index
-            gen_code(q,INS_LABEL,w,NULL,NULL);
-
-            generate_code_nterm(&final_exp,q);
-
-            // TODO: ničit strom až po while!
-            // TODO: GENCODE LT, GT, EQ expression
-            // TODO: GENCODE POPS GF@%%temp_var1
-            gen_code(q,INS_POPS,"GF@%temp_var1",NULL,NULL);
-
-            sprintf(w_end,"end_while_%d",index_while);
-
-            // TODO: GEN_CODE JUMPIFEQ ENDWHILE GF@%%temp_var1 nil@nil
-            // TODO: GENCODE JUMPIFEQ ENDWHILE GF@%%temp_var1 bool@false
-            gen_code(q,INS_JUMPIFEQ,w_end,"GF@%temp_var1","nil@nil");
-            gen_code(q,INS_JUMPIFEQ,w_end,"GF@%temp_var1","bool@false");
-
-            exp_nterm_destroy(&final_exp);
-
-
-            CHECK_AND_LOAD(token, TYPE_KW_DO);
-
-            INIT_SCOPE();
-            // jde hlavne o kontrolu navratovych hodnot returnu ve scopu
-            if ((res = code(token, func_node, q)) != NO_ERR)    return res;
-
-            // TODO: go thru SYMTABLE and define vars
-            // TODO: go thru queue_t and change delete init
-            // TODO: flush code
-            // TODO: jump to while label
-
-
-
-            gen_code(q,INS_JUMP,w,NULL,NULL);
-            DESTROY_SCOPE();
-
-            CHECK_AND_LOAD(token, TYPE_KW_END);
-            // TODO: GENCODE LABEL ENDWHILE
-            gen_code(q,INS_LABEL,w_end,NULL,NULL);
-            index_while += 1;
-
-            filter_defvar(q);
-            queue_flush(q);
-            q = NULL;
-
-            return code(token, func_node,q);
 
             // <code> -> return <lof_e>
         case TYPE_KW_RETURN:
@@ -866,24 +829,25 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
 
             // TODO: pred return se musi zkontrolovat stav listu
             int index = 0;
-            if ((res = lof_e(token, *func_node, &index, 0,q)) != NO_ERR)
+            if ((res = lof_e(token, *func_node, &index, false, q)) != NO_ERR)
                 return res;
-            current_index += index;
 
-            // TODO: donastavit nil pro chybejici parametry -> nebo mozno jiz implicitne nastavit predem
+            // TODO: cisteni?
+            if (index > (*func_node)->lof_rets.length)
+                return ERR_SEM_FUNC;
 
-            // TODO: passing variable to return variable ??
-
-            // TODO: typova kontrola
-            // if (lof_type_control(&lof_data, (*func_node)->lof_rets))
-            //     res = ERR_SEM_FUNC;
-
-            // string_Free(&lof_data);
+            while (index <= (*func_node)->lof_rets.length)
+            {
+                CLEAR_OPERAND(OPERAND_DEST);
+                snprintf(_dest, MAX_STR_LEN, "LF@%%retval$%d", ++index);
+                gen_code(q, INS_MOVE, _dest, "nil@nil", NULL);
+            }
             break;
 
             // <code> -> eps
         case TYPE_KW_END:
         case TYPE_KW_ELSE:
+        case TYPE_KW_ELSEIF:
             break;
 
         default:
@@ -893,7 +857,7 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
     return res;
 }
 
-int var_init_assign(token_t **token, enum data_type *data_t, node_ptr *var_node, queue_t *q)
+int var_init_assign(token_t **token, node_ptr *var_node, queue_t *q)
 {
     int res = NO_ERR;
     INIT_TOKEN(token, res);
@@ -908,13 +872,14 @@ int var_init_assign(token_t **token, enum data_type *data_t, node_ptr *var_node,
         case TYPE_KW_WHILE:
         case TYPE_KW_RETURN:
         case TYPE_KW_ELSE:
-            *data_t = DATA_NIL;
+            define_variable(FRAME_LF, OPERAND_DEST, *var_node);
+            gen_code(q, INS_MOVE, _dest, "nil@nil", NULL);
             break;
 
             // <var_init_assign> -> = <fun_or_exp>
         case TYPE_ASSIGN:
             CHECK_AND_LOAD(token, TYPE_ASSIGN);     // =
-            if ((res = fun_or_exp(token, data_t, var_node, q)) != NO_ERR)    return res;
+            if ((res = fun_or_exp(token, var_node, q)) != NO_ERR)    return res;
             break;
         default:
             res = ERR_SYNTAX;
@@ -923,27 +888,29 @@ int var_init_assign(token_t **token, enum data_type *data_t, node_ptr *var_node,
     return res;
 }
 
-int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node, queue_t *q)
+int fun_or_exp(token_t **token, node_ptr *var_node, queue_t *q)
 {
     int res = NO_ERR;
     node_ptr local_node;
+    enum data_type data_t;
     INIT_TOKEN(token, res);
-    char s[128]={0,};
-
-    char fir[128] = { 0, };
 
     switch((*token)->type)
     {
         case TYPE_IDENTIFIER:
             SEARCH_SYMBOL((*token)->value.str_val, FUNC, local_node);
+
+            // jedna se o volani funkce
             if (local_node != NULL)
             {
                 // ziska, jakou navratovou hodnotu vraci fcu
                 // pokud funkce nevraci nic, nastavi se DATA_NIL
-                *data_t = local_node->lof_rets.value[0];
+                data_t = local_node->lof_rets.value[0];
 
-                // TODO: GEN_CODE(CREATEFRAME, NULL, NULL, NULL);
-                gen_code(q,INS_CREATEFRAME,NULL,NULL,NULL);
+                // priprava ramce pro volani funkce
+                gen_code(q, INS_CREATEFRAME, NULL, NULL, NULL);
+                gen_code(q, INS_CLEARS, NULL, NULL, NULL);
+
                 LOAD_AND_CHECK(token, TYPE_LEFT_PARENTHESES);      // (
                 LOAD_TOKEN(token);
                 int index = 0;
@@ -951,41 +918,53 @@ int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node, queu
                 // kontrola parametru a prirazeni
                 if ((res = lof_e(token, local_node, &index, true,NULL)) != NO_ERR)
                     return res;
-                current_index += index;
 
-                // TODO: GEN_CODE(PUSHS, int@$index, NULL, NULL);
-                sprintf(s,"int@%d",index);
-                gen_code(q,INS_PUSHS,s,NULL,NULL);
-                if (index != local_node->lof_params.length - 1)
-                    return ERR_SEM_FUNC;
+                // pro write je potreba definovat pocet parametru
+                if (local_node->unlim_parms)
+                {
+                    CLEAR_OPERAND(OPERAND_DEST);
+                    snprintf(_dest, MAX_STR_LEN, "int@%d", index);
+                    gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+                }
 
                 CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);     // )
 
-                // TODO: GEN_CODE(call, local_node->key, NULL, NULL);
-                // TODO: GEN_CODE(MOVE, var_node->key, retval1, NULL);
-                gen_code(q, INS_CALL, local_node->key,NULL,NULL);
-                if((*var_node)->is_param_var)
-                    sprintf(fir,"LF@param_%s",(*var_node)->key);
-                else
-                    sprintf(fir, "LF@%s", (*var_node)->key);
-                gen_code(q,INS_MOVE,fir,"TF@%retvar$1",NULL);
+                // volani fce
+                gen_code(q, INS_CALL, local_node->key, NULL, NULL);
+
+                if (local_node->lof_rets.length < 1)    return ERR_SEM_FUNC;
+
+                // typova kontrola a konverze
+                TYPE_CHECK_AND_CONVERT_TERM(data_t, (*var_node)->var_type, ERR_SEM_ASSIGN);
+                gen_code(q, INS_PUSHS, "TF@%%retval$1", NULL, NULL);
+
+                CONVERT_TO_FLOAT(data_t, (*var_node)->var_type);
+
+                define_variable(FRAME_LF, OPERAND_DEST, *var_node);
+                gen_code(q, INS_POPS, _dest, NULL, NULL);
             }
-            else
+            else    // jedna se o promennou
             {
                 exp_nterm_t *final_exp = NULL;
-                if ((res = expression(token, data_t, &final_exp)) != NO_ERR)
+                if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)
                     return res;
+                // typova kontrola a konveerze
+                if (type_control(data_t, (*var_node)->var_type))
+                {
+                    exp_nterm_destroy(&final_exp);
+                    return ERR_SEM_ASSIGN;
+                }
+                CONVERT_TO_FLOAT(data_t, (*var_node)->var_type);
+
+
+                // push(exp)
                 generate_code_nterm(&final_exp, q);
                 exp_nterm_destroy(&final_exp);
 
-                // TODO: gen_code(final_exp);
-                // TODO: GEN_CODE(MOVE, var_node->key, "_tmp$temp_index", NULL);
-                gen_code(q, INS_POPS, "GF@%temp_var1",NULL,NULL);
-                if((*var_node)->is_param_var)
-                    sprintf(fir,"LF@param_%s",(*var_node)->key);
-                else
-                    sprintf(fir, "LF@%s", (*var_node)->key);
-                gen_code(q, INS_MOVE,fir,"GF@%temp_var1",NULL);
+                // tmp1 = pop(); id = tmp1;
+                POP_TO_TMP(OPERAND_FIRST, _first, q);
+                define_variable(FRAME_LF, OPERAND_DEST, *var_node);
+                gen_code(q, INS_MOVE, _dest, _first, NULL);
             }
             break;
         case TYPE_BOOLEAN:
@@ -998,19 +977,25 @@ int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node, queu
         case TYPE_STRLEN:
             {
                 exp_nterm_t *final_exp = NULL;
-                if ((res = expression(token, data_t, &final_exp)) != NO_ERR)
+                if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)
                     return res;
+                // typova kontrola a konveerze
+                if (type_control(data_t, (*var_node)->var_type))
+                {
+                    exp_nterm_destroy(&final_exp);
+                    return ERR_SEM_ASSIGN;
+                }
+                CONVERT_TO_FLOAT(data_t, (*var_node)->var_type);
+
+
+                // push(exp)
                 generate_code_nterm(&final_exp, q);
                 exp_nterm_destroy(&final_exp);
 
-                // TODO: gen_code(final_exp);
-                // TODO: GEN_CODE(MOVE, var_node->key, "_tmp$temp_index", NULL);
-                gen_code(q, INS_POPS, "GF@%temp_var1",NULL,NULL);
-                if((*var_node)->is_param_var)
-                    sprintf(fir,"LF@param_%s",(*var_node)->key);
-                else
-                    sprintf(fir, "LF@%s", (*var_node)->key);
-                gen_code(q, INS_MOVE,fir,"GF@%temp_var1",NULL);
+                // tmp1 = pop(); id = tmp1;
+                POP_TO_TMP(OPERAND_FIRST, _first, q);
+                define_variable(FRAME_LF, OPERAND_DEST, *var_node);
+                gen_code(q, INS_MOVE, _dest, _first, NULL);
             }
             break;
         default:
@@ -1020,33 +1005,32 @@ int fun_or_exp(token_t **token, enum data_type *data_t, node_ptr *var_node, queu
     return res;
 }
 
-int elseif_block(token_t **token, node_ptr *func_node, queue_t *q)
+int elseif_block(token_t **token, node_ptr *func_node, queue_t *q, int end_index)
 {
     int res = NO_ERR;
     enum data_type data_t;
     exp_nterm_t *final_exp = NULL;
     INIT_TOKEN(token, res);
-    char s[128] = {0,};
 
     switch ((*token)->type)
     {
         // <elseif_block> -> elseif <expression> then <code> <elseif_block>
         case TYPE_KW_ELSEIF:
             LOAD_TOKEN(token);
+            int temp = ++glob_cnt.elseif_i;
+            define_label(OPERAND_DEST, LABEL_ELSEIF);
+            gen_code(q, INS_LABEL, _dest, NULL, NULL);
 
             if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
             generate_code_nterm(&final_exp, NULL);
             exp_nterm_destroy(&final_exp);
 
-            sprintf(s,"elseif_%s_%d",(*func_node)->key,index_if); // pouze pomocne navesti
-            gen_code(q,INS_LABEL,s,NULL,NULL);
-            gen_code(q,INS_POPS,"GF@%temp_var1",NULL,NULL);
+            POP_TO_TMP(OPERAND_FIRST, _first, q);
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "%s_endelseif%d", glob_cnt.func_name, temp);
 
-            sprintf(s,"endelseif_%s_%d",(*func_node)->key,index_if);
-            gen_code(q,INS_JUMPIFEQ,s,"GF@%temp_var1","nil@nil");
-            gen_code(q,INS_JUMPIFEQ,s,"GF@%temp_var1","bool@false");
-
-            // TODO: jump to label ELSE if false
+            gen_code(q, INS_JUMPIFEQ, _dest, _first, "nil@nil");
+            gen_code(q, INS_JUMPIFEQ, _dest, _first, "bool@false");
 
             CHECK_AND_LOAD(token, TYPE_KW_THEN);                // then
 
@@ -1055,14 +1039,17 @@ int elseif_block(token_t **token, node_ptr *func_node, queue_t *q)
             if ((res = code(token, func_node,q)) != NO_ERR)    return res;
             DESTROY_SCOPE();
 
-            sprintf(s,"end_%s_%d",(*func_node)->key,index_if);
-            gen_code(q,INS_JUMP,s,NULL,NULL);
-            sprintf(s,"endelseif_%s_%d",(*func_node)->key,index_if);
-            gen_code(q,INS_LABEL,s,NULL,NULL);
+            // jmp end
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "%s_end%d", glob_cnt.func_name, end_index);
+            gen_code(q, INS_JUMP, _dest, NULL, NULL);
 
-            index_elseif += 1;
+            // label endelseif
+            CLEAR_OPERAND(OPERAND_DEST);
+            snprintf(_dest, MAX_STR_LEN, "%s_endelseif%d", glob_cnt.func_name, temp);
+            gen_code(q, INS_LABEL, _dest, NULL, NULL);
 
-            return elseif_block(token, func_node, q);
+            return elseif_block(token, func_node, q, end_index);
 
             // <elseif_block> -> eps
         case TYPE_KW_ELSE:
@@ -1080,8 +1067,6 @@ int else_block(token_t **token, node_ptr *func_node, queue_t *q)
 {
     int res = NO_ERR;
     INIT_TOKEN(token, res);
-    char s[128] = {0,};
-
     switch ((*token)->type)
     {
         // <else_block> -> else <code>
@@ -1089,11 +1074,10 @@ int else_block(token_t **token, node_ptr *func_node, queue_t *q)
             LOAD_TOKEN(token);
 
             INIT_SCOPE();
-            // TODO: LABEL ELSE
-//            sprintf(s,"else_%s_%d",(*func_node)->key,index_if);
-//            gen_code(q,INS_LABEL,s,NULL,NULL);
-            // TODO: pridat queue namisto NULL??
-            res = code(token, func_node,NULL);
+            define_label(OPERAND_DEST, LABEL_ELSE);
+            gen_code(q, INS_LABEL, _dest, NULL, NULL);
+
+            res = code(token, func_node, q);
             DESTROY_SCOPE();
             break;
 
@@ -1112,7 +1096,6 @@ int func_or_assign(token_t **token, node_ptr *node, queue_t *q)
 {
     int res = NO_ERR;
     INIT_TOKEN(token, res);
-    char s[128]={0,};
 
     if (node == NULL)           return ERR_INTERNAL;
     if (*node == NULL)          return ERR_SEM_DEF;
@@ -1123,19 +1106,22 @@ int func_or_assign(token_t **token, node_ptr *node, queue_t *q)
             if ((*node)->type != FUNC)  return ERR_SEM_DEF;
             LOAD_TOKEN(token);
 
-            int index = 0;
-
-            // TODO: GEN_CODE(CREATEFRAME, NULL, NULL, NULL);
             gen_code(q, INS_CREATEFRAME, NULL, NULL, NULL);
+            gen_code(q, INS_CLEARS, NULL, NULL, NULL);
+
+            int index = 0;
 
             // kontrola a prirazeni parametru
             if ((res = lof_e(token, *node, &index, 1,q)) != NO_ERR)
                 return res;
-            current_index += index;
 
-            // TODO: GEN_CODE(PUSHS, int@$index, NULL, NULL);
-            sprintf(s,"int@%d",index);
-            gen_code(q,INS_PUSHS,s,NULL,NULL);
+            // pro write je potreba definovat pocet parametru
+            if ((*node)->unlim_parms)
+            {
+                CLEAR_OPERAND(OPERAND_DEST);
+                snprintf(_dest, MAX_STR_LEN, "int@%d", index);
+                gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+            }
 
             CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);      // )
 
@@ -1177,7 +1163,7 @@ int func_or_assign(token_t **token, node_ptr *node, queue_t *q)
 
             // na leve strane je vice promennych nez na prave
             if (!stack_var_isempty(lof_vars))
-                res = ERR_SEMANT;
+                res = ERR_SEM_ASSIGN;
 
             stack_var_destroy(&lof_vars);
 
@@ -1232,12 +1218,11 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
     enum data_type data_t = DATA_NIL;
     exp_nterm_t *final_exp = NULL;
     node_ptr local_node = NULL;
-    char fir[128] = { 0, };
     INIT_TOKEN(token, res);
 
     switch ((*token)->type)
     {
-        // <multi_e> -> <expression> <multi_var_n>
+        // <multi_e> -> <expression> <multi_e_n>
         case TYPE_IDENTIFIER:
             SEARCH_SYMBOL((*token)->value.str_val, FUNC, local_node);
             if (local_node != NULL)
@@ -1248,58 +1233,89 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
 
                 // TODO: GEN_CODE(CREATEFRAME, NULL, NULL, NULL);
                 gen_code(q, INS_CREATEFRAME, NULL, NULL, NULL);
+                gen_code(q, INS_CLEARS, NULL, NULL, NULL);
 
                 // TODO: nastaveni navratovych hodnot podle curr_val
                 // kontrola parametru
-                if ((res = lof_e(token, local_node, &index, 1,q)) != NO_ERR)
+                if ((res = lof_e(token, local_node, &index, true, q)) != NO_ERR)
                     return res;
-                current_index += index;
+
+                // pro write je potreba definovat pocet parametru
+                if (local_node->unlim_parms)
+                {
+                    CLEAR_OPERAND(OPERAND_DEST);
+                    snprintf(_dest, MAX_STR_LEN, "int@%d", index);
+                    gen_code(q, INS_PUSHS, _dest, NULL, NULL);
+                }
 
                 // TODO: check lof_data and node->lof_parms
                 // TODO: GEN_CODE(PUSHS, int@$index, NULL, NULL);
-                sprintf(fir,"int@%d",index);
-                gen_code(q,INS_PUSHS,fir,NULL,NULL);
-
                 CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);
 
                 // TODO: GEN_CODE(CALL, local_node->key, NULL, NULL);
-                gen_code(q, INS_CALL, local_node->key,NULL ,NULL);
+                gen_code(q, INS_CALL, local_node->key, NULL, NULL);
 
-                int nof_ret_vals = local_node->lof_rets.length - 1;
-                while (lof_vars->len > 0)
+                if (lof_vars->len > local_node->lof_rets.length - 1)    return ERR_SEM_ASSIGN;
+                for (int i = lof_vars->len; i > 0; i--)
                 {
-                    // pokud je vice promennych na leve strane, je jim zprava prirazena hodnota nil
-                    if (lof_vars->len > nof_ret_vals)
-                    {
-                        item_var_t *item = stack_var_pop(lof_vars);
-                        // TODO: GEN_CODE(MOVE, var->id, nil, NULL);
-                        if(item->var_node->is_param_var)
-                            sprintf(fir,"LF@param_%s",item->var_node->key);
-                        else
-                            sprintf(fir, "LF@%s", item->var_node->key);
-                        gen_code(q, INS_MOVE,fir,"nil@nil",NULL);
-                        item_var_destroy(&item);
-                    }
-                    else    // jinak se jim prirazuje vysledek samotny a odecitaji se indexy
-                    {
-                        item_var_t *item = stack_var_pop(lof_vars);
-                        if (item->var_node->var_type != (enum data_type)(local_node->lof_rets.value)[nof_ret_vals - 1])
-                        {
-                            item_var_destroy(&item);
-                            return ERR_SEM_FUNC;
-                        }
-                        // TODO: GEN_CODE(MOVE, item->var_node->key, retval$nof_ret_vals, NULL);
-                        char s[14] = {0,};
-                        sprintf(s,"TF@%%retvar$%d",nof_ret_vals);
-                        if(item->var_node->is_param_var)
-                            sprintf(fir,"LF@param_%s",item->var_node->key);
-                        else
-                            sprintf(fir, "LF@%s", item->var_node->key);
-                        gen_code(q, INS_MOVE,fir,s,NULL);
-                        item_var_destroy(&item);
-                        nof_ret_vals--;
-                    }
+                    item_var_t *item = stack_var_pop(lof_vars);
+
+                    // typova kontrola
+                    TYPE_CHECK_AND_CONVERT_TERM(local_node->lof_rets.value[i-1], 
+                            item->var_node->var_type, ERR_SEM_ASSIGN);
+
+                    CLEAR_OPERAND(OPERAND_FIRST);
+                    snprintf(_first, MAX_STR_LEN, "TF@%%retval$%d", i);
+                    gen_code(q, INS_PUSHS, _first, NULL, NULL);
+
+                    // pretypovani
+                    CONVERT_TO_FLOAT(local_node->lof_rets.value[i-1], 
+                            item->var_node->var_type);
+
+                    define_variable(FRAME_LF, OPERAND_DEST, item->var_node);
+                    gen_code(q, INS_POPS, _dest, NULL, NULL);
+
+                    item_var_destroy(&item);
                 }
+                // while (nof_ret_vals
+
+                        // TODO:
+
+
+                // while (lof_vars->len > 0)
+                // {
+                //     // pokud je vice promennych na leve strane, je jim zprava prirazena hodnota nil
+                //     if (lof_vars->len > nof_ret_vals)
+                //     {
+                //         item_var_t *item = stack_var_pop(lof_vars);
+                //         // TODO: GEN_CODE(MOVE, var->id, nil, NULL);
+                //         if(item->var_node->is_param_var)
+                //             sprintf(fir,"LF@param_%s",item->var_node->key);
+                //         else
+                //             sprintf(fir, "LF@%s", item->var_node->key);
+                //         gen_code(q, INS_MOVE,fir,"nil@nil",NULL);
+                //         item_var_destroy(&item);
+                //     }
+                //     else    // jinak se jim prirazuje vysledek samotny a odecitaji se indexy
+                //     {
+                //         item_var_t *item = stack_var_pop(lof_vars);
+                //         if (item->var_node->var_type != (enum data_type)(local_node->lof_rets.value)[nof_ret_vals - 1])
+                //         {
+                //             item_var_destroy(&item);
+                //             return ERR_SEM_FUNC;
+                //         }
+                //         // TODO: GEN_CODE(MOVE, item->var_node->key, retval$nof_ret_vals, NULL);
+                //         char s[14] = {0,};
+                //         sprintf(s,"TF@%%retvar$%d",nof_ret_vals);
+                //         if(item->var_node->is_param_var)
+                //             sprintf(fir,"LF@param_%s",item->var_node->key);
+                //         else
+                //             sprintf(fir, "LF@%s", item->var_node->key);
+                //         gen_code(q, INS_MOVE,fir,s,NULL);
+                //         item_var_destroy(&item);
+                //         nof_ret_vals--;
+                //     }
+                // }
 
                 // TODO: parse with lof_vars
                 // je to zasobnik, takze se musi prirazovat odzadu
@@ -1309,7 +1325,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
             {
                 if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
                 if (stack_var_isempty(*lof_vars))
-                    return ERR_SEMANT;
+                    return ERR_SEM_ASSIGN;
 
                 // nacte datovy typ do data
                 if ((res =  multi_e_n(token, lof_vars, q)) != NO_ERR)  return res;
@@ -1317,18 +1333,17 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
                 // popnuti a prirazeni
 
                 item_var_t *item = stack_var_pop(lof_vars);
-                if (data_t != DATA_NIL && data_t != item->var_node->var_type)
-                    return ERR_SEM_TYPE;
-                generate_code_nterm(&final_exp, q);
-                exp_nterm_destroy(&final_exp);
-                // TODO: int ind = gen_exp(final_exp)
-                // TODO: GEN_CODE(MOVE, item->var_node->key, _tmp$ind, NULL);
-                gen_code(q,INS_POPS,"GF@%temp_var1",NULL,NULL);
-                if(item->var_node->is_param_var)
-                    sprintf(fir,"LF@param_%s",item->var_node->key);
-                else
-                    sprintf(fir, "LF@%s", item->var_node->key);
-                gen_code(q,INS_MOVE,fir,"GF@%temp_var1",NULL);
+
+                // typova kontrola
+                TYPE_CHECK_AND_CONVERT_TERM(data_t, item->var_node->var_type, ERR_SEM_ASSIGN);
+
+                // pretypovani
+                CONVERT_TO_FLOAT(item->var_node->var_type, data_t);
+
+                // prirazeni
+                define_variable(FRAME_LF, OPERAND_DEST, item->var_node);
+                gen_code(q, INS_POPS, _dest, NULL, NULL);
+
                 item_var_destroy(&item);
             }
             break;
@@ -1342,27 +1357,26 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
         case TYPE_STRLEN:
             if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
             if (stack_var_isempty(*lof_vars))
-                return ERR_SEMANT;
+                return ERR_SEM_ASSIGN;
 
             // nacte datovy typ do data
             if ((res =  multi_e_n(token, lof_vars, q)) != NO_ERR)  return res;
-            // TODO: generovani kodu prirazeni - pass
+            // TODO: generovani kodu prirazeni -- pass
             // popnuti a prirazeni
 
             item_var_t *item = stack_var_pop(lof_vars);
-            if (data_t != DATA_NIL && data_t != item->var_node->var_type)
-                return ERR_SEM_TYPE;
-            generate_code_nterm(&final_exp, q);
-            exp_nterm_destroy(&final_exp);  // XXX: toto se pozdeni zmeni
-            // TODO: int ind = gen_exp(final_exp)
-            // TODO: GEN_CODE(MOVE, item->var_node->key, _tmp$ind, NULL);
-            gen_code(q,INS_POPS,"GF@%temp_var1",NULL,NULL);
-            if(item->var_node->is_param_var)
-                sprintf(fir,"LF@param_%s",item->var_node->key);
-            else
-                sprintf(fir, "LF@%s", item->var_node->key);
-            gen_code(q,INS_MOVE,fir,"GF@%temp_var1",NULL);
-            item_var_destroy(&item);        // XXX: toto se muze pozdeji zmenit
+
+            // typova kontrola
+            TYPE_CHECK_AND_CONVERT_TERM(data_t, item->var_node->var_type, ERR_SEM_ASSIGN);
+
+            // pretypovani
+            CONVERT_TO_FLOAT(item->var_node->var_type, data_t);
+
+            // prirazeni
+            define_variable(FRAME_LF, OPERAND_DEST, item->var_node);
+            gen_code(q, INS_POPS, _dest, NULL, NULL);
+
+            item_var_destroy(&item);
             break;
         default:
             res = ERR_SYNTAX;
@@ -1377,7 +1391,6 @@ int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q)
     enum data_type data_t = DATA_NIL;
     exp_nterm_t *final_exp = NULL;
     INIT_TOKEN(token, res);
-    char fir[128] = { 0, };
 
     switch ((*token)->type)
     {
@@ -1387,24 +1400,27 @@ int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q)
 
             if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
             if (stack_var_isempty(*lof_vars))
-                return ERR_SEMANT;
+                return ERR_SEM_ASSIGN;
 
             // nacte datovy typ do data
             if ((res =  multi_e_n(token, lof_vars, q)) != NO_ERR)  return res;
-            // TODO: generovani kodu prirazeni -pass
+            // TODO: generovani kodu prirazeni -- pass
             // popnuti a prirazeni
 
             item_var_t *item = stack_var_pop(lof_vars);
-            if (data_t != DATA_NIL && data_t != item->var_node->var_type)
-                return ERR_SEM_TYPE;
-            // TODO: int ind = gen_exp(final_exp)
-            // TODO: GEN_CODE(MOVE, item->var_node->key, _tmp$ind, NULL);
-            gen_code(q,INS_POPS,"GF@%temp_var1",NULL,NULL);
-            if(item->var_node->is_param_var)
-                sprintf(fir,"LF@param_%s",item->var_node->key);
-            else
-                sprintf(fir, "LF@%s", item->var_node->key);
-            gen_code(q,INS_MOVE,fir,"GF@%temp_var1",NULL);
+
+            // typova kontrola
+            TYPE_CHECK_AND_CONVERT_TERM(data_t, item->var_node->var_type, ERR_SEM_ASSIGN);
+
+            // pretypovani
+            CONVERT_TO_FLOAT(item->var_node->var_type, data_t);
+
+            // prirazeni
+            define_variable(FRAME_LF, OPERAND_DEST, item->var_node);
+            gen_code(q, INS_POPS, _dest, NULL, NULL);
+
+            item_var_destroy(&item);
+            break;
 
             // <multi_e_n> -> eps
         case TYPE_KW_LOCAL:
@@ -1414,6 +1430,8 @@ int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q)
         case TYPE_KW_END:
         case TYPE_KW_RETURN:    // TODO: ZKONTROLOVAT GRAMATIKU?!
         case TYPE_IDENTIFIER:
+            if (!stack_var_isempty(*lof_vars))
+                return ERR_SEM_ASSIGN;
             break;
 
         default:
@@ -1576,6 +1594,7 @@ static int insert_lib_functions()
 FILE *global_file;
 frame_stack local_stack;
 node_ptr global_tree;
+queue_t q_identifier;
 unsigned file_line = 1;
 
 int syntax_analysis(FILE *file)
@@ -1596,7 +1615,6 @@ int syntax_analysis(FILE *file)
 
     // TODO: generate code init
     queue_init(&q_identifier);
-    index_while = 0;
     gen_code(&q_identifier,INS_LABEL,"$$main",NULL,NULL);
 
     // TODO: vlozeni vnitrnich funkci do TS
@@ -1606,6 +1624,7 @@ int syntax_analysis(FILE *file)
     if ((res = get_token(global_file, &token)) != NO_ERR)
         goto post_local_stack_error;
 
+    init_gen_info();
     res = prg(&token);
     if (res != NO_ERR)
         token_delete(&token);
