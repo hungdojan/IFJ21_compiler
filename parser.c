@@ -810,7 +810,6 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
                 // label endwhile
                 CLEAR_OPERAND(OPERAND_DEST);
                 snprintf(_dest, MAX_STR_LEN, "%s_endwhile%d", glob_cnt.func_name, temp);
-                define_label(OPERAND_DEST, LABEL_ENDWHILE);
                 gen_code(q, INS_LABEL, _dest, NULL, NULL);
 
                 filter_defvar(q);
