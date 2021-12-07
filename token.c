@@ -61,8 +61,7 @@ int token_create(Istring *s, enum Token_type type, token_t **ref_token)
         }
         else if(type == TYPE_IDENTIFIER)
         {
-            int bool_val = 1;
-            if ((bool_val = !strcmp(s->value, "false")) || !strcmp(s->value, "true"))
+            if (!strcmp(s->value, "false") || !strcmp(s->value, "true"))
             {
                 token->type = TYPE_BOOLEAN;
                 token->value.bool_val = strcmp(s->value, "false");
