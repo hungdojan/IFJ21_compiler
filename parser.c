@@ -683,6 +683,16 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
             // <code> -> local id : <d_type> <var_init_assign> <code>
         case TYPE_KW_LOCAL:
             LOAD_AND_CHECK(token, TYPE_IDENTIFIER);             // id
+
+
+            // kontrola, zda uz existuje promenna nebo funkce se stejnym jmenem
+            node_ptr test_node;
+            SEARCH_SYMBOL((*token)->value.str_val, FUNC, test_node);
+            if (test_node == NULL)
+                SEARCH_SYMBOL((*token)->value.str_val, VAR, test_node);
+            if(test_node != NULL)
+                return ERR_SEM_DEF;
+
             INSERT_SYMBOL((*token)->value.str_val, VAR, local_node);
 
             // define id
