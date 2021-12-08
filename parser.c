@@ -803,7 +803,21 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
                 // skok pri nepravde
                 define_label(OPERAND_DEST, LABEL_ENDWHILE);
                 gen_code(q, INS_JUMPIFEQ, _dest, _first, "nil@nil");
+
+                CLEAR_OPERAND(OPERAND_SECOND);
+                snprintf(_second, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+                gen_code(q, INS_TYPE, _second, _first, NULL);
+
+                CLEAR_OPERAND(OPERAND_DEST);
+                snprintf(_dest, MAX_STR_LEN, "%s_iftrue%d", glob_cnt.func_name, glob_cnt.while_i);
+                gen_code(q, INS_JUMPIFNEQ, _dest, _second, "string@bool");
+
+                CLEAR_OPERAND(OPERAND_DEST);    
+                snprintf(_dest, MAX_STR_LEN, "%s_endwhile%d", glob_cnt.func_name, glob_cnt.while_i);
                 gen_code(q, INS_JUMPIFEQ, _dest, _first, "bool@false");
+
+                snprintf(_dest, MAX_STR_LEN, "%s_iftrue%d", glob_cnt.func_name, glob_cnt.while_i);
+                gen_code(q, INS_LABEL, _dest, NULL, NULL);
 
                 exp_nterm_destroy(&final_exp);
 
