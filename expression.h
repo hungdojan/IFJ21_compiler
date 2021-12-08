@@ -157,16 +157,22 @@
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             \
             CLEAR_OPERAND(OPERAND_DEST);\
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
-            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            snprintf(_dest, MAX_STR_LEN, "%sconvert%d", glob_cnt.func_name, ++glob_cnt.convert_i);\
+            CLEAR_OPERAND(OPERAND_FIRST);\
+            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _first, NULL, NULL);\
+            gen_code(q, INS_JUMPIFEQ, _dest, _first, "nil@nil");\
             gen_code(q, INS_INT2FLOATS, NULL, NULL, NULL);\
             *data_t = DATA_NUM;\
         }\
         else if (op2 == DATA_NUM && op1 == DATA_INT)\
         {\
             CLEAR_OPERAND(OPERAND_DEST);\
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
-            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            snprintf(_dest, MAX_STR_LEN, "%sconvert%d", glob_cnt.func_name, ++glob_cnt.convert_i);\
+            CLEAR_OPERAND(OPERAND_FIRST);\
+            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            gen_code(q, INS_PUSHS, _first, NULL, NULL);\
+            gen_code(q, INS_JUMPIFEQ, _dest, _first, "nil@nil");\
             gen_code(q, INS_INT2FLOATS, NULL, NULL, NULL);\
             *data_t = DATA_NUM;\
             \
@@ -185,6 +191,9 @@
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             *data_t = op1;\
         }\
+        CLEAR_OPERAND(OPERAND_DEST);\
+        snprintf(_dest, MAX_STR_LEN, "%sconvert%d", glob_cnt.func_name, glob_cnt.convert_i);\
+        gen_code(q, INS_LABEL, _dest, NULL, NULL);\
     } while (0)
 
 #define INT_IF_NEEDED(op1, op2)\

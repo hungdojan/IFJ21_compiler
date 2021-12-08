@@ -132,7 +132,11 @@ int get_token(FILE *f, token_t **ref)
                 {
                     tmp = fgetc(f);
                     if (tmp == '-')
-                        c = get_rid_of_comments(f);
+                    {
+                        int res = get_rid_of_comments(f);
+                        if (res != NO_ERR)
+                            return print_error(res, &str, NULL, "nezakonceny komentar");
+                    }
                     /* FIXME
                      * Vyreseno jako operator - a cislo
                      * syntakticky analyzator rozpozna, zda se jedna
@@ -524,8 +528,7 @@ int get_rid_of_comments(FILE *f)
         }
     } while (c != EOF && is_comment);
 
-    // vraci posledni nacteny znak
-    return c;
+    return c == EOF ? ERR_LEX : NO_ERR;
 
 }
 

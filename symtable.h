@@ -24,6 +24,8 @@ typedef struct gen_info
     int else_i;           /// Index else pocitadla
 
     int while_i;          /// Index while pocitadla
+
+    int convert_i;
 } gen_info_t;
 
 enum data_type

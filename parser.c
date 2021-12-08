@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+bool contains_require = false;
+
 /**
  * @brief Implementace <prg>
  *
@@ -30,6 +32,7 @@ int prg(token_t **token)
             LOAD_AND_CHECK(token, TYPE_STRING);
 
             LOAD_TOKEN(token);
+            contains_require = true;
             return prg(token);
 
             // <prg> -> global id : function ( <parm> ) <ret> <prg>
@@ -1645,6 +1648,9 @@ int syntax_analysis(FILE *file)
     res = prg(&token);
     if (res != NO_ERR)
         token_delete(&token);
+
+    if (!contains_require)
+        return ERR_SYNTAX;
 
     // print instruction queue
     queue_flush(&q_identifier);
