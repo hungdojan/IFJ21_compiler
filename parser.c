@@ -28,11 +28,15 @@ int prg(token_t **token)
 
             // <prg> -> require "string" <prg>
         case TYPE_KW_REQUIRE:
+            contains_require = true;
+            
             // "string"
             LOAD_AND_CHECK(token, TYPE_STRING);
+            
+            if (strcmp((*token)->value.str_val, "ifj21") != 0)
+                return ERR_SEMANT;
 
             LOAD_TOKEN(token);
-            contains_require = true;
             return prg(token);
 
             // <prg> -> global id : function ( <parm> ) <ret> <prg>
