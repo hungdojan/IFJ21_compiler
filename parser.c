@@ -1139,6 +1139,7 @@ int func_or_assign(token_t **token, node_ptr *node, queue_t *q)
         // <func_or_assign> -> ( <lof_e> )
         case TYPE_LEFT_PARENTHESES:
             if ((*node)->type != FUNC)  return ERR_SEM_DEF;
+            if (!(*node)->is_defined)  return ERR_SEM_DEF;
             LOAD_TOKEN(token);
 
             gen_code(q, INS_CREATEFRAME, NULL, NULL, NULL);
