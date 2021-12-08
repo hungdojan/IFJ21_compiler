@@ -586,7 +586,6 @@ int def_parm(token_t **token, Istring *lof_data)
             if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
             node->var_type = data_t;
             node->is_defined = 1;
-            node->is_param_var = 1;
 
             if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
 
@@ -635,7 +634,6 @@ int def_parm_n(token_t **token, Istring *lof_data)
             if ((res = d_type(token, &data_t)) != NO_ERR)               return res;
             node->var_type = data_t;
             node->is_defined = 1;
-            node->is_param_var = 1;
             if ((res = string_Add_Char(lof_data, data_t)) != NO_ERR)    return res;
 
             // param$i = %$i
@@ -688,11 +686,16 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
             // kontrola, zda uz existuje promenna nebo funkce se stejnym jmenem
             node_ptr test_node;
             SEARCH_SYMBOL((*token)->value.str_val, FUNC, test_node);
-            if (test_node == NULL)
-                SEARCH_SYMBOL((*token)->value.str_val, VAR, test_node);
             if(test_node != NULL)
                 return ERR_SEM_DEF;
-
+            else
+            {
+                // kontrola, zda je promenna definovana v danem scopu
+                stack_reset_index(&local_stack);
+                test_node = tree_search(stack_top(&local_stack), (*token)->value.str_val);
+                if (test_node != NULL)
+                    return ERR_SEM_DEF;
+            }
             INSERT_SYMBOL((*token)->value.str_val, VAR, local_node);
 
             // define id
@@ -1264,6 +1267,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
 {
     if (lof_vars == NULL)   return ERR_INTERNAL;
     int res = NO_ERR;
+    int size_of_stack = 1;
     enum data_type data_t = DATA_NIL;
     exp_nterm_t *final_exp = NULL;
     node_ptr local_node = NULL;
@@ -1376,27 +1380,39 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
                 if (stack_var_isempty(*lof_vars))
                     return ERR_SEM_ASSIGN;
 
-                // nacte datovy typ do data
-                if ((res =  multi_e_n(token, lof_vars, q)) != NO_ERR)  return res;
-                // TODO: generovani kodu prirazeni -- pass
-                // popnuti a prirazeni
-
-                item_var_t *item = stack_var_pop(lof_vars);
                 // push(exp)
+                // ukladani vysledku vyrazu do zasobniku
                 generate_code_nterm(&final_exp, q, &data_t,false);
                 exp_nterm_destroy(&final_exp);
 
-                // typova kontrola
-                TYPE_CHECK_AND_CONVERT_TERM(data_t, item->var_node->var_type, ERR_SEM_ASSIGN);
+                // nacte datovy typ do data
+                if ((res =  multi_e_n(token, lof_vars, q, &size_of_stack)) != NO_ERR)  return res;
+                // TODO: generovani kodu prirazeni -- pass
+                // popnuti a prirazeni
+                if (size_of_stack != lof_vars->len)
+                {
+                    stack_var_destroy(lof_vars);
+                    return ERR_SEM_ASSIGN;
+                }
 
-                // pretypovani
-                CONVERT_TO_FLOAT(item->var_node->var_type, data_t);
+                // postupne prirazovani
+                while (!stack_var_isempty(*lof_vars))
+                {
+                    // pop to this
+                    item_var_t *item = stack_var_pop(lof_vars);
 
-                // prirazeni
-                define_variable(FRAME_LF, OPERAND_DEST, item->var_node);
-                gen_code(q, INS_POPS, _dest, NULL, NULL);
+                    // typova kontrola
+                    TYPE_CHECK_AND_CONVERT_TERM(data_t, item->var_node->var_type, ERR_SEM_ASSIGN);
 
-                item_var_destroy(&item);
+                    // pretypovani
+                    CONVERT_TO_FLOAT(item->var_node->var_type, data_t);
+
+                    // prirazeni
+                    define_variable(FRAME_LF, OPERAND_DEST, item->var_node);
+                    gen_code(q, INS_POPS, _dest, NULL, NULL);
+
+                    item_var_destroy(&item);
+                }
             }
             break;
         case TYPE_STRING:
@@ -1411,27 +1427,32 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
             if (stack_var_isempty(*lof_vars))
                 return ERR_SEM_ASSIGN;
 
-            // nacte datovy typ do data
-            if ((res =  multi_e_n(token, lof_vars, q)) != NO_ERR)  return res;
-            // TODO: generovani kodu prirazeni -- pass
-            // popnuti a prirazeni
-            item_var_t *item = stack_var_pop(lof_vars);
-
             // push(exp)
             generate_code_nterm(&final_exp, q, &data_t,false);
             exp_nterm_destroy(&final_exp);
 
-            // typova kontrola
-            TYPE_CHECK_AND_CONVERT_TERM(data_t, item->var_node->var_type, ERR_SEM_ASSIGN);
+            // nacte datovy typ do data
+            if ((res =  multi_e_n(token, lof_vars, q, &size_of_stack)) != NO_ERR)  return res;
+            // TODO: generovani kodu prirazeni -- pass
+            // popnuti a prirazeni
+            // postupne prirazovani
+            while (!stack_var_isempty(*lof_vars))
+            {
+                // pop to this
+                item_var_t *item = stack_var_pop(lof_vars);
 
-            // pretypovani
-            CONVERT_TO_FLOAT(item->var_node->var_type, data_t);
+                // typova kontrola
+                TYPE_CHECK_AND_CONVERT_TERM(data_t, item->var_node->var_type, ERR_SEM_ASSIGN);
 
-            // prirazeni
-            define_variable(FRAME_LF, OPERAND_DEST, item->var_node);
-            gen_code(q, INS_POPS, _dest, NULL, NULL);
+                // pretypovani
+                CONVERT_TO_FLOAT(item->var_node->var_type, data_t);
 
-            item_var_destroy(&item);
+                // prirazeni
+                define_variable(FRAME_LF, OPERAND_DEST, item->var_node);
+                gen_code(q, INS_POPS, _dest, NULL, NULL);
+
+                item_var_destroy(&item);
+            }
             break;
         default:
             res = ERR_SYNTAX;
@@ -1440,7 +1461,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
     return res;
 }
 
-int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q)
+int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q, int *size_of_stack)
 {
     int res = NO_ERR;
     enum data_type data_t = DATA_NIL;
@@ -1454,31 +1475,15 @@ int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q)
             LOAD_TOKEN(token);
 
             if ((res = expression(token, &data_t, &final_exp)) != NO_ERR)   return res;
-            if (stack_var_isempty(*lof_vars))
-                return ERR_SEM_ASSIGN;
 
-            // nacte datovy typ do data
-            if ((res =  multi_e_n(token, lof_vars, q)) != NO_ERR)  return res;
-            // TODO: generovani kodu prirazeni -- pass
-            item_var_t *item = stack_var_pop(lof_vars);
-           
+            *size_of_stack += 1;
+
             // push(exp)
             generate_code_nterm(&final_exp, q, &data_t,false);
             exp_nterm_destroy(&final_exp);
 
-
-            // typova kontrola
-            TYPE_CHECK_AND_CONVERT_TERM(data_t, item->var_node->var_type, ERR_SEM_ASSIGN);
-
-            // pretypovani
-            CONVERT_TO_FLOAT(item->var_node->var_type, data_t);
-
-            // prirazeni
-            define_variable(FRAME_LF, OPERAND_DEST, item->var_node);
-            gen_code(q, INS_POPS, _dest, NULL, NULL);
-
-            item_var_destroy(&item);
-            break;
+            // nacte datovy typ do data
+            return multi_e_n(token, lof_vars, q, size_of_stack);
 
             // <multi_e_n> -> eps
         case TYPE_KW_LOCAL:

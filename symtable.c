@@ -115,7 +115,7 @@ int tree_init(node_ptr *tree)
         (*tree)->right = NULL;
         // (*tree)->lof_params = NULL;
         // (*tree)->lof_rets = NULL;
-        (*tree)->is_defined = (*tree)->is_declared = (*tree)->is_param_var = 0;
+        (*tree)->is_defined = (*tree)->is_declared = 0;
         (*tree)->var_type = DATA_NIL;
 
         (*tree)->type = ROOT; // staci odlisit pres NULLovy key

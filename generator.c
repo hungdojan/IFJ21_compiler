@@ -53,11 +53,6 @@ int define_variable(enum frame_type ft, enum operand_type ot, node_ptr var_node)
         snprintf(_temp, MAX_STR_LEN, "%s_", var_node->tof_index.func_name);
         CONCAT_TO_OPERAND(ot);
     }
-    if (var_node->is_param_var)
-    {
-        snprintf(_temp, MAX_STR_LEN, "param_");
-        CONCAT_TO_OPERAND(ot);
-    }
     if (var_node->tof_index.if_i > 0)
     {
         sprintf(_temp, "if%d_", var_node->tof_index.if_i);

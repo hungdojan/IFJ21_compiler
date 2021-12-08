@@ -347,7 +347,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q);
  * @param q
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
-int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q);
+int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q, int *size_of_stack);
 
 /**
  * @brief Implementace <d_type> 

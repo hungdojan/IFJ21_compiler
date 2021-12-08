@@ -56,7 +56,6 @@ typedef struct tree_node
     int is_declared;                /// Bool, jestli byl deklarovan
     int is_defined;                 /// Bool, jestli byl definovan
     enum data_type var_type;        ///
-    int is_param_var;               ///
     int unlim_parms;                /// specialni pro write funkci
     Istring lof_params;             /// datove typy parametru
     Istring lof_rets;               /// navratove hodnoty parametru
