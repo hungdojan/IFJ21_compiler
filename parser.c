@@ -1479,6 +1479,11 @@ int d_type(token_t **token, enum data_type *data_t)
             *data_t = DATA_BOOL;
             break;
 
+        case TYPE_KW_NIL:
+            LOAD_TOKEN(token);
+            *data_t = DATA_NIL;
+            break;
+
         default:
             *data_t = DATA_NIL;
             res = ERR_SYNTAX;
