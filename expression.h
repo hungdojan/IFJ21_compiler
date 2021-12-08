@@ -189,7 +189,6 @@
             \
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
-            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             if (enable_push)\
                 gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             \
