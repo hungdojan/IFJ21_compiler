@@ -9,6 +9,7 @@
  *
  * Reseni projektu IFJ a IAL, FIT VUT 21/22
  */
+
 #include "istring.h"
 #include "symtable.h"
 #include "error.h"
@@ -94,7 +95,6 @@ void stack_var_destroy(stack_var_t *stack)
 
 int type_control(enum data_type received, enum data_type expected)
 {
-    // TODO:
     if (received == expected)       return NO_ERR;
     else if (received == DATA_NIL)  return NO_ERR;
     else if (received == DATA_INT && expected == DATA_NUM) return NO_ERR;
@@ -113,8 +113,6 @@ int tree_init(node_ptr *tree)
         (*tree)->key = NULL;
         (*tree)->left = NULL;
         (*tree)->right = NULL;
-        // (*tree)->lof_params = NULL;
-        // (*tree)->lof_rets = NULL;
         (*tree)->is_defined = (*tree)->is_declared = 0;
         (*tree)->var_type = DATA_NIL;
 

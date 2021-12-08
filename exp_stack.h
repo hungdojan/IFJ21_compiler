@@ -20,33 +20,34 @@ enum exp_stack_symb
 
 enum exp_rules
 {
-    RULE_PARENTHESES,       // E -> ( E )
-    RULE_STRLEN,            // E -> # E
-    RULE_NOT,               // E -> not E
-    RULE_POWER,             // E -> E ^ E
-    RULE_CONCAT,            // E -> E..E
-    RULE_PLUS,              // E -> E + E
-    RULE_MINUS,             // E -> E - E
-    RULE_MULTIPLY,          // E -> E * E
-    RULE_DIVIDE,            // E -> E / E
-    RULE_DIVIDE_WHOLE,      // E -> E // E
-    RULE_MODULO,            // E -> E % E
-    RULE_EQ,                // E -> E == E
-    RULE_NE,                // E -> E ~= E
-    RULE_GE,                // E -> E >= E
-    RULE_GT,                // E -> E > E
-    RULE_LE,                // E -> E <= E
-    RULE_LT,                // E -> E < E
-    RULE_AND,               // E -> E and E
-    RULE_OR,                // E -> E or E
-    RULE_ID,                // E -> id
-    RULE_STR,               // E -> _str_
-    RULE_INT,               // E -> _int_
-    RULE_NUM,               // E -> _num_
-    RULE_NIL,               // E -> _nil_
-    RULE_BOOL,              // E -> _bool_
+    RULE_PARENTHESES,       /// E -> ( E )
+    RULE_STRLEN,            /// E -> # E
+    RULE_NOT,               /// E -> not E
+    RULE_POWER,             /// E -> E ^ E
+    RULE_CONCAT,            /// E -> E..E
+    RULE_PLUS,              /// E -> E + E
+    RULE_MINUS,             /// E -> E - E
+    RULE_MULTIPLY,          /// E -> E * E
+    RULE_DIVIDE,            /// E -> E / E
+    RULE_DIVIDE_WHOLE,      /// E -> E // E
+    RULE_MODULO,            /// E -> E % E
+    RULE_EQ,                /// E -> E == E
+    RULE_NE,                /// E -> E ~= E
+    RULE_GE,                /// E -> E >= E
+    RULE_GT,                /// E -> E > E
+    RULE_LE,                /// E -> E <= E
+    RULE_LT,                /// E -> E < E
+    RULE_AND,               /// E -> E and E
+    RULE_OR,                /// E -> E or E
+    RULE_ID,                /// E -> id
+    RULE_STR,               /// E -> _str_
+    RULE_INT,               /// E -> _int_
+    RULE_NUM,               /// E -> _num_
+    RULE_NIL,               /// E -> _nil_
+    RULE_BOOL,              /// E -> _bool_
 };
 
+// indexy symbolu v precedencni tabulce
 enum table_index
 {
     TI_LEFT_PARENTHESES,
@@ -110,21 +111,21 @@ typedef struct exp_stack_item
 // zasobnik samotny
 typedef struct exp_stack
 {
-    exp_item_t *array; ///
-    int alloc_size;    ///
-    int len;           ///
+    exp_item_t *array;
+    int alloc_size;
+    int len;
 } exp_stack_t;
 
 enum prec_type
 {
-    S, // SHIFT <
-    R, // REDUC >
-    E, // EQUAL =
-    U, // UNDEF _
+    S,  /// SHIFT <
+    R,  /// REDUC >
+    E,  /// EQUAL =
+    U,  /// UNDEF _
 };
 
 /**
- * @brief 
+ * @brief Inicializace zasobniku
  *
  * @param n Ukazatel na strukturu exp_nterm_t
  * @return Chybovy kod
@@ -132,7 +133,7 @@ enum prec_type
 int exp_nterm_init(exp_nterm_t **n);
 
 /**
- * @brief 
+ * @brief Zniceni zasobniku
  *
  * @param n Ukazatel na strukturu exp_nterm_t
  * @return Chybovy kod
@@ -140,7 +141,7 @@ int exp_nterm_init(exp_nterm_t **n);
 void exp_nterm_destroy(exp_nterm_t **n);
 
 /**
- * @brief 
+ * @brief Inicializace dat
  *
  * @param data Ukazatel na strukturu exp_data_t
  * @param token Ukazatel na strukturu token_t
@@ -149,15 +150,15 @@ void exp_nterm_destroy(exp_nterm_t **n);
 int exp_data_init(exp_data_t *data, token_t *token);
 
 /**
- * @brief 
+ * @brief Prekopirovani dat prvku
  *
- * @param dst 
- * @param src 
+ * @param dst Cilove misto
+ * @param src Zdrojova data
  */
 void exp_data_copy(exp_data_t *dst, exp_data_t *src);
 
 /**
- * @brief 
+ * @brief Smazani dat vyrazu
  *
  * @param data Ukazatel na strukturu exp_data_t
  */
@@ -175,10 +176,10 @@ int exp_stack_init(exp_stack_t *s);
  * @brief Pridani prvku do zasobniku
  *
  * @param s Ukazatel na strukturu exp_stack_t
- * @param sym
- * @param token
- * @param data
- * @param nterm
+ * @param sym Symbol k pridani
+ * @param token Aktualni token
+ * @param data  Data symbolu tabulky
+ * @param nterm Data neterminalu
  * @return Chybovy kod
  */
 int exp_stack_push(exp_stack_t *s, enum exp_stack_symb sym, token_t *token, exp_data_t *data, struct exp_nterm *nterm);
@@ -193,10 +194,10 @@ int exp_stack_push(exp_stack_t *s, enum exp_stack_symb sym, token_t *token, exp_
 int exp_stack_push_item(exp_stack_t *s, struct exp_stack_item * item);
 
 /**
- * @brief
+ * @brief Zisk hodnoty na vrcholu zasobniku
  *
  * @param s Ukazatel na strukturu exp_stack_t
- * @return 
+ * @return Prvek na vrcholu
  */
 struct exp_stack_item *exp_stack_top(const exp_stack_t *s);
 
@@ -204,15 +205,15 @@ struct exp_stack_item *exp_stack_top(const exp_stack_t *s);
  * @brief Vraci zpet prvni token na zasobniku
  *
  * @param s Ukazatel na strukturu exp_stack_t
- * @return 
+ * @return Nejvyssi terminal na zasobniku
  */
 struct exp_stack_item *exp_stack_top_term(const exp_stack_t *s);
 
 /**
- * @brief
+ * @brief Smazani prvku z vrcholu zasobniku
  *
  * @param s Ukazatel na strukturu exp_stack_t
- * @return 
+ * @return Mazany prvek na vrcholu
  */
 struct exp_stack_item *exp_stack_pop(exp_stack_t *s);
 
@@ -220,15 +221,15 @@ struct exp_stack_item *exp_stack_pop(exp_stack_t *s);
  * @brief Zjisti, jestli je zasobnik prazdny
  *
  * @param s Ukazatel na strukturu exp_stack_t
- * @return 
+ * @return 0 pokud neni prazdny
  */
 int exp_stack_isempty(const exp_stack_t *s);
 
 /**
- * @brief 
+ * @brief Zjisti, zda je na zasobniku symbol shiftu
  *
  * @param s Ukazatel na strukturu exp_stack_t
- * @return 
+ * @return 0 pokud neobsahuje shift
  */
 int exp_stack_contains_shift(const exp_stack_t s);
 

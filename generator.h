@@ -82,16 +82,16 @@ void init_gen_info();
 /**
  * @brief Vynulovani pocitadla
  *
- * @detail Priprava struktury pro dalsi funkci
+ * @details Priprava struktury pro dalsi funkci
  */
 void reset_gen_info(node_ptr func_node);
 
 /**
  * @brief Vytvoreni retezce operandu promenne
  *
- * @param ft        Typ ramce
- * @param ot        Typ operandu
- * @param var_node  Uzel promenne v TS
+ * @param ft Typ ramce
+ * @param ot Typ operandu
+ * @param var_node Uzel promenne v TS
  * @return Chybovy kod
  */
 int define_variable(enum frame_type ft, enum operand_type ot, node_ptr var_node);
@@ -99,17 +99,25 @@ int define_variable(enum frame_type ft, enum operand_type ot, node_ptr var_node)
 /**
  * @brief Vytvoreni retezce konstanty
  *
- * @param ot        Typ operandu
- * @param term      Konstantni vyraz
+ * @param ot Typ operandu
+ * @param term Konstantni vyraz
  * @return Chybovy kod
  */
 int define_constant(enum operand_type ot, exp_data_t term);
 
+/**
+ * @brief Vytvoreni labelu
+ *
+ * @param ot Typ operandu
+ * @param lt Typ popisku
+ * @return Chybovy kod
+ */
 int define_label(enum operand_type ot, enum label_type lt);
 
 /// Globalni struktura pro tvorbu promennych v triadresnem souboru
 extern gen_info_t glob_cnt;
 
+// type instrukce
 enum ins_type
 {
     INS_MOVE,
@@ -170,7 +178,7 @@ enum ins_type
     INS_DPRINT
 };
 
-/// Instruction structure
+/// Struktura instrukce
 typedef struct code
 {
     enum ins_type instruction;  /// Typ instrukce
@@ -180,7 +188,7 @@ typedef struct code
     struct code *next;          /// Ukazatel na dalsi prikaz v pripade zretezeni
 } code_t;
 
-/// Queue of instructions
+/// Fronta instrukci
 typedef struct queue
 {
     code_t *first;              /// Ukazatel na prvni prvek ve fronte
@@ -193,16 +201,16 @@ extern queue_t q_identifier;
  * @brief   Vygeneruje prikaz
  *
  * @param q Ukazatel na strukturu queue_t
- * @param type          Type instrukce
- * @param dest          Cilovy operand
- * @param first_op      Prvni operand
- * @param second_op     Druhy operand
+ * @param type Type instrukce
+ * @param dest Cilovy operand
+ * @param first_op Prvni operand
+ * @param second_op Druhy operand
  * @return Chybovy kod
  */
 int gen_code(queue_t *q, enum ins_type type, char* dest, char* first_op, char* second_op);
 
 /**
- * @brief   Vypise vsechny ulozene instrukce z fronty na stdout
+ * @brief Vypise vsechny ulozene instrukce z fronty na stdout
  *
  * @param q Ukazatel na strukturu queue_t
  */
@@ -246,7 +254,6 @@ void filter_defvar(queue_t *q);
 
 /**
  * @brief Vlozeni vestavenych funkci
- * 
  */
 void import_builtin_functions();
 

@@ -296,7 +296,7 @@
 extern unsigned reduc_id;
 
 /**
- * @brief 
+ * @brief Provedeni redukce na vyrazy zasobniku
  *
  * @param s Ukazatel na strukturu exp_stack_t
  * @return Chybovy kod
@@ -304,30 +304,33 @@ extern unsigned reduc_id;
 int exp_stack_reduce(exp_stack_t *s);
 
 /**
- * @brief 
+ * @brief Provedeni shift vlozeni na zasobnik
  *
  * @param s Ukazatel na strukturu exp_stack_t
- * @param token
+ * @param token Token, na ktery se aplikuje operace
  * @return Chybovy kod
  */
 int exp_stack_shift(exp_stack_t *s, token_t *token);
 
 /**
- * @brief 
+ * @brief Hlavni telo pro provedeni komplexniho reseni vyrazu 
  *
- * @param token
- * @param data_t
+ * @param token Aktualni token
+ * @param data_t Typ dat elementu
  * @param final_exp
- * @return 
+ * @return Ukazatel na vyraz, kam se ulozi finalni vyhodnoceni
+ * @return Chybovy kod
  */
 int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp);
 
 /**
- * @brief 
+ * @brief Generovani kodu pro neterminal
  *
- * @param expr
- * @param q
- * @return 
+ * @param expr Ukazatel na vyraz
+ * @param q Fronta pro praci s funkcemi pri vypisovani kodu
+ * @param data_t Datovy typ 
+ * @param is_global Predikat, zda je nterm mimo funkce v globalnim prostoru
+ * @return Chybovy kod
  */
 int generate_code_nterm(exp_nterm_t **expr, queue_t *q, enum data_type *data_t, bool is_global);
 

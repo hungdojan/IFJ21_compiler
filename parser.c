@@ -3,14 +3,9 @@
 #include <stdbool.h>
 #include <string.h>
 
-bool contains_require = false;
+bool contains_require = false;  /// Pravdivostni hodnota, zda kod obshuje "require"
 
-/**
- * @brief Implementace <prg>
- *
- * @param Posledni nacteny token
- * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
- */
+// Implementace hlavniho pravidla programu <prg>
 int prg(token_t **token)
 {
     if (token == NULL || *token == NULL)    return ERR_INTERNAL;
@@ -195,8 +190,7 @@ error:
     return res;
 }
 
-// TODO: predavat list ocekavanych parametru + index -> pro parsovani pri volani funkce
-// id se bude prirazovat na ramec, semantika bude probihat na teto urovni (nebude se nic vracet)
+
 int lof_e(token_t **token, node_ptr node, int *index, 
         bool is_parm, queue_t *q, bool is_global)
 {
@@ -229,7 +223,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
 
                 // push(exp)
                 generate_code_nterm(&final_exp,q,&data_t,is_global);
-                exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
+                exp_nterm_destroy(&final_exp);
 
                 // konverze
                 CONVERT_TO_FLOAT(data_t, (exp->value)[*index - 1]);
@@ -255,7 +249,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
 
                     // push(exp)
                     generate_code_nterm(&final_exp,q,&data_t,is_global);
-                    exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
+                    exp_nterm_destroy(&final_exp);
                 }
                 else
                 {
@@ -270,7 +264,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
 
                     // push(exp)
                     generate_code_nterm(&final_exp,q,&data_t,is_global);
-                    exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
+                    exp_nterm_destroy(&final_exp);
 
                     // konverze
                     CONVERT_TO_FLOAT(data_t, (exp->value)[*index - 1]);
@@ -342,7 +336,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index,
 
                 // push(exp)
                 generate_code_nterm(&final_exp,q,&data_t,is_global);
-                exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
+                exp_nterm_destroy(&final_exp);
 
                 // konverze
                 CONVERT_TO_FLOAT(data_t, (exp->value)[*index - 1]);
@@ -368,7 +362,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index,
 
                     // push(exp)
                     generate_code_nterm(&final_exp,q,&data_t,is_global);
-                    exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
+                    exp_nterm_destroy(&final_exp); 
                 }
                 else
                 {
@@ -383,7 +377,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index,
 
                     // push(exp)
                     generate_code_nterm(&final_exp,q,&data_t,is_global);
-                    exp_nterm_destroy(&final_exp);  // v budoucnu se muze zmenit
+                    exp_nterm_destroy(&final_exp);
 
                     // konverze
                     CONVERT_TO_FLOAT(data_t, (exp->value)[*index - 1]);
@@ -654,7 +648,6 @@ int def_parm_n(token_t **token, Istring *lof_data)
 
 int code(token_t **token, node_ptr *func_node, queue_t *q)
 {
-    // TODO: int code(token_t **token, node_ptr *func_node, queue_t *q)
     bool is_global = false;
 
     int res = NO_ERR;
@@ -841,11 +834,6 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
                 // jde hlavne o kontrolu navratovych hodnot returnu ve scopu
                 if ((res = code(token, func_node, q)) != NO_ERR)    return res;
 
-                // TODO: go thru SYMTABLE and define vars
-                // TODO: go thru queue_t and change delete init
-                // TODO: flush code
-                // TODO: jump to while label
-
                 // skok na zacatek cyklu
                 CLEAR_OPERAND(OPERAND_DEST);
                 snprintf(_dest, MAX_STR_LEN, "%s_while%d", glob_cnt.func_name, temp);
@@ -873,12 +861,10 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
         case TYPE_KW_RETURN:
             LOAD_TOKEN(token);
 
-            // TODO: pred return se musi zkontrolovat stav listu
             int index = 0;
             if ((res = lof_e(token, *func_node, &index, false, q, false)) != NO_ERR)
                 return res;
 
-            // TODO: cisteni?
             if (index > (*func_node)->lof_rets.length)
                 return ERR_SEM_FUNC;
 
@@ -1177,8 +1163,6 @@ int func_or_assign(token_t **token, node_ptr *node, queue_t *q)
 
             CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);      // )
 
-            // TODO: somehow call the function
-            // GEN_CODE(CALL, NULL, NULL, (*node)->key);
             gen_code(q,INS_CALL,(*node)->key,NULL,NULL);
             break;
 
@@ -1187,8 +1171,6 @@ int func_or_assign(token_t **token, node_ptr *node, queue_t *q)
         case TYPE_ASSIGN:
             if ((*node)->type != VAR)   return ERR_SEM_DEF;
 
-            // TODO: vytvorit list leve strany a list prave strany -> ty se pak postupne priradi
-            // leva strana vyrazu
             stack_var_t lof_vars;
             stack_var_init(&lof_vars);
 
@@ -1219,7 +1201,6 @@ int func_or_assign(token_t **token, node_ptr *node, queue_t *q)
 
             stack_var_destroy(&lof_vars);
 
-            // TODO: get list of nodes and assign them all ??
             break;
 
         default:
@@ -1247,8 +1228,6 @@ int multi_var_n(token_t **token, stack_var_t *lof_vars, queue_t *q)
             // pridani promenne do zasobniku
             if ((res = stack_var_push(lof_vars, node)) != NO_ERR) return res;
             LOAD_TOKEN(token);
-
-            // TODO: add to assign list??
 
             return multi_var_n(token, lof_vars, q);
 
@@ -1284,11 +1263,9 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
                 LOAD_TOKEN(token);
                 int index = 0;
 
-                // TODO: GEN_CODE(CREATEFRAME, NULL, NULL, NULL);
                 gen_code(q, INS_CREATEFRAME, NULL, NULL, NULL);
                 gen_code(q, INS_CLEARS, NULL, NULL, NULL);
 
-                // TODO: nastaveni navratovych hodnot podle curr_val
                 // kontrola parametru
                 if ((res = lof_e(token, local_node, &index, true, q, false)) != NO_ERR)
                     return res;
@@ -1301,11 +1278,8 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
                     gen_code(q, INS_PUSHS, _dest, NULL, NULL);
                 }
 
-                // TODO: check lof_data and node->lof_parms
-                // TODO: GEN_CODE(PUSHS, int@$index, NULL, NULL);
                 CHECK_AND_LOAD(token, TYPE_RIGHT_PARENTHESES);
 
-                // TODO: GEN_CODE(CALL, local_node->key, NULL, NULL);
                 gen_code(q, INS_CALL, local_node->key, NULL, NULL);
 
                 if (lof_vars->len > local_node->lof_rets.length - 1)    return ERR_SEM_ASSIGN;
@@ -1330,49 +1304,6 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
 
                     item_var_destroy(&item);
                 }
-                // while (nof_ret_vals
-
-                        // TODO:
-
-
-                // while (lof_vars->len > 0)
-                // {
-                //     // pokud je vice promennych na leve strane, je jim zprava prirazena hodnota nil
-                //     if (lof_vars->len > nof_ret_vals)
-                //     {
-                //         item_var_t *item = stack_var_pop(lof_vars);
-                //         // TODO: GEN_CODE(MOVE, var->id, nil, NULL);
-                //         if(item->var_node->is_param_var)
-                //             sprintf(fir,"LF@param_%s",item->var_node->key);
-                //         else
-                //             sprintf(fir, "LF@%s", item->var_node->key);
-                //         gen_code(q, INS_MOVE,fir,"nil@nil",NULL);
-                //         item_var_destroy(&item);
-                //     }
-                //     else    // jinak se jim prirazuje vysledek samotny a odecitaji se indexy
-                //     {
-                //         item_var_t *item = stack_var_pop(lof_vars);
-                //         if (item->var_node->var_type != (enum data_type)(local_node->lof_rets.value)[nof_ret_vals - 1])
-                //         {
-                //             item_var_destroy(&item);
-                //             return ERR_SEM_FUNC;
-                //         }
-                //         // TODO: GEN_CODE(MOVE, item->var_node->key, retvar$nof_ret_vals, NULL);
-                //         char s[14] = {0,};
-                //         sprintf(s,"TF@%%retvar$%d",nof_ret_vals);
-                //         if(item->var_node->is_param_var)
-                //             sprintf(fir,"LF@param_%s",item->var_node->key);
-                //         else
-                //             sprintf(fir, "LF@%s", item->var_node->key);
-                //         gen_code(q, INS_MOVE,fir,s,NULL);
-                //         item_var_destroy(&item);
-                //         nof_ret_vals--;
-                //     }
-                // }
-
-                // TODO: parse with lof_vars
-                // je to zasobnik, takze se musi prirazovat odzadu
-                // pres porovnani delky -> node->lof_rets->length - 1 if not 0
             }
             else
             {
@@ -1433,9 +1364,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
 
             // nacte datovy typ do data
             if ((res =  multi_e_n(token, lof_vars, q, &size_of_stack)) != NO_ERR)  return res;
-            // TODO: generovani kodu prirazeni -- pass
-            // popnuti a prirazeni
-            // postupne prirazovani
+
             while (!stack_var_isempty(*lof_vars))
             {
                 // pop to this
@@ -1491,7 +1420,7 @@ int multi_e_n(token_t **token, stack_var_t *lof_vars, queue_t *q, int *size_of_s
         case TYPE_KW_WHILE:
         case TYPE_KW_ELSE:
         case TYPE_KW_END:
-        case TYPE_KW_RETURN:    // TODO: ZKONTROLOVAT GRAMATIKU?!
+        case TYPE_KW_RETURN:
         case TYPE_IDENTIFIER:
             break;
 

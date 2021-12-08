@@ -17,8 +17,6 @@
 #include "token.h"
 #include "error.h"
 
-
-//napr. pro token_t *token;  volat: token_create(&s, type, &token);
 int token_create(Istring *s, enum Token_type type, token_t **ref_token)
 {
     *ref_token = (token_t *) malloc(sizeof(token_t));

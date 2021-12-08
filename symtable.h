@@ -9,6 +9,7 @@
  *
  * Reseni projektu IFJ a IAL, FIT VUT 21/22
  */
+
 #ifndef _SYMTABLE_H_
 #define _SYMTABLE_H_
 
@@ -30,7 +31,7 @@ typedef struct gen_info
 
 enum data_type
 {
-    DATA_NIL=0,
+    DATA_NIL = 0,
     DATA_STR,
     DATA_INT,
     DATA_NUM,
@@ -38,7 +39,6 @@ enum data_type
     DATA_SUB_EXP,
     DATA_ID,
 };
-
 
 // vycet moznych typu uzlu symtablu
 typedef enum{
@@ -56,9 +56,9 @@ typedef struct tree_node
     int is_declared;                /// Bool, jestli byl deklarovan
     int is_defined;                 /// Bool, jestli byl definovan
     enum data_type var_type;        ///
-    int unlim_parms;                /// specialni pro write funkci
-    Istring lof_params;             /// datove typy parametru
-    Istring lof_rets;               /// navratove hodnoty parametru
+    int unlim_parms;                /// Specialni pro write funkci
+    Istring lof_params;             /// Datove typy parametru
+    Istring lof_rets;               /// Navratove hodnoty parametru
 
     struct tree_node *left;         /// Ukazatel na levy podstrom (klice mensi)
     struct tree_node *right;        /// Ukazatel na pravy podstrom (klice vetsi)
@@ -67,20 +67,20 @@ typedef struct tree_node
 
 typedef struct item_var
 {
-    node_ptr var_node;              ///
+    node_ptr var_node;              /// Ukazatel na uzel stromu
     struct item_var *next;          /// ukazatel na dalsi item
 } item_var_t;
 
 typedef struct stack_var
 {
-    item_var_t *top;                /// ukazatel na vrchol zasobniku
-    int len;                        /// velikost zasobniku
+    item_var_t *top;                /// Ukazatel na vrchol zasobniku
+    int len;                        /// Velikost zasobniku
 } stack_var_t;
 
 /**
  * @brief Odstraneni prvku
  *
- * @param item odstranovany prvek
+ * @param item Odstranovany prvek ze stromu
  */
 void item_var_destroy(item_var_t **item);
 
@@ -94,8 +94,8 @@ void stack_var_init(stack_var_t *stack);
 /**
  * @brief Pridani prvku na vrchol zasobniku
  *
- * @param stack ukazatel na strukturu stack_var_t
- * @param var_node 
+ * @param stack Ukazatel na strukturu stack_var_t
+ * @param var_node Uzel stromu
  * @return Chybovy kod
  */
 int stack_var_push(stack_var_t *stack, node_ptr var_node);
@@ -103,7 +103,7 @@ int stack_var_push(stack_var_t *stack, node_ptr var_node);
 /**
  * @brief Odstraneni prvku na vrcholu zasobniku
  *
- * @param stack ukazatel na strukturu stack_var_t
+ * @param stack Ukazatel na strukturu stack_var_t
  * @return Ukazatel na odstraneny prvek
  */
 item_var_t *stack_var_pop(stack_var_t *stack);
@@ -120,7 +120,7 @@ item_var_t *stack_var_top(stack_var_t *stack);
  * @brief Zjisti, zda je zasobnik prazdny
  *
  * @param stack ukazatel na strukturu stack_var_t
- * @return 
+ * @return 0 pokud neni prazdny
  */
 int stack_var_isempty(const stack_var_t stack);
 
@@ -131,7 +131,7 @@ int stack_var_isempty(const stack_var_t stack);
  */
 void stack_var_destroy(stack_var_t *stack);
 
-extern node_ptr global_tree;
+extern node_ptr global_tree;    /// Globalni strom identifikatoru
 
 /**
  * @brief Porovna typovou kompatibilitu mezi datovymi typy
@@ -168,7 +168,7 @@ int tree_init(node_ptr *tree);
  * @param key String klic pridavaneho uzlu
  * @param type Typ noveho uzlu
  * @param out  Vrati pres referenci nove vytvoreny uzel
- * @return Error kod
+ * @return Chybovy kod
 */
 int tree_insert(node_ptr *tree, char *key, item_type type, node_ptr *out);
 

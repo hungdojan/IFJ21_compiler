@@ -42,7 +42,7 @@ int string_Add_Char(Istring *s, char c)
 
             s->value = temp;
             s->allocSize *= 2;
-        } // s->length + 1 >= s->allocSize
+        }
         s->value[(s->length)++] = c;
     }
     return NO_ERR;
