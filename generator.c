@@ -25,12 +25,14 @@ gen_info_t glob_cnt = { 0, };
 void init_gen_info()
 {
     glob_cnt.if_i = glob_cnt.elseif_i = glob_cnt.else_i = glob_cnt.tmp_var_i = glob_cnt.while_i = 0;
+    glob_cnt.convert_i = 0;
     glob_cnt.func_name = NULL;
 }
 
 void reset_gen_info(node_ptr func_node)
 {
     glob_cnt.if_i = glob_cnt.elseif_i = glob_cnt.else_i = glob_cnt.tmp_var_i = glob_cnt.while_i = 0;
+    glob_cnt.convert_i = 0;
     if (func_node != NULL)
         glob_cnt.func_name = func_node->key;
     else
@@ -460,9 +462,6 @@ void import_builtin_functions()
     /// %%cokoli - pomocné proměnné
 
     fprintf(stdout,".IFJcode21\n\n"
-            "DEFVAR GF@%%temp_var1\n"
-            "DEFVAR GF@%%temp_var2\n"
-            "DEFVAR GF@%%temp_var3\n"
             "JUMP $$main\n\n");
 
 
@@ -505,7 +504,12 @@ void import_builtin_functions()
             "LT LF@%%cond LF@%%i int@1\n"
             "JUMPIFEQ write&return LF@%%cond bool@true\n"
             "POPS LF@%%param1\n"
+            "JUMPIFNEQ not&nil LF@%%param1 nil@nil\n"
+            "WRITE string@nil\n"
+            "JUMP end&if&nil\n"
+            "LABEL not&nil\n"
             "WRITE LF@%%param1\n"
+            "LABEL end&if&nil\n"
             "SUB LF@%%i LF@%%i int@1\n"
             "JUMP write&cycle\n"
             "LABEL write&return\n"
