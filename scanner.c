@@ -528,7 +528,7 @@ int get_rid_of_comments(FILE *f)
         }
     } while (c != EOF && is_comment);
 
-    return c == EOF ? ERR_LEX : NO_ERR;
+    return c == EOF && is_comment ? ERR_LEX : NO_ERR;
 
 }
 
