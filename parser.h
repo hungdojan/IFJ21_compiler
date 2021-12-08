@@ -182,7 +182,7 @@ int prg(token_t **token);
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
 int lof_e(token_t **token, node_ptr node, int *index, 
-        bool is_parm, queue_t *q);
+        bool is_parm, queue_t *q, bool is_global);
 
 /**
  * @brief Implementace <lof_e_n>
@@ -195,7 +195,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
  * @return Nenulove cislo v pripade, ze dojde k chybe nebo nastane konec programu
  */
 int lof_e_n(token_t **token, node_ptr node, int *index, 
-        bool is_parm, queue_t *q);
+        bool is_parm, queue_t *q, bool is_global);
 
 /**
  * @brief Implementace <parm> 

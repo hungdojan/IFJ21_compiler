@@ -287,6 +287,6 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
  * @param q
  * @return 
  */
-int generate_code_nterm(exp_nterm_t **expr, queue_t *q, enum data_type *data_t);
+int generate_code_nterm(exp_nterm_t **expr, queue_t *q, enum data_type *data_t, bool is_global);
 
 #endif // _EXPRESSION_H_

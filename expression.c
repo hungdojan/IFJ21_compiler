@@ -527,7 +527,7 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
     return res;
 }
 
-static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data_t)
+static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data_t, bool is_global)
 {
     if (expr == NULL)
         return ERR_INTERNAL;
@@ -951,14 +951,14 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
     return NO_ERR;
 }
 
-int generate_code_nterm(exp_nterm_t **expr, queue_t *q, enum data_type *data_t)
+int generate_code_nterm(exp_nterm_t **expr, queue_t *q, enum data_type *data_t, bool is_global)
 {
     // TODO: GEN_CODE(CLEARS)
     //gen_code(q, INS_CLEARS, NULL, NULL, NULL);
     if (expr != NULL && *expr != NULL)
     {
         //printf("(");
-        int res = push_to_gen_stack(q, *expr, data_t);
+        int res = push_to_gen_stack(q, *expr, data_t, is_global);
         //printf(")\n");
         return res;
     }

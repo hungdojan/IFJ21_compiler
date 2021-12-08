@@ -81,7 +81,7 @@ int prg(token_t **token)
 
             // inicializace a pridani datovych typu
             if ((res = lof_e(token, node, &index, 
-                            true, &q_identifier)) != NO_ERR)        goto error;
+                            true, &q_identifier, true)) != NO_ERR)        goto error;
 
             // pro write je potreba definovat pocet parametru
             if (node->unlim_parms)
@@ -198,7 +198,7 @@ error:
 // TODO: predavat list ocekavanych parametru + index -> pro parsovani pri volani funkce
 // id se bude prirazovat na ramec, semantika bude probihat na teto urovni (nebude se nic vracet)
 int lof_e(token_t **token, node_ptr node, int *index, 
-        bool is_parm, queue_t *q)
+        bool is_parm, queue_t *q, bool is_global)
 {
     if (node == NULL)   return ERR_INTERNAL;
     int res = NO_ERR;
@@ -242,7 +242,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
 
                 // retvar_$i = tmp1
                 gen_code(q, INS_MOVE, _dest, _first, NULL);
-                return lof_e_n(token, node, index, is_parm, q);
+                return lof_e_n(token, node, index, is_parm, q, is_global);
             }
             else
             {
@@ -251,7 +251,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
 
                 if (node->unlim_parms)
                 {
-                    if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
+                    if ((res = lof_e_n(token, node, index, is_parm, q, is_global)) != NO_ERR)  return res;
 
                     // push(exp)
                     generate_code_nterm(&final_exp,q,&data_t);
@@ -266,7 +266,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
                     snprintf(_dest, MAX_STR_LEN, "TF@%%%d", *index);
                     gen_code(q, INS_DEFVAR, _dest, NULL, NULL);
                     int temp = *index;
-                    if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
+                    if ((res = lof_e_n(token, node, index, is_parm, q, is_global)) != NO_ERR)  return res;
 
                     // push(exp)
                     generate_code_nterm(&final_exp,q,&data_t);
@@ -306,7 +306,7 @@ int lof_e(token_t **token, node_ptr node, int *index,
 }
 
 int lof_e_n(token_t **token, node_ptr node, int *index, 
-        bool is_parm, queue_t *q)
+        bool is_parm, queue_t *q, bool is_global)
 {
     if (node == NULL)   return ERR_INTERNAL;
     int res = NO_ERR;
@@ -355,7 +355,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index,
 
                 // retvar_$i = tmp1
                 gen_code(q, INS_MOVE, _dest, _first, NULL);
-                return lof_e_n(token, node, index, is_parm, q);
+                return lof_e_n(token, node, index, is_parm, q, is_global);
             }
             else
             {
@@ -364,7 +364,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index,
 
                 if (node->unlim_parms)
                 {
-                    if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
+                    if ((res = lof_e_n(token, node, index, is_parm, q, is_global)) != NO_ERR)  return res;
 
                     // push(exp)
                     generate_code_nterm(&final_exp,q,&data_t);
@@ -379,7 +379,7 @@ int lof_e_n(token_t **token, node_ptr node, int *index,
                     snprintf(_dest, MAX_STR_LEN, "TF@%%%d", *index);
                     gen_code(q, INS_DEFVAR, _dest, NULL, NULL);
                     int temp = *index;
-                    if ((res = lof_e_n(token, node, index, is_parm, q)) != NO_ERR)  return res;
+                    if ((res = lof_e_n(token, node, index, is_parm, q, is_global)) != NO_ERR)  return res;
 
                     // push(exp)
                     generate_code_nterm(&final_exp,q,&data_t);
@@ -861,7 +861,7 @@ int code(token_t **token, node_ptr *func_node, queue_t *q)
 
             // TODO: pred return se musi zkontrolovat stav listu
             int index = 0;
-            if ((res = lof_e(token, *func_node, &index, false, q)) != NO_ERR)
+            if ((res = lof_e(token, *func_node, &index, false, q, false)) != NO_ERR)
                 return res;
 
             // TODO: cisteni?
@@ -950,7 +950,7 @@ int fun_or_exp(token_t **token, node_ptr *var_node, queue_t *q)
                 int index = 0;
 
                 // kontrola parametru a prirazeni
-                if ((res = lof_e(token, local_node, &index, true,NULL)) != NO_ERR)
+                if ((res = lof_e(token, local_node, &index, true,NULL, false)) != NO_ERR)
                     return res;
 
                 // pro write je potreba definovat pocet parametru
@@ -1148,7 +1148,7 @@ int func_or_assign(token_t **token, node_ptr *node, queue_t *q)
             int index = 0;
 
             // kontrola a prirazeni parametru
-            if ((res = lof_e(token, *node, &index, 1,q)) != NO_ERR)
+            if ((res = lof_e(token, *node, &index, 1,q, false)) != NO_ERR)
                 return res;
 
             // pro write je potreba definovat pocet parametru
@@ -1273,7 +1273,7 @@ int fun_or_multi_e(token_t **token, stack_var_t *lof_vars, queue_t *q)
 
                 // TODO: nastaveni navratovych hodnot podle curr_val
                 // kontrola parametru
-                if ((res = lof_e(token, local_node, &index, true, q)) != NO_ERR)
+                if ((res = lof_e(token, local_node, &index, true, q, false)) != NO_ERR)
                     return res;
 
                 // pro write je potreba definovat pocet parametru
