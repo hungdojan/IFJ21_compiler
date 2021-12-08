@@ -12,15 +12,15 @@
 
 #include "parser.h"
 #include <stdio.h>
+#include "error.h"
 
 extern unsigned file_line;
 
 int main() {
     int res = syntax_analysis(stdin);
     // TODO:
-    fprintf(stderr, "%d\n", res);
     if (res)
-        fprintf(stderr, "chyba je mezi radky %u a %u\n", file_line-1, file_line);
+        print_error(res, NULL, NULL, "chyba je mezi radky %u a %u\n", file_line-1, file_line);
     return res;
 }
 

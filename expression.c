@@ -715,17 +715,17 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2);
             //printf(")");
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
+            CLEAR_OPERAND(OPERAND_FIRST);
+            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+            gen_code(q, INS_POPS, _first, NULL, NULL);
+
+            CLEAR_OPERAND(OPERAND_FIRST);
+            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+            gen_code(q, INS_POPS, _first, NULL, NULL);
+
             if (op1 == DATA_NUM || op2 == DATA_NUM)
-            {
-                CLEAR_OPERAND(OPERAND_FIRST);
-                snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
-                gen_code(q, INS_POPS, _first, NULL, NULL);
-                
-                CLEAR_OPERAND(OPERAND_FIRST);
-                snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
-                gen_code(q, INS_POPS, _first, NULL, NULL);
                 FLOAT_IF_NEEDED(op1, op2, false);
-            }
+
             CLEAR_OPERAND(OPERAND_DEST);
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp3", glob_cnt.func_name);
             CLEAR_OPERAND(OPERAND_FIRST);
@@ -743,17 +743,17 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             //printf(")");
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
             // TODO: GEN_CODE(NOTS, NULL, NULL, NULL);
+            CLEAR_OPERAND(OPERAND_FIRST);
+            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+            gen_code(q, INS_POPS, _first, NULL, NULL);
+
+            CLEAR_OPERAND(OPERAND_FIRST);
+            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+            gen_code(q, INS_POPS, _first, NULL, NULL);
+
             if (op1 == DATA_NUM || op2 == DATA_NUM)
-            {
-                CLEAR_OPERAND(OPERAND_FIRST);
-                snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
-                gen_code(q, INS_POPS, _first, NULL, NULL);
-                
-                CLEAR_OPERAND(OPERAND_FIRST);
-                snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
-                gen_code(q, INS_POPS, _first, NULL, NULL);
                 FLOAT_IF_NEEDED(op1, op2, false);
-            }
+
             CLEAR_OPERAND(OPERAND_DEST);
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp3", glob_cnt.func_name);
             CLEAR_OPERAND(OPERAND_FIRST);
@@ -777,7 +777,6 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
                 FLOAT_IF_NEEDED(op1, op2, true);
             else
             {
-
                 CLEAR_OPERAND(OPERAND_DEST);
                 snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
                 gen_code(q, INS_PUSHS, _dest, NULL, NULL);

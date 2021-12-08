@@ -1,14 +1,10 @@
 .IFJcode21
 
-DEFVAR GF@%temp_var1
-DEFVAR GF@%temp_var2
-DEFVAR GF@%temp_var3
 JUMP $$main
 
 LABEL reads
 PUSHFRAME
 DEFVAR LF@%retvar$1
-POPS LF@%retvar$1
 MOVE LF@%retvar$1 nil@nil
 READ LF@%retvar$1 string
 POPFRAME
@@ -17,7 +13,6 @@ RETURN
 LABEL readi
 PUSHFRAME
 DEFVAR LF@%retvar$1
-POPS LF@%retvar$1
 MOVE LF@%retvar$1 nil@nil
 READ LF@%retvar$1 int
 POPFRAME
@@ -26,7 +21,6 @@ RETURN
 LABEL readn
 PUSHFRAME
 DEFVAR LF@%retvar$1
-POPS LF@%retvar$1
 MOVE LF@%retvar$1 nil@nil
 READ LF@%retvar$1 float
 POPFRAME
@@ -43,7 +37,12 @@ LABEL write&cycle
 LT LF@%cond LF@%i int@1
 JUMPIFEQ write&return LF@%cond bool@true
 POPS LF@%param1
+JUMPIFNEQ not&nil LF@%param1 nil@nil
+WRITE string@nil
+JUMP end&if&nil
+LABEL not&nil
 WRITE LF@%param1
+LABEL end&if&nil
 SUB LF@%i LF@%i int@1
 JUMP write&cycle
 LABEL write&return
@@ -56,8 +55,7 @@ DEFVAR LF@%retvar$1
 MOVE LF@%retvar$1 nil@nil
 DEFVAR LF@%cond
 DEFVAR LF@%param1
-POPS LF@%param1
-POPS LF@%param1
+MOVE LF@%param1 LF@%1
 TYPE LF@%cond LF@%param1
 JUMPIFEQ tointeger&return LF@%cond string@number
 FLOAT2INT LF@%retvar$1 LF@%param1
@@ -69,16 +67,15 @@ LABEL substr
 PUSHFRAME
 DEFVAR LF@%cond
 DEFVAR LF@%param1
-POPS LF@%param1
-POPS LF@%param1
+MOVE LF@%param1 LF@%1
 TYPE LF@%cond LF@%param1
 JUMPIFNEQ substr&exit LF@%cond string@string
 DEFVAR LF@%param2
-POPS LF@%param2
+MOVE LF@%param2 LF@%2
 TYPE LF@%cond LF@%param2
 JUMPIFNEQ substr&exit LF@%cond string@int
 DEFVAR LF@%param3
-POPS LF@%param3
+MOVE LF@%param3 LF@%3
 TYPE LF@%cond LF@%param3
 JUMPIFNEQ substr&exit LF@%cond string@int
 DEFVAR LF@%retvar$1
@@ -93,7 +90,7 @@ LT LF@%cond LF@%param3 int@1
 JUMPIFEQ substr&return LF@%cond bool@true
 GT LF@%cond LF@%param3 LF@%cond_length
 JUMPIFEQ substr&return LF@%cond bool@true
-GT LF@%cond LF@%param3 LF@%param2
+LT LF@%cond LF@%param3 LF@%param2
 JUMPIFEQ substr&return LF@%cond bool@true
 DEFVAR LF@%item
 DEFVAR LF@%i
@@ -117,12 +114,11 @@ LABEL ord
 PUSHFRAME
 DEFVAR LF@%retvar$1
 DEFVAR LF@%param1
-POPS LF@%param1
-POPS LF@%param1
+MOVE LF@%param1 LF@%1
 TYPE LF@%retvar$1 LF@%param1
 JUMPIFNEQ ord&exit LF@%retvar$1 string@string
 DEFVAR LF@%param2
-POPS LF@%param2
+MOVE LF@%param2 LF@%2
 TYPE LF@%retvar$1 LF@%param2
 JUMPIFNEQ ord&exit LF@%retvar$1 string@int
 MOVE LF@%retvar$1 nil@nil
@@ -144,8 +140,7 @@ LABEL chr
 PUSHFRAME
 DEFVAR LF@%cond
 DEFVAR LF@%param1
-POPS LF@%param1
-POPS LF@%param1
+MOVE LF@%param1 LF@%1
 TYPE LF@%cond LF@%param1
 JUMPIFNEQ chr&exit LF@%cond string@int
 DEFVAR LF@%retvar$1
@@ -163,24 +158,138 @@ EXIT int@8
 
 LABEL main
 PUSHFRAME
-CREATEFRAME
-POPS GF@%temp_var1
+DEFVAR LF@$main_tmp1
+DEFVAR LF@$main_tmp2
+DEFVAR LF@$main_tmp3
+DEFVAR LF@main_a
+PUSHS int@5
+POPS LF@$main_tmp1
+MOVE LF@main_a LF@$main_tmp1
+DEFVAR LF@main_b
+PUSHS float@0x1.399999999999ap+2
+POPS LF@$main_tmp1
+MOVE LF@main_b LF@$main_tmp1
+DEFVAR LF@main_c
+PUSHS float@0x1.4666666666666p+2
+POPS LF@$main_tmp1
+MOVE LF@main_c LF@$main_tmp1
+LABEL main_if1
+PUSHS LF@main_a
+PUSHS LF@main_c
+POPS LF@$main_tmp2
+JUMPIFEQ main&error_nil LF@$main_tmp2 nil@nil
+POPS LF@$main_tmp1
+JUMPIFEQ main&error_nil LF@$main_tmp1 nil@nil
+PUSHS LF@$main_tmp1
+JUMPIFEQ mainconvert1 LF@$main_tmp1 nil@nil
+INT2FLOATS
+POPS LF@$main_tmp1
+PUSHS LF@$main_tmp1
+PUSHS LF@$main_tmp2
+LABEL mainconvert1
+POPS LF@$main_tmp2
+POPS LF@$main_tmp1
+PUSHS LF@$main_tmp1
+PUSHS LF@$main_tmp2
+GTS
+PUSHS LF@$main_tmp1
+PUSHS LF@$main_tmp2
+EQS
+ORS
+POPS LF@$main_tmp1
+JUMPIFEQ main_endif1 LF@$main_tmp1 nil@nil
+JUMPIFEQ main_endif1 LF@$main_tmp1 bool@false
 CREATEFRAME
 CLEARS
-PUSHS string@Hello\032world!
-DEFVAR TF@%tmp$1
-POPS TF@%tmp$1
-CLEARS
-PUSHS string@\010
-DEFVAR TF@%tmp$2
-POPS TF@%tmp$2
-PUSHS TF@%tmp$2
-PUSHS TF@%tmp$1
-PUSHS int@2
+PUSHS string@ano,
+PUSHS int@1
 CALL write
+JUMP main_end1
+LABEL main_endif1
+LABEL main_else1
+CREATEFRAME
+CLEARS
+PUSHS string@ne,
+PUSHS int@1
+CALL write
+LABEL main_end1
+LABEL main_if2
+PUSHS LF@main_a
+PUSHS LF@main_b
+POPS LF@$main_tmp2
+JUMPIFEQ main&error_nil LF@$main_tmp2 nil@nil
+POPS LF@$main_tmp1
+JUMPIFEQ main&error_nil LF@$main_tmp1 nil@nil
+PUSHS LF@$main_tmp1
+JUMPIFEQ mainconvert2 LF@$main_tmp1 nil@nil
+INT2FLOATS
+POPS LF@$main_tmp1
+PUSHS LF@$main_tmp1
+PUSHS LF@$main_tmp2
+LABEL mainconvert2
+GTS
+POPS LF@$main_tmp1
+JUMPIFEQ main_endif2 LF@$main_tmp1 nil@nil
+JUMPIFEQ main_endif2 LF@$main_tmp1 bool@false
+CREATEFRAME
+CLEARS
+PUSHS string@ano,
+PUSHS int@1
+CALL write
+JUMP main_end2
+LABEL main_endif2
+LABEL main_else2
+CREATEFRAME
+CLEARS
+PUSHS string@ne,
+PUSHS int@1
+CALL write
+LABEL main_end2
+LABEL main_if3
+PUSHS LF@main_a
+PUSHS float@0x1.399999999999ap+2
+POPS LF@$main_tmp2
+JUMPIFEQ main&error_nil LF@$main_tmp2 nil@nil
+POPS LF@$main_tmp1
+JUMPIFEQ main&error_nil LF@$main_tmp1 nil@nil
+PUSHS LF@$main_tmp1
+JUMPIFEQ mainconvert3 LF@$main_tmp1 nil@nil
+INT2FLOATS
+POPS LF@$main_tmp1
+PUSHS LF@$main_tmp1
+PUSHS LF@$main_tmp2
+LABEL mainconvert3
+GTS
+POPS LF@$main_tmp1
+JUMPIFEQ main_endif3 LF@$main_tmp1 nil@nil
+JUMPIFEQ main_endif3 LF@$main_tmp1 bool@false
+CREATEFRAME
+CLEARS
+PUSHS string@ano,
+PUSHS int@1
+CALL write
+JUMP main_end3
+LABEL main_endif3
+LABEL main_else3
+CREATEFRAME
+CLEARS
+PUSHS string@ne,
+PUSHS int@1
+CALL write
+LABEL main_end3
 POPFRAME
 RETURN
+LABEL main&error_nil
+EXIT int@8
+LABEL main&error_zero
+EXIT int@9
 LABEL $$main
 CREATEFRAME
-PUSHS int@0
+PUSHFRAME
+DEFVAR LF@$main_tmp1
+DEFVAR LF@$main_tmp2
+DEFVAR LF@$main_tmp3
+CREATEFRAME
+CLEARS
 CALL main
+POPFRAME

@@ -41,7 +41,7 @@ debug: $(TARGET)
 
 pack:
 	rm -f *.zip
-	zip $(LOGIN) *.h *.c Makefile
+	zip $(LOGIN) *.h *.c Makefile rozdeleni
 
 clean:
 	rm -rf *.o $(TARGET) build/*

@@ -1668,7 +1668,12 @@ int syntax_analysis(FILE *file)
         token_delete(&token);
 
     if (!contains_require)
-        return ERR_SYNTAX;
+    {
+        queue_destroy(&q_identifier);        
+        stack_destroy(&local_stack, &tree_destroy);
+        tree_destroy(&global_tree);
+        return print_error(ERR_SYNTAX, NULL, NULL, "chybi require prolog!");
+    }
 
     // print instruction queue
     queue_flush(&q_identifier);
