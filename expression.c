@@ -689,9 +689,9 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             // TODO: GEN_CODE(DIVS, NULL, NULL, NULL);
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
-            IS_NOT_ZERO(2, q);
+            IS_NOT_ZERO(2, q, op2); 
+            FLOAT_IF_NEEDED(op1, op2, true);
 
-            INT_IF_NEEDED(op1, op2);
             gen_code(q, INS_DIVS, NULL, NULL, NULL);
             break;
         case RULE_DIVIDE_WHOLE:
@@ -703,9 +703,9 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             // TODO: GEN_CODE(IDIVS, NULL, NULL, NULL);
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
-            IS_NOT_ZERO(2, q);
+            IS_NOT_ZERO(2, q, op2);
+            INT_IF_NEEDED(op1, op2);
 
-            FLOAT_IF_NEEDED(op1, op2, true);
             gen_code(q, INS_IDIVS, NULL, NULL, NULL);
             break;
         case RULE_EQ:

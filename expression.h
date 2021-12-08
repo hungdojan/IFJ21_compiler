@@ -135,7 +135,7 @@
         gen_code(queue, INS_JUMPIFEQ, _dest, _first, "nil@nil");\
     } while (0)
 
-#define IS_NOT_ZERO(tmp_index, queue)\
+#define IS_NOT_ZERO(tmp_index, queue, oper_type)\
     do\
     {\
         CLEAR_OPERAND(OPERAND_FIRST);\
@@ -143,8 +143,10 @@
         \
         CLEAR_OPERAND(OPERAND_DEST);\
         snprintf(_dest, MAX_STR_LEN, "%s&error_zero", glob_cnt.func_name);\
-        gen_code(queue, INS_JUMPIFEQ, _dest, _first, "int@0");\
-        gen_code(queue, INS_JUMPIFEQ, _dest, _first, "float@0x0p+0");\
+        if (oper_type == DATA_NUM)\
+            gen_code(queue, INS_JUMPIFEQ, _dest, _first, "float@0x0p+0");\
+        else\
+            gen_code(queue, INS_JUMPIFEQ, _dest, _first, "int@0");\
     } while (0)
 
 #define FLOAT_IF_NEEDED(op1, op2, enable_push)\
