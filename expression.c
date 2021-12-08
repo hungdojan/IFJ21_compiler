@@ -716,7 +716,16 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             //printf(")");
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
             if (op1 == DATA_NUM || op2 == DATA_NUM)
+            {
+                CLEAR_OPERAND(OPERAND_FIRST);
+                snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+                gen_code(q, INS_POPS, _first, NULL, NULL);
+                
+                CLEAR_OPERAND(OPERAND_FIRST);
+                snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+                gen_code(q, INS_POPS, _first, NULL, NULL);
                 FLOAT_IF_NEEDED(op1, op2);
+            }
             gen_code(q, INS_EQS, NULL, NULL, NULL);
             break;
         case RULE_NE:
@@ -728,7 +737,16 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
             // TODO: GEN_CODE(NOTS, NULL, NULL, NULL);
             if (op1 == DATA_NUM || op2 == DATA_NUM)
+            {
+                CLEAR_OPERAND(OPERAND_FIRST);
+                snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
+                gen_code(q, INS_POPS, _first, NULL, NULL);
+                
+                CLEAR_OPERAND(OPERAND_FIRST);
+                snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);
+                gen_code(q, INS_POPS, _first, NULL, NULL);
                 FLOAT_IF_NEEDED(op1, op2);
+            }
             gen_code(q, INS_EQS, NULL, NULL, NULL);
             gen_code(q, INS_NOTS, NULL, NULL, NULL);
             break;
