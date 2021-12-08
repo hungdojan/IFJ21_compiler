@@ -147,14 +147,15 @@
         gen_code(queue, INS_JUMPIFEQ, _dest, _first, "float@0x0p+0");\
     } while (0)
 
-#define FLOAT_IF_NEEDED(op1, op2)\
+#define FLOAT_IF_NEEDED(op1, op2, enable_push)\
     do\
     {\
         if (op1 == DATA_NUM && op2 == DATA_INT)\
         {\
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
-            gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            if (enable_push)\
+                gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             \
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "%sconvert%d", glob_cnt.func_name, ++glob_cnt.convert_i);\
@@ -163,7 +164,10 @@
             gen_code(q, INS_PUSHS, _first, NULL, NULL);\
             gen_code(q, INS_JUMPIFEQ, _dest, _first, "nil@nil");\
             gen_code(q, INS_INT2FLOATS, NULL, NULL, NULL);\
+            gen_code(q, INS_POPS, _first, NULL, NULL);\
             *data_t = DATA_NUM;\
+            if (enable_push)\
+                gen_code(q, INS_PUSHS, _first, NULL, NULL);\
             \
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "%sconvert%d", glob_cnt.func_name, glob_cnt.convert_i);\
@@ -178,11 +182,16 @@
             gen_code(q, INS_PUSHS, _first, NULL, NULL);\
             gen_code(q, INS_JUMPIFEQ, _dest, _first, "nil@nil");\
             gen_code(q, INS_INT2FLOATS, NULL, NULL, NULL);\
+            gen_code(q, INS_POPS, _first, NULL, NULL);\
             *data_t = DATA_NUM;\
+            if (enable_push)\
+                gen_code(q, INS_PUSHS, _first, NULL, NULL);\
             \
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
+            if (enable_push)\
+                gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             \
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "%sconvert%d", glob_cnt.func_name, glob_cnt.convert_i);\
