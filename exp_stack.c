@@ -1,3 +1,14 @@
+/**
+ * @file exp_stack.c
+ * @brief Definice funkci pro praci se strukturami precedencni analyzy
+ *
+ * @authors David Kedra        (xkedra00)
+ *          Hung Do            (xdohun00)
+ *          Petr Kolarik       (xkolar79)
+ *          Jaroslav Kvasnicka (xkvasn14)
+ *
+ * Reseni projektu IFJ a IAL, FIT VUT 21/22
+ */
 #include <string.h>
 #include "exp_stack.h"
 #include "error.h"

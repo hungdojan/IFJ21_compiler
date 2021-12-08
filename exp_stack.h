@@ -1,3 +1,14 @@
+/**
+ * @file exp_stack.h
+ * @brief Deklarace struktur a funkci precedencni analyzy
+ *
+ * @authors David Kedra        (xkedra00)
+ *          Hung Do            (xdohun00)
+ *          Petr Kolarik       (xkolar79)
+ *          Jaroslav Kvasnicka (xkvasn14)
+ *
+ * Reseni projektu IFJ a IAL, FIT VUT 21/22
+ */
 #ifndef _EXP_STACK_H
 #define _EXP_STACK_H
 

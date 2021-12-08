@@ -18,7 +18,6 @@ extern unsigned file_line;
 
 int main() {
     int res = syntax_analysis(stdin);
-    // TODO:
     if (res)
         print_error(res, NULL, NULL, "chyba je mezi radky %u a %u\n", file_line-1, file_line);
     return res;

@@ -1,3 +1,14 @@
+/**
+ * @file parser.c
+ * @brief Definice funkci netermu syntakticke analyzy
+ *
+ * @authors Petr Kolarik       (xkolar79)
+ *          David Kedra        (xkedra00)
+ *          Hung Do            (xdohun00)
+ *          Jaroslav Kvasnicka (xkvasn14)
+ *
+ * Reseni projektu IFJ a IAL, FIT VUT 21/22
+ */
 #include "expression.h"
 #include "parser.h"
 #include <stdbool.h>

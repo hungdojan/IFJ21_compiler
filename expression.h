@@ -1,3 +1,14 @@
+/**
+ * @file expression.c
+ * @brief Definice funkci a maker syntakticke analyzy zdola nahoru
+ *
+ * @authors David Kedra        (xkedra00)
+ *          Hung Do            (xdohun00)
+ *          Petr Kolarik       (xkolar79)
+ *          Jaroslav Kvasnicka (xkvasn14)
+ *
+ * Reseni projektu IFJ a IAL, FIT VUT 21/22
+ */
 #ifndef _EXPRESSION_H_
 #define _EXPRESSION_H_
 

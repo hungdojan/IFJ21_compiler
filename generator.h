@@ -2,10 +2,10 @@
  * @file generator.h
  * @brief Deklarace struktur gen_info, code a jejich funkce
  *
- * @authors Hung Do            (xdohun00)
+ * @authors Jaroslav Kvasnicka (xkvasn14)
+ *          Hung Do            (xdohun00)
  *          David Kedra        (xkedra00)
  *          Petr Kolarik       (xkolar79)
- *          Jaroslav Kvasnicka (xkvasn14)
  *
  * Reseni projektu IFJ a IAL, FIT VUT 21/22
  */

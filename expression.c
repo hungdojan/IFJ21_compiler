@@ -1,3 +1,14 @@
+/**
+ * @file expression.c
+ * @brief Definice funkci algoritmu syntakticke analyzy zdola nahoru
+ *
+ * @authors David Kedra        (xkedra00)
+ *          Hung Do            (xdohun00)
+ *          Petr Kolarik       (xkolar79)
+ *          Jaroslav Kvasnicka (xkvasn14)
+ *
+ * Reseni projektu IFJ a IAL, FIT VUT 21/22
+ */
 #include "token.h"
 #include "expression.h"
 #include "error.h"
