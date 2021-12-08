@@ -149,7 +149,10 @@
     do\
     {\
         CLEAR_OPERAND(oper_type);\
-        snprintf(oper, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+        if (!is_global)\
+            snprintf(oper, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+        else\
+            snprintf(oper, MAX_STR_LEN, "LF@$global_tmp1");\
         gen_code(queue, INS_POPS, oper, NULL, NULL);\
     } while (0)
 

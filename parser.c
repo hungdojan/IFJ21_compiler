@@ -657,6 +657,7 @@ int def_parm_n(token_t **token, Istring *lof_data)
 int code(token_t **token, node_ptr *func_node, queue_t *q)
 {
     // TODO: int code(token_t **token, node_ptr *func_node, queue_t *q)
+    bool is_global = false;
 
     int res = NO_ERR;
     enum data_type data_t = DATA_NIL;
@@ -924,6 +925,7 @@ int var_init_assign(token_t **token, node_ptr *var_node, queue_t *q)
 
 int fun_or_exp(token_t **token, node_ptr *var_node, queue_t *q)
 {
+    bool is_global = false;
     int res = NO_ERR;
     node_ptr local_node;
     enum data_type data_t;
@@ -1041,6 +1043,7 @@ int fun_or_exp(token_t **token, node_ptr *var_node, queue_t *q)
 
 int elseif_block(token_t **token, node_ptr *func_node, queue_t *q, int end_index)
 {
+    bool is_global = false;
     int res = NO_ERR;
     enum data_type data_t;
     exp_nterm_t *final_exp = NULL;
@@ -1666,9 +1669,9 @@ int syntax_analysis(FILE *file)
     gen_code(&q_identifier,INS_LABEL,"$$main",NULL,NULL);
     gen_code(&q_identifier,INS_CREATEFRAME,NULL,NULL,NULL);
     gen_code(&q_identifier,INS_PUSHFRAME,NULL,NULL,NULL);
-    gen_code(&q_identifier, INS_DEFVAR, "LF@$main_tmp1", NULL, NULL);
-    gen_code(&q_identifier, INS_DEFVAR, "LF@$main_tmp2", NULL, NULL);
-    gen_code(&q_identifier, INS_DEFVAR, "LF@$main_tmp3", NULL, NULL);
+    gen_code(&q_identifier, INS_DEFVAR, "LF@$global_tmp1", NULL, NULL);
+    gen_code(&q_identifier, INS_DEFVAR, "LF@$global_tmp2", NULL, NULL);
+    gen_code(&q_identifier, INS_DEFVAR, "LF@$global_tmp3", NULL, NULL);
 
     // TODO: vlozeni vnitrnich funkci do TS
     import_builtin_functions();

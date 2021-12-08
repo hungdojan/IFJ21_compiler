@@ -127,7 +127,10 @@
     do\
     {\
         CLEAR_OPERAND(OPERAND_FIRST);\
-        snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp%d", glob_cnt.func_name, tmp_index);\
+        if (!is_global)\
+            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp%d", glob_cnt.func_name, tmp_index);\
+        else\
+            snprintf(_first, MAX_STR_LEN, "LF@$global_tmp%d", tmp_index);\
         gen_code(queue, INS_POPS, _first, NULL, NULL);\
         \
         CLEAR_OPERAND(OPERAND_DEST);\
@@ -139,7 +142,10 @@
     do\
     {\
         CLEAR_OPERAND(OPERAND_FIRST);\
-        snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp%d", glob_cnt.func_name, tmp_index);\
+        if (!is_global)\
+            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp%d", glob_cnt.func_name, tmp_index);\
+        else\
+            snprintf(_first, MAX_STR_LEN, "LF@$global_tmp%d", tmp_index);\
         \
         CLEAR_OPERAND(OPERAND_DEST);\
         snprintf(_dest, MAX_STR_LEN, "%s&error_zero", glob_cnt.func_name);\
@@ -155,14 +161,20 @@
         if (op1 == DATA_NUM && op2 == DATA_INT)\
         {\
             CLEAR_OPERAND(OPERAND_DEST);\
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            if (!is_global)\
+                snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            else\
+                snprintf(_dest, MAX_STR_LEN, "LF@$global_tmp1");\
             if (enable_push)\
                 gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             \
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "%sconvert%d", glob_cnt.func_name, ++glob_cnt.convert_i);\
             CLEAR_OPERAND(OPERAND_FIRST);\
-            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            if (!is_global)\
+                snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            else\
+                snprintf(_first, MAX_STR_LEN, "LF@$global_tmp2");\
             gen_code(q, INS_PUSHS, _first, NULL, NULL);\
             gen_code(q, INS_JUMPIFEQ, _dest, _first, "nil@nil");\
             gen_code(q, INS_INT2FLOATS, NULL, NULL, NULL);\
@@ -180,7 +192,10 @@
             CLEAR_OPERAND(OPERAND_DEST);\
             snprintf(_dest, MAX_STR_LEN, "%sconvert%d", glob_cnt.func_name, ++glob_cnt.convert_i);\
             CLEAR_OPERAND(OPERAND_FIRST);\
-            snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            if (!is_global)\
+                snprintf(_first, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            else\
+                snprintf(_first, MAX_STR_LEN, "LF@$global_tmp1");\
             gen_code(q, INS_PUSHS, _first, NULL, NULL);\
             gen_code(q, INS_JUMPIFEQ, _dest, _first, "nil@nil");\
             gen_code(q, INS_INT2FLOATS, NULL, NULL, NULL);\
@@ -190,7 +205,10 @@
                 gen_code(q, INS_PUSHS, _first, NULL, NULL);\
             \
             CLEAR_OPERAND(OPERAND_DEST);\
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            if (!is_global)\
+                snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            else\
+                snprintf(_dest, MAX_STR_LEN, "LF@$global_tmp2");\
             if (enable_push)\
                 gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             \
@@ -201,11 +219,17 @@
         else\
         {\
             CLEAR_OPERAND(OPERAND_DEST);\
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            if (!is_global)\
+                snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            else\
+                snprintf(_dest, MAX_STR_LEN, "LF@$global_tmp1");\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             \
             CLEAR_OPERAND(OPERAND_DEST);\
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            if (!is_global)\
+                snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            else\
+                snprintf(_dest, MAX_STR_LEN, "LF@$global_tmp2");\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             *data_t = op1;\
         }\
@@ -217,23 +241,35 @@
         if (op1 == DATA_NUM && op2 == DATA_INT)\
         {\
             CLEAR_OPERAND(OPERAND_DEST);\
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            if (!is_global)\
+                snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            else\
+                snprintf(_dest, MAX_STR_LEN, "LF@$global_tmp1");\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             gen_code(q, INS_FLOAT2INTS, NULL, NULL, NULL);\
             \
             CLEAR_OPERAND(OPERAND_DEST);\
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            if (!is_global)\
+                snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            else\
+                snprintf(_dest, MAX_STR_LEN, "LF@$global_tmp2");\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             *data_t = DATA_INT;\
         }\
         else if (op2 == DATA_NUM && op1 == DATA_INT)\
         {\
             CLEAR_OPERAND(OPERAND_DEST);\
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            if (!is_global)\
+                snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            else\
+                snprintf(_dest, MAX_STR_LEN, "LF@$global_tmp1");\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             \
             CLEAR_OPERAND(OPERAND_DEST);\
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            if (!is_global)\
+                snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            else\
+                snprintf(_dest, MAX_STR_LEN, "LF@$global_tmp2");\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             gen_code(q, INS_FLOAT2INTS, NULL, NULL, NULL);\
             *data_t = DATA_INT;\
@@ -241,11 +277,17 @@
         else\
         {\
             CLEAR_OPERAND(OPERAND_DEST);\
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            if (!is_global)\
+                snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp1", glob_cnt.func_name);\
+            else\
+                snprintf(_dest, MAX_STR_LEN, "LF@$global_tmp1");\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             \
             CLEAR_OPERAND(OPERAND_DEST);\
-            snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            if (!is_global)\
+                snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);\
+            else\
+                snprintf(_dest, MAX_STR_LEN, "LF@$global_tmp2");\
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);\
             *data_t = DATA_INT;\
         }\
