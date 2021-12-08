@@ -16,6 +16,7 @@
 #include "istring.h"
 #include <stdbool.h>
 
+// typy vsech moznych tokenu
 enum Token_type {
     TYPE_PLUS,
     TYPE_MINUS,
@@ -74,16 +75,16 @@ enum Token_type {
 // mozne typy atributu tokenu, vyuzije se jeden z nich
 typedef union
 {
-    int     int_val;
-    double  float_val;
-    char *  str_val;
-    bool    bool_val;
+    int     int_val;        /// Celociselna hodnota
+    double  float_val;      /// Desetinne cislo
+    char *  str_val;        /// Retezec, nazev identifikatoru, ...
+    bool    bool_val;       /// Booleanovska hodnota
 } token_value_t;
 
 // struktura pro token
 typedef struct{
     enum Token_type type;   /// Typ tokenu
-    token_value_t value;    /// Datkovy typ atributu tokenu
+    token_value_t value;    /// Datovy typ atributu tokenu
 } token_t;
 
 
@@ -93,6 +94,7 @@ typedef struct{
  * @param s Struktura lexemu s retezcem
  * @param type Typ tokenu
  * @param ref_token Ukazatel na dynamicky token, kam se ulozi nove vytvoreny
+ * @return Chybovy kod
  */
 int token_create(Istring *s, enum Token_type type, token_t **ref_token);
 

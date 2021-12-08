@@ -22,6 +22,13 @@
                    ((x) >= 'A' && (x) <= 'F'))
 #define GET_DIGIT(x) (x) - '0'
 
+/**
+ * @brief Nacita ascii hodnoty znaku
+ * 
+ * @param c Nacteny znak
+ * @param f Zdrojovy soubor
+ * @return Chybovy kod
+ */
 static int load_ascii(int *c, FILE *f)
 {
     if (f == NULL || c == NULL)
@@ -46,6 +53,14 @@ static int load_ascii(int *c, FILE *f)
         return ERR_INTERNAL;
     return NO_ERR;
 }
+
+/**
+ * @brief Prevadi znak do ascii retezce
+ * 
+ * @param c Znak ke zpracovani
+ * @param str Vysledny string
+ * @return Chybovy kod
+ */
 static int convert_to_ascii(Istring *str, int c)
 {
     int res = NO_ERR;
@@ -55,6 +70,13 @@ static int convert_to_ascii(Istring *str, int c)
     return res;
 }
 
+/**
+ * @brief Prevadi zdrojove znaky do hexadecimalni soustavy
+ * 
+ * @param str Vysledny string
+ * @param f Zdrojovy soubor
+ * @return Chybovy kod
+ */
 static int convert_to_hex(Istring *s, FILE *f)
 {
     char c[3] = {0,};
@@ -73,7 +95,13 @@ static int convert_to_hex(Istring *s, FILE *f)
     return convert_to_ascii(s,number);
 }
 
-
+/**
+ * @brief Nacita a prevadi znaky do escape sequence
+ * 
+ * @param str Vysledny string
+ * @param f Zdrojovy soubor
+ * @return Chybovy kod
+ */
 static int esc_seq(Istring *s, FILE *f)
 {
     if (f == NULL)
@@ -103,6 +131,7 @@ static int esc_seq(Istring *s, FILE *f)
         return ERR_LEX;
     return res;
 }
+
 
 int get_token(FILE *f, token_t **ref)
 {
@@ -137,18 +166,6 @@ int get_token(FILE *f, token_t **ref)
                         if (res != NO_ERR)
                             return print_error(res, &str, NULL, "nezakonceny komentar");
                     }
-                    /* FIXME
-                     * Vyreseno jako operator - a cislo
-                     * syntakticky analyzator rozpozna, zda se jedna
-                     * o operaci minus nebo zaporne cislo
-                    else if (isdigit(tmp))
-                    {
-                        // FIXME: token_integer_neg
-                        string_Add_Char(&str, c);
-                        ungetc(tmp, f);
-                        state = STATE_INTEGER;
-                    }
-                    */
                     else
                     {
                         string_Add_Char(&str, c);
@@ -180,18 +197,6 @@ int get_token(FILE *f, token_t **ref)
                         state = STATE_END_LOAD;
                     }
                 }
-                // else if (c == '%')
-                // {
-                //     string_Add_Char(&str, c);
-                //     type = TYPE_DIVIDE_MODULO;
-                //     state = STATE_END_LOAD;
-                // }
-                // else if (c == '^')
-                // {
-                //     string_Add_Char(&str, c);
-                //     type = TYPE_POWER;
-                //     state = STATE_END_LOAD;
-                // }
                 else if (c == '>')
                 {
                     tmp = fgetc(f);
@@ -255,8 +260,7 @@ int get_token(FILE *f, token_t **ref)
                     }
                     else
                     {
-                        // ERROR - can not do "~x" , x - any symbol
-                        //goto error;
+                        // ERROR - nelze "~x" , kde x - libovolny symbol
                         return print_error(ERR_LEX, &str, NULL, "spatny format operatoru ~");
                     }
                 }
@@ -303,8 +307,7 @@ int get_token(FILE *f, token_t **ref)
                     }
                     else
                     {
-                        // ERROR - "." is not a valid definition
-                        //goto error;
+                        // ERROR - "." nevalidni definice
                         return print_error(ERR_LEX, &str, NULL, "chybejici operand konkatenace");
                     }
                 }
@@ -332,7 +335,6 @@ int get_token(FILE *f, token_t **ref)
                 else if (isspace(c)) { }
                 else
                     return print_error(ERR_LEX, &str, NULL, "neplatny znak \"%c\"", c);
-                    //goto error;
                 break;
             case STATE_IDENTIFIER:
                 if (isalpha(c) || c == '_' || isdigit(c))
@@ -354,11 +356,10 @@ int get_token(FILE *f, token_t **ref)
                 else if (c == '.')
                 {
                     tmp = fgetc(f);
-                    // non-digit character after floating-point sign
+                    // neciselny znak po desetinne carce
                     if (!isdigit(tmp))
                     {
                         ungetc(tmp, f);
-                        //goto error;
                         return print_error(ERR_LEX, &str, NULL, "chybny format desetinneho cisla");
                     }
                     string_Add_Char(&str, c);
@@ -402,8 +403,7 @@ int get_token(FILE *f, token_t **ref)
                 }
                 else
                 {
-                    // ERROR - after E must come a digit
-                    //goto error;
+                    // ERROR - po E musi nasledovat cislice
                     return print_error(ERR_LEX, &str, NULL, "neplatna hodnota v exponentu po znaku E");
                 }
                 break;
@@ -430,7 +430,6 @@ int get_token(FILE *f, token_t **ref)
                     string_Add_Char(&str,'\\');
                     if (esc_seq(&str, f) != NO_ERR)
                         return print_error(ERR_LEX, &str, NULL, "chybna escape sekvence stringu");
-                        //goto error;
                 }
                 else
                 {
@@ -463,16 +462,8 @@ int get_token(FILE *f, token_t **ref)
                 break;
         }
     } while (loading);
-    // if (c == EOF)
-    // {
-    //     string_Free(&str);
-    //     return EOF;
-    // }
+
     return NO_ERR;
-/*error:
-    string_Free(&str);
-    return 1;
-*/
 }
 
 #define SINGLE_LINE_COMM 1
@@ -492,7 +483,7 @@ int get_rid_of_comments(FILE *f)
         {
             case SINGLE_LINE_COMM:
                 if (c == '[')        state = START_MULTI;
-                else    // single line comment
+                else    // jednoradkovy komentar
                 {
                     if (c != '\n' && c != EOF)
                     {
@@ -505,7 +496,7 @@ int get_rid_of_comments(FILE *f)
                 break;
             case START_MULTI:
                 if (c == '[')        state = MULTI_LINE_COMM;
-                else    // single line comment
+                else    // viceradkovy komentar
                 {
                     if (c != '\n' && c != EOF)
                         while ((c = fgetc(f)) != '\n' && c != EOF)

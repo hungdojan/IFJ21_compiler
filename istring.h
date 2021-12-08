@@ -14,6 +14,7 @@
 
 #define STRING_BASE_SIZE 8
 
+// Struktura dynamcikeho stringu
 typedef struct
 {
     char *value;        /// Obsah retezce
@@ -40,6 +41,9 @@ int string_Add_Char(Istring *s, char c);
 
 /**
  * @brief Porovnava dva retezce
+ * 
+ * @param s1 Prvni operand - retezec
+ * @param s2 Druhy operand - retezec
  */
 int string_compare(Istring *s1, Istring *s2);
 

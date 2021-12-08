@@ -16,6 +16,7 @@
 #include "token.h"
 #include <stdio.h>
 
+// Stav automatu lexikalniho analyzatoru 
 enum State {
     STATE_NEW,
     STATE_INTEGER,
@@ -25,17 +26,16 @@ enum State {
     STATE_EXPONENT,
     STATE_EXPONENT_FINISH,
     STATE_END_LOAD
-    // STATE_ERROR
 };
 
-extern unsigned file_line;
+extern unsigned file_line;  /// Aktualni cislo radku zpracovavaneho kodu
 
 /**
  * @brief Ziska token ze zdrojoveho souboru
  *
  * @param f Ukazatel na otevreny zdrojovy soubor
  * @param ref Ukazatel na referencni token, pres ktery se vraci data
- * @return Nulovou hodnotu, pokud nenastala zadna lexikalni chyba
+ * @return Chybovy kod, nebo 0, kdyz probehl spravne
  */
 int get_token(FILE *f, token_t **ref);
 

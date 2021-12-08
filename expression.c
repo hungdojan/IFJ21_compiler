@@ -222,39 +222,24 @@ int exp_stack_reduce(exp_stack_t *s)
         // zbyle pravidla E op E
         switch (oper->data.oper)
         {
-            //case TYPE_POWER:
-            //    new_nterm->rule = RULE_POWER;
-            //    SEMANTIC_CHECK_INT_AND_NUM(new_nterm, operand1->data.nterm, operand2->data.nterm, 
-            //            new_nterm->val1_to_num, new_nterm->val2_to_num);
-            //    // TODO: converting to real ??
-            //    // TODO: generating code??
-            //    break;
             case TYPE_CONCAT:
                 new_nterm->rule = RULE_CONCAT;
                 SEMANTIC_CHECK_STR(new_nterm, operand1->data.nterm, operand2->data.nterm);
-                // TODO: converting to real ??
-                // TODO: generating code ??
                 break;
             case TYPE_PLUS:
                 new_nterm->rule = RULE_PLUS;
                 SEMANTIC_CHECK_INT_AND_NUM(new_nterm, operand1->data.nterm, operand2->data.nterm, 
                         new_nterm->val1_to_num, new_nterm->val2_to_num);
-                // TODO: converting to real ??
-                // TODO: generating code??
                 break;
             case TYPE_MINUS:
                 new_nterm->rule = RULE_MINUS;
                 SEMANTIC_CHECK_INT_AND_NUM(new_nterm, operand1->data.nterm, operand2->data.nterm, 
                         new_nterm->val1_to_num, new_nterm->val2_to_num);
-                // TODO: converting to real ??
-                // TODO: generating code??
                 break;
             case TYPE_MULTIPLY:
                 new_nterm->rule = RULE_MULTIPLY;
                 SEMANTIC_CHECK_INT_AND_NUM(new_nterm, operand1->data.nterm, operand2->data.nterm, 
                         new_nterm->val1_to_num, new_nterm->val2_to_num);
-                // TODO: converting to real ??
-                // TODO: generating code??
                 break;
             case TYPE_DIVIDE:
                 new_nterm->rule = RULE_DIVIDE;
@@ -264,8 +249,6 @@ int exp_stack_reduce(exp_stack_t *s)
                 if (operand2->data.nterm->rule == RULE_INT || 
                         operand2->data.nterm->rule == RULE_NUM)
                     CHECK_DIV_ZERO(operand2->data.nterm->val1);
-                // TODO: converting to real ??
-                // TODO: generating code??
                 break;
             case TYPE_DIVIDE_WHOLE:
                 new_nterm->rule = RULE_DIVIDE_WHOLE;
@@ -275,70 +258,50 @@ int exp_stack_reduce(exp_stack_t *s)
                 if (operand2->data.nterm->rule == RULE_INT ||
                         operand2->data.nterm->rule == RULE_NUM)
                     CHECK_DIV_ZERO(operand2->data.nterm->val1); 
-                // TODO: converting to real ??
-                // TODO: generating code??
                 break;
-            // case TYPE_DIVIDE_MODULO:
-            //     new_nterm->rule = RULE_MODULO;
-            //     SEMANTIC_CHECK_INT_AND_NUM(new_nterm, operand1->data.nterm, operand2->data.nterm, 
-            //             new_nterm->val1_to_num, new_nterm->val2_to_num);
-            //     // check for div 0
-            //     if (operand2->data.nterm->rule == RULE_INT)
-            //         CHECK_DIV_ZERO(operand2->data.nterm->val1);
-            //     // TODO: converting to real ??
-            //     // TODO: generating code??
-            //     break;
             case TYPE_EQ:
                 new_nterm->rule = RULE_EQ;
                 SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
                 new_nterm->data_t = DATA_BOOL;
-                // TODO: generating code ??
                 break;
             case TYPE_NOT_EQ:
                 new_nterm->rule = RULE_NE;
                 SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
                 new_nterm->data_t = DATA_BOOL;
-                // TODO: generating code ??
                 break;
             case TYPE_GREATER_OR_EQ:
                 new_nterm->rule = RULE_GE;
                 SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
                 SEMANTIC_CHECK_BOOL_NON_NIL(new_nterm, operand1->data.nterm, operand2->data.nterm);
                 new_nterm->data_t = DATA_BOOL;
-                // TODO: generating code ??
                 break;
             case TYPE_GREATER:
                 new_nterm->rule = RULE_GT;
                 SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
                 SEMANTIC_CHECK_BOOL_NON_NIL(new_nterm, operand1->data.nterm, operand2->data.nterm);
                 new_nterm->data_t = DATA_BOOL;
-                // TODO: generating code ??
                 break;
             case TYPE_LESSER_OR_EQ:
                 new_nterm->rule = RULE_LE;
                 SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
                 SEMANTIC_CHECK_BOOL_NON_NIL(new_nterm, operand1->data.nterm, operand2->data.nterm);
                 new_nterm->data_t = DATA_BOOL;
-                // TODO: generating code ??
                 break;
             case TYPE_LESSER:
                 new_nterm->rule = RULE_LT;
                 SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
                 SEMANTIC_CHECK_BOOL_NON_NIL(new_nterm, operand1->data.nterm, operand2->data.nterm);
                 new_nterm->data_t = DATA_BOOL;
-                // TODO: generating code ??
                 break;
             case TYPE_KW_AND:
                 new_nterm->rule = RULE_AND;
                 SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
                 new_nterm->data_t = DATA_BOOL;
-                // TODO: generating code ??
                 break;
             case TYPE_KW_OR:
                 new_nterm->rule = RULE_OR;
                 SEMANTIC_GENERAL_TYPE_CHECK(operand1->data.nterm, operand2->data.nterm);
                 new_nterm->data_t = DATA_BOOL;
-                // TODO: generating code ??
                 break;
 
             default:
@@ -355,15 +318,6 @@ int exp_stack_reduce(exp_stack_t *s)
     else
         return ERR_SYNTAX;
 
-
-    // 3 operandy je pripadne potreba smazat
-    // if (op1->type == SYM_EXPR) exp_nterm_destroy(&op1->data.nterm);
-    // else if (op1->type == SYM_TERM) exp_data_destroy(&op1->data.term);
-    // if (op2->type == SYM_EXPR) exp_nterm_destroy(&op2->data.nterm);
-    // else if (op1->type == SYM_TERM) exp_data_destroy(&op2->data.term);
-    // if (op2->type == SYM_EXPR) exp_nterm_destroy(&op2->data.nterm);
-    // else if (op1->type == SYM_TERM) exp_data_destroy(&op2->data.term);
-    
     // popnuti '<'
     exp_stack_pop(s);
     return exp_stack_push(s, SYM_EXPR, NULL, NULL, new_nterm);
@@ -439,7 +393,6 @@ int expression(token_t **token, enum data_type *data_t, exp_nterm_t **final_exp)
     if (token == NULL || *token == NULL)   return ERR_INTERNAL;
     do
     {
-        // TODO:
         exp_item_t *top_item = exp_stack_top_term(&s);
         //ziskani patricne operace shift/redukce/.. z tabulky
         // enum prec_type  index = get_index_from_item(*top_item);
@@ -537,7 +490,6 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
     {
         // jeden operand
         case RULE_ID:
-            ////printf("%s", expr->val1.value.id);
             {
                 node_ptr var_node = NULL;
                 SEARCH_SYMBOL(expr->val1.value.id, VAR, var_node);
@@ -550,7 +502,6 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
                 break;
             }
         case RULE_BOOL:
-            ////printf("%s", expr->val1.value.boolean ? "true" : "false");
             CLEAR_OPERAND(OPERAND_DEST);
             snprintf(_dest, MAX_STR_LEN, "bool@%s", expr->val1.value.boolean ? "true" : "false");
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);
@@ -558,8 +509,6 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
                 *data_t = DATA_BOOL;
             break;
         case RULE_INT:
-            ////printf("%d", expr->val1.value.integer);
-            // TODO: GEN_CODE(PUSHS, expr->val1.value.integer, NULL, NULL)
             CLEAR_OPERAND(OPERAND_DEST);
             snprintf(_dest, MAX_STR_LEN, "int@%d", expr->val1.value.integer);
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);
@@ -567,13 +516,11 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
                 *data_t = DATA_INT;
             break;
         case RULE_NIL:
-            ////printf("nil");
             gen_code(q, INS_PUSHS, "nil@nil", NULL, NULL);
             if (data_t != NULL)
                 *data_t = DATA_NIL;
             break;
         case RULE_NUM:
-            ////printf("%g", expr->val1.value.number);
             CLEAR_OPERAND(OPERAND_DEST);
             snprintf(_dest, MAX_STR_LEN, "float@%a", expr->val1.value.number);
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);
@@ -581,7 +528,6 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
                 *data_t = DATA_NUM;
             break;
         case RULE_STR:
-            //printf("%s", expr->val1.value.string);
             CLEAR_OPERAND(OPERAND_DEST);
             snprintf(_dest, MAX_STR_LEN, "string@%s", expr->val1.value.string);
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);
@@ -591,14 +537,8 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
 
             // jeden operand a operator
         case RULE_STRLEN:
-            //printf("(#");
             push_to_gen_stack(q, expr->val1.value.sub_expr, NULL, is_global);
-            //printf(")");
 
-            // TODO: def vars temp_var1, temp_var2 -- DONE
-            // TODO: GEN_CODE(POPS, string@temp_var1, NULL, NULL);
-            // TODO: GEN_CODE(STRLEN, string@temp_var1, NULL, int@temp_var2);
-            // TODO: GEN_CODE(PUSHS, int@temp_var2, NULL, NULL);
             IS_NOT_NIL(1, q);
             CLEAR_OPERAND(OPERAND_DEST);
             if (!is_global)
@@ -615,23 +555,12 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             gen_code(q,INS_PUSHS,_dest,NULL,NULL);
             break;
         case RULE_NOT:
-            //printf("(not");
             push_to_gen_stack(q, expr->val1.value.sub_expr, NULL, is_global);
-            //printf(")");
-            // TODO: GEN_CODE(NOTS, NULL, NULL, NULL);
             gen_code(q, INS_NOTS, NULL, NULL, NULL);
             break;
         case RULE_CONCAT:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, NULL, is_global);
-            //printf("..");
             push_to_gen_stack(q, expr->val2.value.sub_expr, NULL, is_global);
-            //printf(")");
-            // TODO: def vars temp_var1, temp_var2, temp_var3 -- DONE
-            // TODO: GEN_CODE(POPS, string@temp_var1, NULL, NULL);
-            // TODO: GEN_CODE(POPS, string@temp_var2, NULL, NULL);
-            // TODO: GEN_CODE(CONCAT, string@temp_var1, string@temp_var2, string@temp_var3);
-            // TODO: GEN_CODE(PUSHS, string@temp_var3, NULL, NULL);
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
             CLEAR_OPERAND(OPERAND_DEST);
@@ -652,27 +581,18 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             gen_code(q, INS_CONCAT, _dest, _second, _first);
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);
             break;
-            // TODO: pretypovani
         case RULE_PLUS:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf("+");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
 
             FLOAT_IF_NEEDED(op1, op2, true);
-            //printf(")");
-            // TODO: GEN_CODE(ADDS, NULL, NULL, NULL);
             gen_code(q,INS_ADDS,NULL,NULL,NULL);
             break;
         case RULE_MINUS:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf("-");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
-            //printf(")");
-            // TODO: GEN_CODE(SUBS, NULL, NULL, NULL);
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
 
@@ -680,12 +600,8 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             gen_code(q,INS_SUBS,NULL,NULL,NULL);
             break;
         case RULE_MULTIPLY:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf("*");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
-            //printf(")");
-            // TODO: GEN_CODE(MULS, NULL, NULL, NULL);
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
 
@@ -693,12 +609,8 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             gen_code(q, INS_MULS, NULL, NULL , NULL);
             break;
         case RULE_DIVIDE:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf("/");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
-            //printf(")");
-            // TODO: GEN_CODE(DIVS, NULL, NULL, NULL);
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
             IS_NOT_ZERO(2, q, op2); 
@@ -707,12 +619,8 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             gen_code(q, INS_DIVS, NULL, NULL, NULL);
             break;
         case RULE_DIVIDE_WHOLE:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf("//");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
-            //printf(")");
-            // TODO: GEN_CODE(IDIVS, NULL, NULL, NULL);
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
             IS_NOT_ZERO(2, q, op2);
@@ -721,12 +629,8 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             gen_code(q, INS_IDIVS, NULL, NULL, NULL);
             break;
         case RULE_EQ:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf("==");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
-            //printf(")");
-            // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
             CLEAR_OPERAND(OPERAND_FIRST);
             CLEAR_OPERAND(OPERAND_SECOND);
             if (!is_global)
@@ -765,13 +669,8 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             gen_code(q, INS_PUSHS, _dest, NULL, NULL);
             break;
         case RULE_NE:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf("~=");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
-            //printf(")");
-            // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
-            // TODO: GEN_CODE(NOTS, NULL, NULL, NULL);
 
             if (!is_global)
             {
@@ -808,12 +707,8 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             gen_code(q, INS_NOTS, NULL, NULL, NULL);
             break;
         case RULE_GT:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf(">");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
-            //printf(")");
-            // TODO: GEN_CODE(GTS, NULL, NULL, NULL);
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
             if (op1 == DATA_NUM || op2 == DATA_NUM)
@@ -844,16 +739,8 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             gen_code(q, INS_GTS, NULL, NULL, NULL);
             break;
         case RULE_GE:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf(">=");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
-            //printf(")");
-            // TODO: dostat nejak z funkci datove typy?? exp->val->type
-            //
-            // TODO: def vars temp_var1, temp_var2, temp_var3 -- DONE
-            // TODO: GEN_CODE(POPS, temp_var1, NULL, NULL);
-            // TODO: GEN_CODE(POPS, temp_var2, NULL, NULL);
             // nil kontrola
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
@@ -883,7 +770,6 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
                 }
             }
 
-            // =============
             CLEAR_OPERAND(OPERAND_FIRST);
 
             CLEAR_OPERAND(OPERAND_SECOND);
@@ -900,32 +786,20 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
 
             gen_code(q,INS_POPS,_first,NULL,NULL);
             gen_code(q,INS_POPS,_second,NULL,NULL);
-            //
-            // TODO: GEN_CODE(PUSHS, temp_var2, NULL, NULL);
-            // TODO: GEN_CODE(PUSHS, temp_var1, NULL, NULL);
-            // TODO: GEN_CODE(GTS, NULL, NULL, NULL);
+
             gen_code(q,INS_PUSHS,_second,NULL,NULL);
             gen_code(q,INS_PUSHS,_first,NULL,NULL);
             gen_code(q,INS_GTS,NULL,NULL,NULL);
-            //
-            // TODO: GEN_CODE(PUSHS, temp_var2, NULL, NULL);
-            // TODO: GEN_CODE(PUSHS, temp_var1, NULL, NULL);
-            // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
+            
             gen_code(q,INS_PUSHS,_second,NULL,NULL);
             gen_code(q,INS_PUSHS,_first,NULL,NULL);
             gen_code(q,INS_EQS,NULL,NULL,NULL);
 
-            //
-            // TODO: GEN_CODE(ORS, NULL, NULL, NULL);
             gen_code(q,INS_ORS,NULL,NULL,NULL);
             break;
         case RULE_LT:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf("<");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
-            //printf(")");
-            // TODO: GEN_CODE(LTS, NULL, NULL, NULL);
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
             if (op1 == DATA_NUM || op2 == DATA_NUM)
@@ -943,16 +817,8 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
             gen_code(q, INS_LTS, NULL, NULL, NULL);
             break;
         case RULE_LE:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf("<=");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
-            //printf(")");
-            // TODO: dostat nejak z funkci datove typy?? exp->val->type
-            //
-            // TODO: def vars temp_var1, temp_var2, temp_var3 -- DONE
-            // TODO: GEN_CODE(POPS, temp_var1, NULL, NULL);
-            // TODO: GEN_CODE(POPS, temp_var2, NULL, NULL);
             // nil kontrola
             IS_NOT_NIL(2, q);
             IS_NOT_NIL(1, q);
@@ -968,7 +834,6 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
                 snprintf(_dest, MAX_STR_LEN, "LF@$%s_tmp2", glob_cnt.func_name);
                 gen_code(q, INS_PUSHS, _dest, NULL, NULL);
             }
-            // ==========
             CLEAR_OPERAND(OPERAND_FIRST);
 
             CLEAR_OPERAND(OPERAND_SECOND);
@@ -985,45 +850,28 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
 
             gen_code(q, INS_POPS, _first, NULL, NULL);
             gen_code(q, INS_POPS, _second, NULL, NULL);
-            //
-            // TODO: GEN_CODE(PUSHS, temp_var2, NULL, NULL);
-            // TODO: GEN_CODE(PUSHS, temp_var1, NULL, NULL);
-            // TODO: GEN_CODE(LTS, NULL, NULL, NULL);
+            
             gen_code(q,INS_PUSHS,_second,NULL,NULL);
             gen_code(q,INS_PUSHS,_first,NULL,NULL);
             gen_code(q,INS_LTS,NULL,NULL,NULL);
 
-            //
-            // TODO: GEN_CODE(PUSHS, temp_var2, NULL, NULL);
-            // TODO: GEN_CODE(PUSHS, temp_var1, NULL, NULL);
-            // TODO: GEN_CODE(EQS, NULL, NULL, NULL);
             gen_code(q,INS_PUSHS,_second,NULL,NULL);
             gen_code(q,INS_PUSHS,_first,NULL,NULL);
             gen_code(q,INS_EQS,NULL,NULL,NULL);
 
-            //
-            // TODO: GEN_CODE(ORS, NULL, NULL, NULL);
             gen_code(q,INS_ORS,NULL,NULL,NULL);
 
             break;
         case RULE_AND:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf("and");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
-            //printf(")");
-            // TODO: GEN_CODE(ANDS, NULL, NULL, NULL);
             if (op1 == DATA_NUM || op2 == DATA_NUM)
                 FLOAT_IF_NEEDED(op1, op2, true);
             gen_code(q, INS_ANDS, NULL, NULL, NULL);
             break;
         case RULE_OR:
-            //printf("(");
             push_to_gen_stack(q, expr->val1.value.sub_expr, &op1, is_global);
-            //printf("or");
             push_to_gen_stack(q, expr->val2.value.sub_expr, &op2, is_global);
-            //printf(")");
-            // TODO: GEN_CODE(ORS, NULL, NULL, NULL);
             if (op1 == DATA_NUM || op2 == DATA_NUM)
                 FLOAT_IF_NEEDED(op1, op2, true);
             gen_code(q, INS_ORS, NULL, NULL, NULL);
@@ -1038,13 +886,9 @@ static int push_to_gen_stack(queue_t *q, exp_nterm_t *expr, enum data_type *data
 
 int generate_code_nterm(exp_nterm_t **expr, queue_t *q, enum data_type *data_t, bool is_global)
 {
-    // TODO: GEN_CODE(CLEARS)
-    //gen_code(q, INS_CLEARS, NULL, NULL, NULL);
     if (expr != NULL && *expr != NULL)
     {
-        //printf("(");
         int res = push_to_gen_stack(q, *expr, data_t, is_global);
-        //printf(")\n");
         return res;
     }
     return ERR_INTERNAL;

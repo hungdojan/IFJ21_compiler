@@ -391,8 +391,6 @@ void flush_item(code_t *item)
             fprintf(stdout,"DPRINT %s\n",item->dest);
             break;
         default:
-            // error?
-            // the end of queue?
             break;
     }
 }
@@ -459,7 +457,6 @@ void import_builtin_functions()
     fprintf(stdout,".IFJcode21\n\n"
             "JUMP $$main\n\n");
 
-
     /// print reads
     fprintf(stdout,"LABEL reads\n"
             "PUSHFRAME\n"
@@ -517,9 +514,6 @@ void import_builtin_functions()
             "DEFVAR LF@%%retvar$1\n"
             "MOVE LF@%%retvar$1 nil@nil\n"
             "DEFVAR LF@%%cond\n"
-            // "DEFVAR LF@%%param1\n"
-            // "POPS LF@%%param1\n" // empty pop
-            // "POPS LF@%%param1\n"
             "DEFVAR LF@%%param1\n"
             "MOVE LF@%%param1 LF@%%1\n"
             "TYPE LF@%%cond LF@%%param1\n"
@@ -545,18 +539,6 @@ void import_builtin_functions()
             "MOVE LF@%%param3 LF@%%3\n"
             "TYPE LF@%%cond LF@%%param3\n"
             "JUMPIFNEQ substr&exit LF@%%cond string@int\n"
-            // "POPS LF@%%param1\n" // empty pop
-            // "POPS LF@%%param1\n"
-            // "TYPE LF@%%cond LF@%%param1\n"
-            // "JUMPIFNEQ substr&exit LF@%%cond string@string\n"
-            // "DEFVAR LF@%%param2\n"
-            // "POPS LF@%%param2\n"
-            // "TYPE LF@%%cond LF@%%param2\n"
-            // "JUMPIFNEQ substr&exit LF@%%cond string@int\n"
-            // "DEFVAR LF@%%param3\n"
-            // "POPS LF@%%param3\n"
-            // "TYPE LF@%%cond LF@%%param3\n"
-            // "JUMPIFNEQ substr&exit LF@%%cond string@int\n"
             "DEFVAR LF@%%retvar$1\n"
             "MOVE LF@%%retvar$1 string@\n"
             "DEFVAR LF@%%cond_length\n"
@@ -601,14 +583,6 @@ void import_builtin_functions()
             "MOVE LF@%%param2 LF@%%2\n"
             "TYPE LF@%%retvar$1 LF@%%param2\n"
             "JUMPIFNEQ ord&exit LF@%%retvar$1 string@int\n"
-            // "POPS LF@%%param1\n" // empty pop
-            // "POPS LF@%%param1\n"
-            // "TYPE LF@%%retvar$1 LF@%%param1\n"
-            // "JUMPIFNEQ ord&exit LF@%%retvar$1 string@string\n"
-            // "DEFVAR LF@%%param2\n"
-            // "POPS LF@%%param2\n"
-            // "TYPE LF@%%retvar$1 LF@%%param2\n"
-            // "JUMPIFNEQ ord&exit LF@%%retvar$1 string@int\n"
             "MOVE LF@%%retvar$1 nil@nil\n"
             "DEFVAR LF@%%cond_length\n"
             "LT LF@%%cond_length LF@%%param2 int@0\n"
@@ -632,10 +606,6 @@ void import_builtin_functions()
             "MOVE LF@%%param1 LF@%%1\n"
             "TYPE LF@%%cond LF@%%param1\n"
             "JUMPIFNEQ chr&exit LF@%%cond string@int\n"
-            // "POPS LF@%%param1\n" // empty pop
-            // "POPS LF@%%param1\n"
-            // "TYPE LF@%%cond LF@%%param1\n"
-            // "JUMPIFNEQ chr&exit LF@%%cond string@int\n"
             "DEFVAR LF@%%retvar$1\n"
             "MOVE LF@%%retvar$1 nil@nil\n"
             "LT LF@%%cond LF@%%param1 int@0\n"

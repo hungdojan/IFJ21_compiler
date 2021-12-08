@@ -10,16 +10,11 @@ int exp_nterm_init(exp_nterm_t **n)
         *n = (exp_nterm_t *)calloc(1, sizeof(exp_nterm_t));
         if (*n == NULL)     return ERR_INTERNAL;
         (*n)->val1_to_num = (*n)->val2_to_num = false;
-        // val1 rule a val2 jsou explicitne definovane
-        // (*n)->parms = NULL;
-        // (*n)->parm_len = 0;
-        // (*n)->parm_alloc_size = 0;
+        
         return NO_ERR;
     }
     return ERR_INTERNAL;
 }
-
-// data_t data = { .type = DATA_SUB_EXP, .value.sub_expr=nterm };
 
 int exp_data_init(exp_data_t *data, token_t *token)
 {
@@ -143,17 +138,7 @@ void exp_nterm_destroy(exp_nterm_t **n)
             (*n)->rule == RULE_AND ||
             (*n)->rule == RULE_OR)
             exp_data_destroy(&(*n)->val2);
-#if 0
-        // ruseni parametru fci
-        for (int i = 0; i < (*n)->parm_len; i++)
-        {
-            if (((*n)->parms)[i].type == DATA_SUB_EXP)
-            {
-                exp_nterm_destroy(&((*n)->parms)[i].value.sub_expr);
-                ((*n)->parms)[i].value.sub_expr = NULL;
-            }
-        }
-#endif
+
         free(*n);
         *n = NULL;
     }
@@ -261,33 +246,6 @@ int exp_stack_isempty(const exp_stack_t *s)
         return !(s->len) || s->len == -1;
     return 1;
 }
-
-#if 0
-// vlozi parametr fce
-int exp_nterm_add_parameter(exp_nterm_t *func, exp_data_t parm)
-{
-    if (func != NULL)
-    {
-        if (func->parms == NULL)
-        {
-            func->parms = (exp_data_t *)calloc(EXP_FUNC_PARM_SIZE, sizeof(exp_data_t));
-            if (func->parms == NULL)    return ERR_INTERNAL;
-            func->parm_len = 0;
-            func->parm_alloc_size = EXP_FUNC_PARM_SIZE;
-        } 
-        else if (func->parm_len + 1 > func->parm_alloc_size)
-        {
-            void *p = realloc(func->parms, sizeof(exp_data_t) * func->parm_alloc_size * 2);
-            if (p == NULL)  return ERR_INTERNAL;
-            func->parms = p;
-            func->parm_alloc_size *= 2;
-        }
-        (func->parms)[func->parm_len] = parm;
-        func->parm_len++;
-    }
-    return ERR_INTERNAL;
-}
-#endif
 
 int exp_stack_contains_shift(const exp_stack_t s)
 {
